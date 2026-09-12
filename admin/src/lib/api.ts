@@ -17,6 +17,7 @@ export interface Facility {
   description?: string;
   openHour?: string;
   closeHour?: string;
+  isActive?: boolean;
   createdAt?: string;
 }
 
@@ -32,7 +33,18 @@ export interface Venue {
   name: string;
   venueType: string;
   defaultPrice: number;
+  basePricePerHour?: number;
   pricingConfig?: PricingRule[];
+  pricingRules?: Record<string, any>;
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
+  slotDurationMinutes?: number;
+  cancellationPolicy?: {
+    hoursBeforeForFullRefund: number;
+    hoursBeforeForNoRefund: number;
+  };
   isActive?: boolean;
 }
 
@@ -149,8 +161,9 @@ class ApiService {
   }
 
   // --- FACILITIES ---
-  async getFacilities(): Promise<Facility[]> {
-    return this.request<Facility[]>('/facilities');
+  async getFacilities(includeInactive = false): Promise<Facility[]> {
+    const query = includeInactive ? '?includeInactive=true' : '';
+    return this.request<Facility[]>(`/facilities${query}`);
   }
 
   async createFacility(data: Partial<Facility>): Promise<Facility> {
@@ -160,9 +173,25 @@ class ApiService {
     });
   }
 
+  async updateFacility(id: string, data: Partial<Facility>): Promise<Facility> {
+    return this.request<Facility>(`/facilities/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteFacility(id: string): Promise<{ message: string; facility: Facility }> {
+    return this.request<{ message: string; facility: Facility }>(`/facilities/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // --- VENUES ---
-  async getVenues(facilityId?: string): Promise<Venue[]> {
-    const query = facilityId ? `?facilityId=${facilityId}` : '';
+  async getVenues(facilityId?: string, includeInactive = false): Promise<Venue[]> {
+    const params = new URLSearchParams();
+    if (facilityId) params.append('facilityId', facilityId);
+    if (includeInactive) params.append('includeInactive', 'true');
+    const query = params.toString() ? `?${params.toString()}` : '';
     return this.request<Venue[]>(`/venues${query}`);
   }
 
@@ -170,6 +199,19 @@ class ApiService {
     return this.request<Venue>('/venues', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async updateVenue(id: string, data: Partial<Venue>): Promise<Venue> {
+    return this.request<Venue>(`/venues/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteVenue(id: string): Promise<{ message: string; venue: Venue }> {
+    return this.request<{ message: string; venue: Venue }>(`/venues/${id}`, {
+      method: 'DELETE',
     });
   }
 
