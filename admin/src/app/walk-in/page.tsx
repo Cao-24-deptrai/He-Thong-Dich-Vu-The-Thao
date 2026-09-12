@@ -280,7 +280,7 @@ export default function WalkInBookingPage() {
             >
               {facilities.map((fac) => (
                 <option key={fac._id} value={fac._id}>
-                  {fac.name} ({fac.sportType})
+                  {fac.name} ({fac.sportTypes?.[0] || fac.sportType || 'Thể thao'})
                 </option>
               ))}
             </select>

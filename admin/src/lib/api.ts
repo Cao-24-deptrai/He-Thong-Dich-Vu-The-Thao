@@ -12,7 +12,8 @@ export interface Facility {
   _id: string;
   name: string;
   address: string;
-  sportType: 'FOOTBALL' | 'BADMINTON' | 'PICKLEBALL' | 'TENNIS' | 'ESPORTS' | 'GYM';
+  sportType?: 'FOOTBALL' | 'BADMINTON' | 'PICKLEBALL' | 'TENNIS' | 'ESPORTS' | 'GYM' | string;
+  sportTypes?: string[];
   description?: string;
   openHour?: string;
   closeHour?: string;

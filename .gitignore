@@ -23,6 +23,7 @@ dist/
 out/
 build/
 */build/
+*.tsbuildinfo
 
 # Expo / React Native
 .expo/

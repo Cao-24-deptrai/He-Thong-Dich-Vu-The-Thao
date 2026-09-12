@@ -102,7 +102,13 @@ export default function FacilitiesPage() {
   const handleCreateFacility = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.createFacility(facilityForm as any);
+      await api.createFacility({
+        name: facilityForm.name,
+        address: facilityForm.address,
+        sportType: facilityForm.sportType,
+        sportTypes: [facilityForm.sportType],
+        description: facilityForm.description,
+      } as any);
       setShowFacilityModal(false);
       setFacilityForm({
         name: '',
@@ -221,10 +227,18 @@ export default function FacilitiesPage() {
           ) : (
             <div className="space-y-3">
               {facilities.map((fac) => {
-                const sport = SPORT_TYPES.find((s) => s.value === fac.sportType) || {
-                  label: fac.sportType,
+                const sportTypeStr = (fac.sportTypes && fac.sportTypes.length > 0)
+                  ? fac.sportTypes[0]
+                  : (fac.sportType || 'FOOTBALL');
+                const matchedSport = SPORT_TYPES.find(
+                  (s) => s.value.toUpperCase() === String(sportTypeStr).toUpperCase()
+                );
+                const sport = matchedSport || {
+                  value: sportTypeStr,
+                  label: sportTypeStr ? `${sportTypeStr} Thể thao` : 'Thể thao',
                   icon: '🏅',
                 };
+                const sportLabel = sport.label || 'Thể thao';
                 const isSelected = selectedFacility?._id === fac._id;
 
                 return (
@@ -240,7 +254,7 @@ export default function FacilitiesPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3.5">
                         <span className="text-2xl p-2.5 bg-slate-800/80 rounded-2xl border border-slate-700/80 shadow-inner">
-                          {sport.icon}
+                          {sport.icon || '🏅'}
                         </span>
                         <div>
                           <h3 className="font-extrabold text-white text-base leading-snug">{fac.name}</h3>
@@ -251,7 +265,7 @@ export default function FacilitiesPage() {
                         </div>
                       </div>
                       <span className="px-2.5 py-1 text-[10px] font-mono font-black uppercase rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                        {sport.label.split(' ')[0]}
+                        {sportLabel.split(' ')[0]}
                       </span>
                     </div>
 
