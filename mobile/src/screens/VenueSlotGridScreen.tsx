@@ -16,6 +16,7 @@ import { api } from '../api/client';
 import { Venue, SlotAvailability } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
 import { subscribeSlotChanges } from '../socket/socket';
+import { PitchMap2D } from '../components/PitchMap2D';
 
 interface Props {
   onBack: () => void;
@@ -25,12 +26,14 @@ interface Props {
 export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment }) => {
   const { selectedFacility, setSelectedVenue, selectedVenue, selectedDate, setSelectedDate, setActiveBooking } = useBookingStore();
 
+  const [viewMode, setViewMode] = useState<'2D' | 'LIST'>('2D');
   const [venues, setVenues] = useState<Venue[]>([]);
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
   const [loadingVenues, setLoadingVenues] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [holding, setHolding] = useState(false);
+
 
   // Generate 5 upcoming days
   const dateOptions = Array.from({ length: 5 }).map((_, i) => {
@@ -151,34 +154,65 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Venue Selection Pills */}
-          <Text style={styles.sectionTitle}>1. CHỌN SÂN / VỊ TRÍ CHƠI</Text>
+          {/* View Mode Toggle (2D Pitch Map vs List) */}
+          <View style={styles.viewModeToggleRow}>
+            <TouchableOpacity
+              style={[styles.viewModeBtn, viewMode === '2D' && styles.viewModeBtnActive]}
+              onPress={() => setViewMode('2D')}
+            >
+              <Text style={[styles.viewModeBtnText, viewMode === '2D' && styles.viewModeBtnTextActive]}>
+                🗺️ Sơ đồ 2D (Pitch Map)
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.viewModeBtn, viewMode === 'LIST' && styles.viewModeBtnActive]}
+              onPress={() => setViewMode('LIST')}
+            >
+              <Text style={[styles.viewModeBtnText, viewMode === 'LIST' && styles.viewModeBtnTextActive]}>
+                📋 Danh sách (List)
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Venue Selection: 2D Pitch Map or List */}
           {loadingVenues ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: 10 }} />
+            <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
+          ) : viewMode === '2D' ? (
+            <PitchMap2D
+              venues={venues}
+              selectedVenue={selectedVenue}
+              onSelectVenue={setSelectedVenue}
+              sportTypes={selectedFacility?.sportTypes}
+            />
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-              {venues.map((v) => {
-                const isSelected = selectedVenue?._id === v._id;
-                return (
-                  <TouchableOpacity
-                    key={v._id}
-                    style={[styles.venuePill, isSelected && styles.activeVenuePill]}
-                    onPress={() => setSelectedVenue(v)}
-                  >
-                    <Text style={[styles.venuePillName, isSelected && styles.activeVenuePillName]}>
-                      {v.name}
-                    </Text>
-                    <Text style={[styles.venuePillPrice, isSelected && styles.activeVenuePillPrice]}>
-                      {v.basePricePerHour.toLocaleString('vi-VN')} đ/h
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            <>
+              <Text style={styles.sectionTitle}>1. CHỌN SÂN / VỊ TRÍ CHƠI</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
+                {venues.map((v) => {
+                  const isSelected = selectedVenue?._id === v._id;
+                  const price = (v as any).defaultPrice ?? v.basePricePerHour ?? 200000;
+                  return (
+                    <TouchableOpacity
+                      key={v._id}
+                      style={[styles.venuePill, isSelected && styles.activeVenuePill]}
+                      onPress={() => setSelectedVenue(v)}
+                    >
+                      <Text style={[styles.venuePillName, isSelected && styles.activeVenuePillName]}>
+                        {v.name}
+                      </Text>
+                      <Text style={[styles.venuePillPrice, isSelected && styles.activeVenuePillPrice]}>
+                        {price.toLocaleString('vi-VN')} đ/h
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </>
           )}
 
           {/* Date Picker Tabs */}
           <Text style={styles.sectionTitle}>2. CHỌN NGÀY ĐẶT</Text>
+
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
             {dateOptions.map((opt) => {
               const isSelected = selectedDate === opt.dateStr;
@@ -576,4 +610,35 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  viewModeToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  viewModeBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  viewModeBtnActive: {
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  viewModeBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+  },
+  viewModeBtnTextActive: {
+    color: '#ffffff',
+  },
 });
+
