@@ -231,8 +231,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   activeCategoryPill: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#00f2fe',
+    borderColor: '#00f2fe',
+    shadowColor: '#00f2fe',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
   },
   categoryIcon: {
     fontSize: 14,
@@ -240,23 +244,27 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     color: colors.textSecondary,
   },
   activeCategoryLabel: {
-    color: '#fff',
-    fontWeight: '700',
+    color: '#090d16',
+    fontWeight: '900',
   },
   facilityList: {
     paddingBottom: 30,
     gap: 14,
   },
   facilityCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 16,
+    backgroundColor: '#111827',
+    borderRadius: 24,
+    padding: 18,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -265,13 +273,13 @@ const styles = StyleSheet.create({
   cardIconBox: {
     width: 48,
     height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.background,
+    borderRadius: 16,
+    backgroundColor: '#090d16',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cardIcon: {
     fontSize: 24,
@@ -281,8 +289,8 @@ const styles = StyleSheet.create({
   },
   facilityName: {
     fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontWeight: '800',
+    color: '#ffffff',
   },
   facilityAddress: {
     fontSize: 12,
@@ -296,18 +304,21 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   sportTag: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    backgroundColor: 'rgba(0, 242, 254, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 242, 254, 0.25)',
   },
   sportTagText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: colors.primaryLight,
+    fontWeight: '800',
+    color: '#00f2fe',
+    fontFamily: 'monospace',
   },
   openHourBadge: {
     flexDirection: 'row',
@@ -316,16 +327,18 @@ const styles = StyleSheet.create({
   openHourText: {
     fontSize: 11,
     color: colors.textMuted,
+    fontFamily: 'monospace',
   },
   cardAction: {
-    marginTop: 10,
+    marginTop: 12,
     alignItems: 'flex-end',
   },
   cardActionText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: colors.primaryLight,
+    fontWeight: '800',
+    color: '#00f2fe',
   },
+
   centerContainer: {
     flex: 1,
     alignItems: 'center',

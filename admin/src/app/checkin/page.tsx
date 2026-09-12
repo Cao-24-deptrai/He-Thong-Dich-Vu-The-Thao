@@ -14,9 +14,41 @@ import {
   Clock, 
   Layers,
   Sparkles,
-  Search
+  Search,
+  Zap,
+  ShieldCheck
 } from 'lucide-react';
 import { api, Booking } from '@/lib/api';
+
+// Web audio checkin chime
+const playCheckinSound = (status: 'SUCCESS' | 'INVALID') => {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (status === 'SUCCESS') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
+      osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.frequency.setValueAtTime(140, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    }
+  } catch (e) {}
+};
 
 export default function CheckinPage() {
   const [scannerActive, setScannerActive] = useState(false);
@@ -40,15 +72,16 @@ export default function CheckinPage() {
 
     try {
       const res = await api.scanCheckin(token.trim());
+      playCheckinSound('SUCCESS');
       setScanResult({
         status: 'SUCCESS',
-        message: res.message || 'Check-in thành công!',
+        message: res.message || 'Check-in thành công! Khách được phép vào sân.',
         booking: res.booking,
       });
-      // Clear manual input on success
       setManualToken('');
     } catch (err: any) {
       console.error('Checkin scan error:', err);
+      playCheckinSound('INVALID');
       const errorMsg = err.message || 'Mã QR không hợp lệ hoặc đã hết hạn';
       setScanResult({
         status: 'INVALID',
@@ -81,7 +114,7 @@ export default function CheckinPage() {
           handleProcessQr(decodedText);
         },
         (errorMessage) => {
-          // ignore scan frame misses
+          // ignore misses
         }
       );
       setScannerActive(true);
@@ -97,9 +130,7 @@ export default function CheckinPage() {
       try {
         await scannerRef.current.stop();
         scannerRef.current.clear();
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
       scannerRef.current = null;
     }
     setScannerActive(false);
@@ -114,41 +145,52 @@ export default function CheckinPage() {
   return (
     <div className="space-y-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-          <QrCode className="w-7 h-7 text-blue-600" />
-          Quét Check-in Vé Vào Sân
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Mục 4.2: Quét Dynamic QR Code từ điện thoại của khách hàng, xác thực mã JWT 60 giây và chống check-in trùng lặp.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+              <QrCode className="w-6 h-6 text-slate-950" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+                Trạm Soát Vé & Quét Check-in QR
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                  HUD SCANNER
+                </span>
+              </h1>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Mục 4.2: Xác thực Dynamic QR Token 60s, kiểm tra vé hợp lệ và chống gian lận check-in trùng lặp
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Result Card: Displayed right at top for instant visibility */}
       {scanResult && (
         <div
-          className={`p-6 rounded-2xl border-2 shadow-lg transition-all duration-300 animate-in fade-in zoom-in-95 ${
+          className={`p-6 rounded-3xl border-2 shadow-2xl transition-all duration-300 backdrop-blur-md ${
             scanResult.status === 'SUCCESS'
-              ? 'bg-emerald-50/90 border-emerald-500 text-emerald-950'
-              : 'bg-rose-50/90 border-rose-500 text-rose-950'
+              ? 'bg-emerald-950/40 border-emerald-400 text-white shadow-emerald-500/15'
+              : 'bg-rose-950/40 border-rose-500 text-white shadow-rose-500/15'
           }`}
         >
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3.5">
               {scanResult.status === 'SUCCESS' ? (
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-black">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/40 font-black">
                   <XCircle className="w-7 h-7" />
                 </div>
               )}
               <div>
-                <h2 className="text-xl font-extrabold tracking-tight">
-                  {scanResult.status === 'SUCCESS' ? 'XÁC THỰC THÀNH CÔNG - HỢP LỆ VÀO SÂN' : 'VÉ KHÔNG HỢP LỆ'}
+                <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
+                  {scanResult.status === 'SUCCESS' ? 'XÁC THỰC THÀNH CÔNG • VÉ HỢP LỆ' : 'VÉ KHÔNG HỢP LỆ'}
                 </h2>
-                <p className="text-sm font-medium mt-0.5 opacity-90">
+                <p className="text-xs font-medium mt-0.5 text-slate-300">
                   {scanResult.status === 'SUCCESS' ? scanResult.message : scanResult.errorDetail}
                 </p>
               </div>
@@ -156,66 +198,66 @@ export default function CheckinPage() {
 
             <button
               onClick={() => setScanResult(null)}
-              className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white/80 hover:bg-white border shadow-xs transition"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
             >
-              Quét tiếp theo
+              Tiếp tục quét
             </button>
           </div>
 
           {/* Success Booking Details */}
           {scanResult.status === 'SUCCESS' && scanResult.booking && (
-            <div className="mt-6 pt-5 border-t border-emerald-200/80 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-              <div className="bg-white/80 p-3.5 rounded-xl border border-emerald-100">
-                <span className="text-xs text-slate-500 flex items-center gap-1 mb-1">
-                  <User className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="mt-6 pt-5 border-t border-emerald-500/20 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
+                  <User className="w-3.5 h-3.5 text-emerald-400" />
                   Khách hàng
                 </span>
-                <span className="font-bold text-slate-900 block truncate">
+                <span className="font-extrabold text-white block truncate text-base">
                   {scanResult.booking.customerName || scanResult.booking.userId?.fullName || 'Khách hàng'}
                 </span>
-                <span className="text-xs font-mono text-slate-500">
+                <span className="text-xs font-mono text-slate-400">
                   {scanResult.booking.customerPhone || scanResult.booking.userId?.phone || 'N/A'}
                 </span>
               </div>
 
-              <div className="bg-white/80 p-3.5 rounded-xl border border-emerald-100">
-                <span className="text-xs text-slate-500 flex items-center gap-1 mb-1">
-                  <Layers className="w-3.5 h-3.5 text-emerald-600" />
-                  Sân & Cơ sở
+              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
+                  <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                  Sân & Vị Trí
                 </span>
-                <span className="font-bold text-slate-900 block truncate">
+                <span className="font-extrabold text-white block truncate text-base">
                   {scanResult.booking.venueId?.name || 'Sân thể thao'}
                 </span>
-                <span className="text-xs text-emerald-700 font-semibold">
-                  Mã vé: {scanResult.booking.bookingCode || scanResult.booking._id.slice(-6).toUpperCase()}
+                <span className="text-xs text-emerald-400 font-mono font-bold">
+                  Mã vé: #{(scanResult.booking.bookingCode || scanResult.booking._id).slice(-6).toUpperCase()}
                 </span>
               </div>
 
-              <div className="bg-white/80 p-3.5 rounded-xl border border-emerald-100">
-                <span className="text-xs text-slate-500 flex items-center gap-1 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                  Khung giờ chơi
+              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
+                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
+                  Khung giờ thi đấu
                 </span>
-                <span className="font-bold text-slate-900 block">
+                <span className="font-black text-cyan-400 font-mono block text-base">
                   {scanResult.booking.startTime} - {scanResult.booking.endTime}
                 </span>
-                <span className="text-xs text-slate-500 font-mono">
-                  {scanResult.booking.bookingDate}
+                <span className="text-xs text-slate-400 font-mono">
+                  {scanResult.booking.bookingDate?.split('T')[0]}
                 </span>
               </div>
 
-              <div className="bg-white/80 p-3.5 rounded-xl border border-emerald-100">
-                <span className="text-xs text-slate-500 flex items-center gap-1 mb-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                  Thời gian check-in
+              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  Giờ vào cổng
                 </span>
-                <span className="font-bold text-emerald-700 block">
+                <span className="font-mono font-bold text-emerald-400 block text-base">
                   {scanResult.booking.checkedInAt
                     ? new Date(scanResult.booking.checkedInAt).toLocaleTimeString('vi-VN')
                     : 'Vừa xong'}
                 </span>
-                <span className="text-xs text-slate-400">
-                  Đã ghi nhận vào hệ thống
+                <span className="text-[10px] text-slate-500">
+                  Đã khóa vé điện tử
                 </span>
               </div>
             </div>
@@ -226,25 +268,25 @@ export default function CheckinPage() {
       {/* Main Scanner Section */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         {/* Camera Scanner View */}
-        <div className="md:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <h2 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Camera className="w-4 h-4 text-blue-600" />
-              Camera Quét Trực Tiếp
+        <div className="md:col-span-7 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 backdrop-blur-md">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h2 className="font-black text-white text-base flex items-center gap-2">
+              <Camera className="w-4 h-4 text-cyan-400" />
+              Camera Quét Trực Tiếp (HUD Scanner)
             </h2>
             <div className="flex items-center gap-2">
               {!scannerActive ? (
                 <button
                   onClick={startScanner}
-                  className="inline-flex items-center px-3.5 py-1.5 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 shadow-xs transition"
+                  className="inline-flex items-center px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl text-xs font-black hover:from-emerald-700 hover:to-cyan-700 shadow-sm active:scale-95 transition"
                 >
                   <Camera className="w-3.5 h-3.5 mr-1" />
-                  Mở Camera
+                  Bật Camera Quét
                 </button>
               ) : (
                 <button
                   onClick={stopScanner}
-                  className="inline-flex items-center px-3.5 py-1.5 bg-rose-600 text-white rounded-xl text-xs font-semibold hover:bg-rose-700 shadow-xs transition"
+                  className="inline-flex items-center px-3.5 py-1.5 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold hover:bg-rose-600/30 transition"
                 >
                   Tắt Camera
                 </button>
@@ -252,87 +294,80 @@ export default function CheckinPage() {
             </div>
           </div>
 
-          <div className="relative bg-slate-900 rounded-2xl overflow-hidden min-h-[320px] flex items-center justify-center border border-slate-800">
-            <div id={scannerContainerId} className="w-full h-full max-w-sm" />
-
+          {/* HTML5 QR Container */}
+          <div className="relative min-h-[300px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+            <div id={scannerContainerId} className="w-full h-full" />
+            
             {!scannerActive && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-950/90 text-white">
-                <Camera className="w-12 h-12 text-slate-500 mb-3" />
-                <p className="font-semibold text-sm">Camera hiện đang tắt</p>
-                <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                  Bấm &quot;Mở Camera&quot; bên trên để bật camera quét mã QR trên điện thoại khách hàng, hoặc dùng ô nhập mã bên phải.
+              <div className="text-center p-8 space-y-3 z-10">
+                <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-cyan-400 shadow-inner">
+                  <QrCode className="w-7 h-7" />
+                </div>
+                <p className="text-sm font-bold text-slate-300">
+                  Camera chưa được kích hoạt
                 </p>
-                <button
-                  onClick={startScanner}
-                  className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-xl text-xs font-semibold text-white shadow-md shadow-blue-500/20 transition"
-                >
-                  Bật Camera Ngay
-                </button>
+                <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                  Nhấn &quot;Bật Camera Quét&quot; ở trên hoặc dùng ô nhập mã Token bên phải để xác thực vé.
+                </p>
               </div>
             )}
           </div>
+
+          <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400 flex items-center gap-2.5">
+            <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>
+              Cơ chế bảo mật: Mã QR Dynamic JWT có hiệu lực 60s. Khách không thể sử dụng ảnh chụp màn hình cũ để gian lận vé.
+            </span>
+          </div>
         </div>
 
-        {/* Manual Input & Testing Section */}
-        <div className="md:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-5">
-          <div>
-            <h2 className="font-bold text-slate-900 text-base flex items-center gap-2">
-              <Search className="w-4 h-4 text-blue-600" />
-              Nhập Mã QR Thủ Công
+        {/* Manual Input Form on Right */}
+        <div className="md:col-span-5 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-5 backdrop-blur-md">
+          <div className="pb-3 border-b border-slate-800">
+            <h2 className="font-black text-white text-base flex items-center gap-2">
+              <Search className="w-4 h-4 text-emerald-400" />
+              Nhập Mã Token Thủ Công
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Dành cho trường hợp camera bị mờ, hoặc quét bằng máy quét mã vạch cầm tay
+              Dành cho trường hợp camera bị mờ hoặc kiểm thử nhanh
             </p>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleProcessQr(manualToken);
-            }}
-            className="space-y-3"
-          >
+          <div className="space-y-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                Chuỗi Dynamic QR Token (JWT)
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                Chuỗi Dynamic Token / JWT
               </label>
               <textarea
-                rows={4}
-                required
+                rows={5}
                 value={manualToken}
                 onChange={(e) => setManualToken(e.target.value)}
-                placeholder="Dán chuỗi token hoặc quét mã barcode vào đây..."
-                className="w-full px-3.5 py-2 text-xs font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Dán chuỗi token mã hóa từ vé QR của khách hàng tại đây..."
+                className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono resize-none"
               />
             </div>
 
             <button
-              type="submit"
+              onClick={() => handleProcessQr(manualToken)}
               disabled={loading || !manualToken.trim()}
-              className="w-full flex justify-center items-center py-2.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition shadow-sm"
+              className={`w-full py-3.5 rounded-2xl font-black text-xs transition flex items-center justify-center gap-2 ${
+                loading || !manualToken.trim()
+                  ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
+              }`}
             >
               {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Đang xác thực mã...</span>
-                </div>
+                </>
               ) : (
-                <span>Xác Thực Check-in</span>
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>XÁC THỰC VÉ & CHECK-IN NGAY</span>
+                </>
               )}
             </button>
-          </form>
-
-          {/* Quick instructions */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-2">
-            <h4 className="font-semibold text-slate-800 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              Quy tắc Check-in Bảo Mật (Mục 3.4 & 4.2):
-            </h4>
-            <ul className="list-disc pl-4 space-y-1 text-slate-500">
-              <li>Mã QR của khách hàng thay đổi định kỳ mỗi <strong>60 giây</strong> trên điện thoại.</li>
-              <li>Chống chụp màn hình gửi cho người khác hoặc quét nhiều lần.</li>
-              <li>Khi check-in thành công, trạng thái booking được đánh dấu <code>isCheckedIn = true</code>. Quét lại lần thứ 2 sẽ báo lỗi đỏ ngay lập tức.</li>
-            </ul>
           </div>
         </div>
       </div>

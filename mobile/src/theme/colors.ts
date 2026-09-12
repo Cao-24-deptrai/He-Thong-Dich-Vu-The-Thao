@@ -1,32 +1,36 @@
 // mobile/src/theme/colors.ts
 
 export const colors = {
-  // Backgrounds
-  background: '#0f172a', // slate-900
-  surface: '#1e293b',    // slate-800
-  surfaceLight: '#334155', // slate-700
-  card: '#1e293b',
+  // Tri-Layer Obsidian Canvas
+  background: '#090d16',  // Lớp 0: Nền sâu thẳm
+  surface: '#111827',     // Lớp 1: Bề mặt thẻ Glass Card
+  surfaceLight: '#1e293b',// Lớp 2: Phần tử nổi bật
+  card: '#111827',
 
-  // Primary brand
-  primary: '#2563eb',    // blue-600
-  primaryLight: '#3b82f6', // blue-500
-  primaryDark: '#1d4ed8',  // blue-700
-  primaryText: '#ffffff',
+  // Dual-Accent Energy Brand (Volt Lime & Cyber Cyan)
+  primary: '#00f2fe',     // Cyber Cyan neon
+  primaryLight: '#38bdf8',
+  primaryDark: '#0284c7',
+  primaryText: '#090d16',
+
+  volt: '#10b981',        // Volt Lime / Emerald thể thao
+  voltLight: '#34d399',
+  voltDark: '#059669',
 
   // Accents & statuses
-  success: '#10b981',    // emerald-500
-  successBg: '#064e3b',
-  warning: '#f59e0b',    // amber-500
-  warningBg: '#78350f',
-  danger: '#ef4444',     // rose-500
-  dangerBg: '#7f1d1d',
+  success: '#10b981',     // emerald-500
+  successBg: 'rgba(16, 185, 129, 0.15)',
+  warning: '#f59e0b',     // amber-500
+  warningBg: 'rgba(245, 158, 11, 0.15)',
+  danger: '#ef4444',      // rose-500
+  dangerBg: 'rgba(239, 68, 68, 0.15)',
   
   // Text
   textPrimary: '#ffffff',
   textSecondary: '#94a3b8', // slate-400
   textMuted: '#64748b',     // slate-500
-  border: '#334155',        // slate-700
-  borderLight: '#475569',
+  border: 'rgba(255, 255, 255, 0.1)',
+  borderLight: 'rgba(255, 255, 255, 0.15)',
 
   // Cyber-Athletic & Pitch 2D Palettes
   pitchGrassDark: '#14532d',    // Cỏ xanh sẫm (sọc 1)
@@ -49,6 +53,5 @@ export const colors = {
   walletBorder: 'rgba(255, 255, 255, 0.1)',
   laserBeam: '#00f2fe',        // Tia laser xanh ngọc sáng
   laserGlow: 'rgba(0, 242, 254, 0.6)',
-  cornerBracket: '#38bdf8',
+  cornerBracket: '#00f2fe',
 };
-
