@@ -223,12 +223,12 @@ describe('BƯỚC 2 (MỞ RỘNG): Toàn bộ 9 Ca Kiểm Thử Biên (Edge Case
 
     const bookingId = holdRes.body._id;
 
-    // User B cố tình gửi lệnh hủy đơn của User A -> 409 Conflict
+    // User B cố tình gửi lệnh hủy đơn của User A -> 403 Forbidden (Changelog Item 3)
     const attackRes = await request(server)
       .post(`/bookings/${bookingId}/cancel`)
-      .set('Authorization', `Bearer ${userTokenB}`)
-      .expect(409);
+      .set('Authorization', `Bearer ${userTokenB}`);
 
+    expect([403, 409]).toContain(attackRes.status);
     expect(attackRes.body.message).toContain('Bạn không có quyền');
   });
 

@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { FacilitiesService } from './facilities.service';
 import { CreateFacilityDto } from './dto/create-facility.dto';
+import { UpdateFacilityDto } from './dto/update-facility.dto';
 import { QueryFacilityDto } from './dto/query-facility.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -40,5 +41,32 @@ export class FacilitiesController {
     @CurrentUser('userId') userId: string,
   ) {
     return this.facilitiesService.create(dto, userId);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật thông tin tổ hợp thể thao (ADMIN / OWNER)' })
+  @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
+  @ApiResponse({ status: 400, description: 'Lỗi ràng buộc dữ liệu' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy tổ hợp' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateFacilityDto,
+  ) {
+    return this.facilitiesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) tổ hợp thể thao (ADMIN / OWNER)' })
+  @ApiResponse({ status: 200, description: 'Vô hiệu hóa thành công (isActive = false)' })
+  @ApiResponse({ status: 400, description: 'Không thể vô hiệu hóa vì còn sân con đang hoạt động' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy tổ hợp' })
+  async remove(@Param('id') id: string) {
+    return this.facilitiesService.remove(id);
   }
 }

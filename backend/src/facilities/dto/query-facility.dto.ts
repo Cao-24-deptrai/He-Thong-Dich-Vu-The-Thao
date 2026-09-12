@@ -25,4 +25,8 @@ export class QueryFacilityDto {
   @Type(() => Number)
   @IsNumber()
   maxDistance?: number;
+
+  @ApiProperty({ required: false, description: 'Bao gồm cả cơ sở đã vô hiệu hóa (Admin)', default: false })
+  @IsOptional()
+  includeInactive?: boolean | string;
 }

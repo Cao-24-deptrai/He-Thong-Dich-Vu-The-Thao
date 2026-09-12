@@ -36,6 +36,10 @@ export class Facility {
   @ApiProperty({ description: 'Owner user ID', required: false })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   ownerId?: Types.ObjectId;
+
+  @ApiProperty({ description: 'Trạng thái hoạt động (Soft delete)', default: true })
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
 }
 
 export const FacilitySchema = SchemaFactory.createForClass(Facility);

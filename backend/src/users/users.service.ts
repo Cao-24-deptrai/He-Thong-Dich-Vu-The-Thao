@@ -39,11 +39,24 @@ export class UsersService {
     return this.userModel.findOne({ phone }).exec();
   }
 
-  async findById(id: string): Promise<UserDocument | null> {
+  async findById(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng');
     }
     return user;
+  }
+
+  async updateFcmToken(userId: string, fcmToken: string): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    user.fcmToken = fcmToken;
+    return user.save();
+  }
+
+  async updateProfile(userId: string, dto: { fullName?: string; email?: string }): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    if (dto.fullName !== undefined) user.fullName = dto.fullName;
+    if (dto.email !== undefined) user.email = dto.email;
+    return user.save();
   }
 }

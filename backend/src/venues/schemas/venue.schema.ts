@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { VenueType } from '../../common/enums';
@@ -34,6 +34,46 @@ export class Venue {
   })
   @Prop({ type: MongooseSchema.Types.Mixed })
   pricingRules?: Record<string, any>;
+
+  @ApiProperty({ description: 'Trạng thái hoạt động (Soft delete)', default: true })
+  @Prop({ type: Boolean, default: true })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Khung giờ hoạt động của sân',
+    example: { openTime: '06:00', closeTime: '22:00' },
+    required: false,
+  })
+  @Prop(
+    raw({
+      openTime: { type: String, default: '06:00' },
+      closeTime: { type: String, default: '22:00' },
+    }),
+  )
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
+
+  @ApiProperty({ description: 'Độ dài mỗi slot tính theo phút', example: 60, default: 60, required: false })
+  @Prop({ type: Number, default: 60 })
+  slotDurationMinutes?: number;
+
+  @ApiProperty({
+    description: 'Chính sách hủy và hoàn tiền theo mốc thời gian',
+    example: { hoursBeforeForFullRefund: 24, hoursBeforeForNoRefund: 2 },
+    required: false,
+  })
+  @Prop(
+    raw({
+      hoursBeforeForFullRefund: { type: Number, default: 24 },
+      hoursBeforeForNoRefund: { type: Number, default: 2 },
+    }),
+  )
+  cancellationPolicy?: {
+    hoursBeforeForFullRefund: number;
+    hoursBeforeForNoRefund: number;
+  };
 }
 
 export const VenueSchema = SchemaFactory.createForClass(Venue);

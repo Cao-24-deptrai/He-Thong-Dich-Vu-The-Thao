@@ -43,4 +43,33 @@ export class CreateVenueDto {
   @ApiProperty({ required: false })
   @IsOptional()
   pricingConfig?: any;
+
+  @ApiProperty({
+    example: { openTime: '06:00', closeTime: '23:00' },
+    required: false,
+    description: 'Khung giờ hoạt động',
+  })
+  @IsOptional()
+  @IsObject()
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
+
+  @ApiProperty({ example: 60, required: false, description: 'Độ dài mỗi slot (phút)' })
+  @IsOptional()
+  @IsNumber()
+  slotDurationMinutes?: number;
+
+  @ApiProperty({
+    example: { hoursBeforeForFullRefund: 24, hoursBeforeForNoRefund: 2 },
+    required: false,
+    description: 'Chính sách hoàn hủy theo mốc giờ',
+  })
+  @IsOptional()
+  @IsObject()
+  cancellationPolicy?: {
+    hoursBeforeForFullRefund: number;
+    hoursBeforeForNoRefund: number;
+  };
 }

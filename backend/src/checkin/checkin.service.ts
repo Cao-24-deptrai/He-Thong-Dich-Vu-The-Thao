@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -22,7 +23,11 @@ export class CheckinService {
   ) {}
 
   /**
-   * Sinh / làm mới qrToken động (JWT sống 60s) - Mục 4.5 của spec
+   * Sinh / làm mới qrToken động (JWT sống 60s) - Siết chặt theo Changelog Item 2:
+   * 1. Quyền sở hữu (req.user.id === booking.userId) -> 403 Forbidden
+   * 2. Trạng thái thanh toán (status === 'CONFIRMED') -> PAYMENT_NOT_CONFIRMED
+   * 3. Chống dùng lại vé (isCheckedIn === true) -> ALREADY_CHECKED_IN
+   * 4. Chỉ khi qua hết 3 bước trên mới sinh JWT mới (TTL 60s)
    */
   async getOrRefreshQrToken(bookingId: string, userId: string) {
     const booking = await this.bookingModel.findById(bookingId).populate('venueId').exec();
@@ -30,17 +35,34 @@ export class CheckinService {
       throw new NotFoundException('Không tìm thấy đơn đặt');
     }
 
+    // 1. Kiểm tra quyền sở hữu
     if (booking.userId?.toString() !== userId) {
-      throw new ConflictException('Bạn không có quyền xem vé của đơn này');
+      throw new ForbiddenException({
+        statusCode: 403,
+        errorCode: 'FORBIDDEN',
+        message: 'Bạn không có quyền xem vé của đơn này',
+      });
     }
 
+    // 2. Kiểm tra trạng thái thanh toán (Trả tiền mới có vé)
     if (booking.status !== BookingStatus.CONFIRMED) {
-      throw new BadRequestException(
-        `Chỉ đơn đã thanh toán thành công (CONFIRMED) mới có mã QR vé. Trạng thái hiện tại: ${booking.status}`,
-      );
+      throw new BadRequestException({
+        statusCode: 400,
+        errorCode: 'PAYMENT_NOT_CONFIRMED',
+        message: `Chỉ đơn đã thanh toán thành công (CONFIRMED) mới có mã QR vé. Trạng thái hiện tại: ${booking.status}`,
+      });
     }
 
-    // Sinh JWT payload với jti duy nhất, sống 60 giây (Mục 4.5.1)
+    // 3. Kiểm tra đã check-in chưa (Chặn dùng lại vé đã quét vào sân)
+    if (booking.isCheckedIn === true) {
+      throw new ConflictException({
+        statusCode: 409,
+        errorCode: 'ALREADY_CHECKED_IN',
+        message: 'Vé đã được check-in vào sân trước đó, không thể cấp mã QR mới',
+      });
+    }
+
+    // 4. Sinh JWT payload với jti duy nhất, sống 60 giây (Mục 4.5.1)
     const payload = {
       bookingId: booking._id.toString(),
       userId: booking.userId?.toString(),

@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { VenuesService } from './venues.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { CreateVenueDto } from './dto/create-venue.dto';
+import { UpdateVenueDto } from './dto/update-venue.dto';
 import { AvailabilityQueryDto } from '../bookings/dto/availability-query.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -29,9 +30,15 @@ export class VenuesController {
 
   @Get()
   @ApiOperation({ summary: 'Danh sách sân' })
+  @ApiQuery({ name: 'facilityId', required: false })
+  @ApiQuery({ name: 'includeInactive', required: false, type: Boolean })
   @ApiResponse({ status: 200, description: 'Danh sách sân' })
-  async findAll(@Query('facilityId') facilityId?: string) {
-    return this.venuesService.findAll(facilityId);
+  async findAll(
+    @Query('facilityId') facilityId?: string,
+    @Query('includeInactive') includeInactive?: string | boolean,
+  ) {
+    const shouldInclude = includeInactive === true || includeInactive === 'true';
+    return this.venuesService.findAll(facilityId, shouldInclude);
   }
 
   @Get(':id')
@@ -49,5 +56,32 @@ export class VenuesController {
   @ApiResponse({ status: 201, description: 'Tạo thành công' })
   async create(@Body() dto: CreateVenueDto) {
     return this.venuesService.create(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật thông tin sân (ADMIN / OWNER)' })
+  @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
+  @ApiResponse({ status: 400, description: 'Lỗi ràng buộc dữ liệu' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy sân' })
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateVenueDto,
+  ) {
+    return this.venuesService.update(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) sân (ADMIN / OWNER)' })
+  @ApiResponse({ status: 200, description: 'Vô hiệu hóa thành công (isActive = false)' })
+  @ApiResponse({ status: 400, description: 'Không thể vô hiệu hóa vì còn booking tương lai' })
+  @ApiResponse({ status: 404, description: 'Không tìm thấy sân' })
+  async remove(@Param('id') id: string) {
+    return this.venuesService.remove(id);
   }
 }

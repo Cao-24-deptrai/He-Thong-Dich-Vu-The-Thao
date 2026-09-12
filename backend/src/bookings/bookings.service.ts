@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -173,9 +174,14 @@ export class BookingsService {
       }
     }
 
-    // Tạo danh sách các slot từ 06:00 đến 22:00
+    // Tạo danh sách các slot theo khung giờ hoạt động của venue (mặc định 06:00 đến 22:00)
+    const openTimeStr = venue.operatingHours?.openTime || '06:00';
+    const closeTimeStr = venue.operatingHours?.closeTime || '22:00';
+    const openHour = parseInt(openTimeStr.split(':')[0], 10) || 6;
+    const closeHour = parseInt(closeTimeStr.split(':')[0], 10) || 22;
+
     const slots = [];
-    for (let hour = 6; hour < 22; hour++) {
+    for (let hour = openHour; hour < closeHour; hour++) {
       const startH = hour.toString().padStart(2, '0');
       const endH = (hour + 1).toString().padStart(2, '0');
       const startTime = `${startH}:00`;
@@ -249,19 +255,64 @@ export class BookingsService {
 
   /**
    * Hủy đơn giữ chỗ / đặt chỗ (Mục 5 - POST /bookings/:id/cancel)
+   * Changelog Item 3:
+   * 1. Kiểm tra ownership: req.user.id === booking.userId -> 403 Forbidden
+   * 2. Tính tỷ lệ hoàn tiền cancellationPolicy theo số giờ còn lại trước giờ bắt đầu
    */
-  async cancelBooking(bookingId: string, userId: string): Promise<BookingDocument> {
-    const booking = await this.bookingModel.findById(bookingId).exec();
+  async cancelBooking(bookingId: string, userId: string): Promise<any> {
+    const booking = await this.bookingModel.findById(bookingId).populate('venueId').exec();
     if (!booking) {
       throw new NotFoundException('Không tìm thấy đơn đặt');
     }
 
+    // 1. Kiểm tra quyền sở hữu
     if (booking.userId?.toString() !== userId) {
-      throw new ConflictException('Bạn không có quyền hủy đơn đặt này');
+      throw new ForbiddenException({
+        statusCode: 403,
+        errorCode: 'FORBIDDEN',
+        message: 'Bạn không có quyền hủy đơn đặt này',
+      });
     }
 
     if (booking.status !== BookingStatus.HELD && booking.status !== BookingStatus.CONFIRMED) {
       throw new BadRequestException(`Không thể hủy đơn đang ở trạng thái ${booking.status}`);
+    }
+
+    // 2. Tính toán chính sách hoàn tiền cancellationPolicy nếu đơn đã CONFIRMED
+    const venue = booking.venueId as any;
+    const policy = venue?.cancellationPolicy || {
+      hoursBeforeForFullRefund: 24,
+      hoursBeforeForNoRefund: 2,
+    };
+
+    let refundRate = 1.0;
+    let refundAmount = booking.totalPrice;
+
+    if (booking.status === BookingStatus.CONFIRMED) {
+      const [startH, startM] = (booking.startTime || '00:00').split(':').map(Number);
+      const bDate = new Date(booking.bookingDate);
+      const slotStartTime = new Date(
+        bDate.getFullYear(),
+        bDate.getMonth(),
+        bDate.getDate(),
+        startH || 0,
+        startM || 0,
+        0,
+        0,
+      );
+      const now = new Date();
+      const diffHours = (slotStartTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      if (diffHours >= policy.hoursBeforeForFullRefund) {
+        refundRate = 1.0;
+        refundAmount = booking.totalPrice;
+      } else if (diffHours <= policy.hoursBeforeForNoRefund) {
+        refundRate = 0.0;
+        refundAmount = 0;
+      } else {
+        refundRate = 0.5;
+        refundAmount = Math.round(booking.totalPrice * 0.5);
+      }
     }
 
     booking.status = BookingStatus.CANCELLED;
@@ -270,14 +321,20 @@ export class BookingsService {
     // Broadcast giải phóng slot sang AVAILABLE
     const dateStr = booking.bookingDate.toISOString().split('T')[0];
     this.eventsGateway.broadcastSlotStatusChanged({
-      venueId: booking.venueId.toString(),
+      venueId: (venue?._id || booking.venueId).toString(),
       bookingDate: dateStr,
       startTime: booking.startTime,
       endTime: booking.endTime,
       status: BookingStatus.CANCELLED,
     });
 
-    return updated;
+    const resObj = updated.toObject ? updated.toObject() : updated;
+    return {
+      ...resObj,
+      refundRate,
+      refundAmount,
+      cancellationPolicy: policy,
+    };
   }
 
   /**

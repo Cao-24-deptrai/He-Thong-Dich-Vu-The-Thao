@@ -18,7 +18,9 @@ export class CheckinController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Lấy / làm mới qrToken hiển thị vé QR động (Mục 5 - GET /bookings/:id/qr)' })
   @ApiResponse({ status: 200, description: 'Trả về chuỗi JWT QR động có hạn 60 giây' })
-  @ApiResponse({ status: 400, description: 'Đơn chưa thanh toán thành công' })
+  @ApiResponse({ status: 400, description: 'Đơn chưa thanh toán thành công (PAYMENT_NOT_CONFIRMED)' })
+  @ApiResponse({ status: 403, description: 'Không có quyền truy cập vé của người khác (FORBIDDEN)' })
+  @ApiResponse({ status: 409, description: 'Vé đã được check-in trước đó (ALREADY_CHECKED_IN)' })
   async getQrToken(
     @Param('id') id: string,
     @CurrentUser('userId') userId: string,
