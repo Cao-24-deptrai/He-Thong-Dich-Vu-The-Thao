@@ -16,6 +16,7 @@ import { AdminModule } from './admin/admin.module';
 import { MembershipPassModule } from './membership-pass/membership-pass.module';
 import { MatchRequestsModule } from './match-requests/match-requests.module';
 import { RentalsModule } from './rentals/rentals.module';
+import { ReviewsModule } from './reviews/reviews.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { RentalsModule } from './rentals/rentals.module';
     MembershipPassModule,
     MatchRequestsModule,
     RentalsModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}

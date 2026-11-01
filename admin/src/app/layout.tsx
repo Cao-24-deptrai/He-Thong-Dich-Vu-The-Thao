@@ -17,7 +17,8 @@ import {
   X,
   Dumbbell,
   Users,
-  PackageCheck
+  PackageCheck,
+  Star
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -98,6 +99,12 @@ export default function RootLayout({
       label: 'Thuê Dụng Cụ (M13)',
       icon: PackageCheck,
       description: 'Quản lý thiết bị, cọc & quầy giao nhận',
+    },
+    {
+      href: '/reviews',
+      label: 'Đánh Giá & Phản Hồi (E15)',
+      icon: Star,
+      description: 'Chăm sóc khách hàng & cảnh báo sao thấp',
     },
   ];
 

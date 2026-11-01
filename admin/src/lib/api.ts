@@ -63,6 +63,45 @@ export interface VenueAvailability {
 }
 
 
+
+export interface StaffResponse {
+  respondedBy: string;
+  responderName: string;
+  content: string;
+  respondedAt: string;
+}
+
+export interface Review {
+  _id: string;
+  bookingId: string;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  facilityId: string;
+  venueId?: string;
+  facilityRating: number;
+  serviceRating: number;
+  staffRating: number;
+  cleanlinessRating: number;
+  overallRating: number;
+  comment: string;
+  staffId?: string;
+  needsAttention: boolean;
+  staffResponse?: StaffResponse;
+  createdAt: string;
+}
+
+export interface ReviewSummary {
+  totalReviews: number;
+  avgOverall: number;
+  avgFacility: number;
+  avgService: number;
+  avgStaff: number;
+  avgCleanliness: number;
+  starsBreakdown: { [key: number]: number };
+  needsAttentionCount: number;
+}
+
 export interface Equipment {
   _id: string;
   code: string;
@@ -401,6 +440,50 @@ class ApiService {
     return this.request<RentalTicket>(`/rentals/tickets/${id}/return`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  }
+
+
+  // --- REVIEWS & COMMUNITY (E15) ---
+  async getReviewSummary(facilityId?: string): Promise<ReviewSummary> {
+    const query = facilityId ? `?facilityId=${facilityId}` : '';
+    return this.request<ReviewSummary>(`/reviews/summary${query}`);
+  }
+
+  async getReviews(params?: { facilityId?: string; venueId?: string; needsAttention?: boolean; rating?: number }): Promise<Review[]> {
+    const q = new URLSearchParams();
+    if (params?.facilityId) q.append('facilityId', params.facilityId);
+    if (params?.venueId) q.append('venueId', params.venueId);
+    if (params?.needsAttention !== undefined) q.append('needsAttention', String(params.needsAttention));
+    if (params?.rating) q.append('rating', String(params.rating));
+    const query = q.toString() ? `?${q.toString()}` : '';
+    return this.request<Review[]>(`/reviews${query}`);
+  }
+
+  async createReview(payload: {
+    bookingId: string;
+    facilityRating: number;
+    serviceRating: number;
+    staffRating: number;
+    cleanlinessRating: number;
+    comment: string;
+  }): Promise<Review> {
+    return this.request<Review>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async respondToReview(id: string, content: string): Promise<Review> {
+    return this.request<Review>(`/reviews/${id}/respond`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async dismissReviewAttention(id: string): Promise<Review> {
+    return this.request<Review>(`/reviews/${id}/dismiss`, {
+      method: 'PATCH',
     });
   }
 
