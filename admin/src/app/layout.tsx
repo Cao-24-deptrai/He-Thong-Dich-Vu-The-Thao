@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Dumbbell,
-  Users
+  Users,
+  PackageCheck
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -91,6 +92,12 @@ export default function RootLayout({
       label: 'Cáp Kèo Thể Thao',
       icon: Users,
       description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+    },
+    {
+      href: '/rentals',
+      label: 'Thuê Dụng Cụ (M13)',
+      icon: PackageCheck,
+      description: 'Quản lý thiết bị, cọc & quầy giao nhận',
     },
   ];
 

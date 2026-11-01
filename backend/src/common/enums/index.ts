@@ -56,3 +56,28 @@ export enum MatchRequestStatus {
   FULL = 'FULL',
   CLOSED = 'CLOSED',
 }
+
+export enum SportType {
+  FOOTBALL = 'FOOTBALL',
+  TENNIS = 'TENNIS',
+  BADMINTON = 'BADMINTON',
+  BASKETBALL = 'BASKETBALL',
+  GENERAL = 'GENERAL',
+}
+
+export enum RentalPricingType {
+  PER_TURN = 'PER_TURN',
+  HOURLY = 'HOURLY',
+}
+
+export enum RentalTicketStatus {
+  RENTING = 'RENTING',
+  RETURNED = 'RETURNED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum RentalItemCondition {
+  GOOD = 'GOOD',
+  DAMAGED = 'DAMAGED',
+  LOST = 'LOST',
+}
