@@ -6,7 +6,14 @@ import {
   VenueAvailability, 
   Booking, 
   PaymentLinkResponse, 
-  QrTokenResponse 
+  QrTokenResponse,
+  StaffProfile,
+  ClassSession,
+  PtBookingSession,
+  Tournament,
+  TournamentMatch,
+  GamingMachine,
+  GamingSession,
 } from '../types';
 
 const API_BASE_URL = 
@@ -173,6 +180,79 @@ class ApiClient {
   async joinMatch(matchId: string): Promise<any> {
     return this.request<any>(`/match-requests/${matchId}/join`, {
       method: 'POST',
+    });
+  }
+
+  // --- PT & CLASSES (M11) ---
+  async getTrainers(specialty?: string, search?: string): Promise<StaffProfile[]> {
+    const params = new URLSearchParams();
+    if (specialty) params.append('specialty', specialty);
+    if (search) params.append('search', search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request<StaffProfile[]>(`/pt-classes/trainers${qs}`);
+  }
+
+  async getClasses(date?: string, classType?: string): Promise<ClassSession[]> {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (classType) params.append('classType', classType);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request<ClassSession[]>(`/pt-classes/classes${qs}`);
+  }
+
+  async registerClass(sessionId: string, payload?: { customerName?: string; paymentMethod?: string }): Promise<any> {
+    return this.request<any>(`/pt-classes/classes/${sessionId}/register`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+  }
+
+  async bookPtSession(payload: {
+    trainerId: string;
+    sessionDate: string;
+    startTime: string;
+    durationMinutes?: number;
+    notes?: string;
+  }): Promise<PtBookingSession> {
+    return this.request<PtBookingSession>('/pt-classes/pt/book', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getMyPtSessions(): Promise<PtBookingSession[]> {
+    return this.request<PtBookingSession[]>('/pt-classes/pt/my-sessions');
+  }
+
+  // --- TOURNAMENTS (M16) ---
+  async getTournaments(type?: string, status?: string): Promise<Tournament[]> {
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    if (status) params.append('status', status);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return this.request<Tournament[]>(`/tournaments${qs}`);
+  }
+
+  async getTournamentBracket(tournamentId: string): Promise<TournamentMatch[]> {
+    return this.request<TournamentMatch[]>(`/tournaments/${tournamentId}/matches`);
+  }
+
+  async registerTournamentTeam(tournamentId: string, payload: any): Promise<any> {
+    return this.request<any>(`/tournaments/${tournamentId}/register-team`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- GAMING (M14) ---
+  async getGamingMachines(): Promise<GamingMachine[]> {
+    return this.request<GamingMachine[]>('/gaming/machines');
+  }
+
+  async startGamingSession(machineCode: string): Promise<GamingSession> {
+    return this.request<GamingSession>('/gaming/sessions/start', {
+      method: 'POST',
+      body: JSON.stringify({ machineCode }),
     });
   }
 }

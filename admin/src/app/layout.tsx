@@ -1,4 +1,3 @@
-// admin/src/app/layout.tsx
 'use client';
 
 import './globals.css';
@@ -16,7 +15,11 @@ import {
   Menu,
   X,
   Dumbbell,
-  Users
+  Users,
+  Award,
+  Trophy,
+  Gamepad2,
+  Cpu
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -38,7 +41,7 @@ export default function RootLayout({
 
     // If not logged in and not on login page, redirect to login
     if (!currentUser && pathname !== '/login') {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [pathname, router]);
 
@@ -87,6 +90,30 @@ export default function RootLayout({
       description: 'Quản lý gói tập & soát vé (Mục 6.1)',
     },
     {
+      href: '/pt-classes',
+      label: 'PT & Lớp Học',
+      icon: Award,
+      description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
+    },
+    {
+      href: '/tournaments',
+      label: 'Giải Đấu Thể Thao',
+      icon: Trophy,
+      description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
+    },
+    {
+      href: '/gaming',
+      label: 'Khu Gaming 100 Máy',
+      icon: Gamepad2,
+      description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
+    },
+    {
+      href: '/bridge',
+      label: 'Bridge Agent & IoT',
+      icon: Cpu,
+      description: 'Thiết bị quầy & Cửa xoay (M22)',
+    },
+    {
       href: '/matchmaking',
       label: 'Cáp Kèo Thể Thao',
       icon: Users,
@@ -97,7 +124,7 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <head>
-        <title>Hệ Thống Quản Trị Sân Thể Thao & Esports • Neo-Athletic</title>
+        <title>Hệ Thống Quản Trị Sân Thể Thao & Esports — Neo-Athletic</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="bg-[#090D16] text-slate-100 flex min-h-screen relative selection:bg-cyan-500 selection:text-black">
@@ -108,87 +135,85 @@ export default function RootLayout({
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex flex-col w-72 bg-[#0d121f]/95 border-r border-slate-800/80 backdrop-blur-xl shrink-0 z-20">
           {/* Brand Header */}
-          <div className="p-6 border-b border-slate-800/80 flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              ⚡
+          <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-800/80">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center font-black text-black text-lg shadow-lg shadow-cyan-500/20">
+              P
             </div>
             <div>
-              <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
-                SPORTS ARENA
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  v2.0
-                </span>
-              </h1>
-              <p className="text-[11px] text-slate-400 font-medium tracking-wide">
-                Tactical Command & POS
-              </p>
+              <span className="font-black text-base tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
+                PHANTA
+              </span>
+              <span className="text-[10px] block font-mono text-cyan-400 tracking-widest font-semibold uppercase">
+                Staff Desk Core
+              </span>
             </div>
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
-              VẬN HÀNH & ĐIỀU HÀNH
-            </div>
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+              const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-start space-x-3 px-3.5 py-3 rounded-2xl transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all group ${
                     isActive
-                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-cyan-300 border-l-4 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.15)] font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                      ? 'bg-gradient-to-r from-cyan-500/15 to-emerald-500/10 text-cyan-400 border border-cyan-500/30 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
-                  <div>
-                    <div className="text-sm tracking-tight">{item.label}</div>
-                    <div className={`text-[11px] mt-0.5 ${isActive ? 'text-cyan-200/70' : 'text-slate-500'}`}>
+                  <Icon
+                    className={`w-5 h-5 transition-transform duration-200 group-hover:scale-110 ${
+                      isActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'
+                    }`}
+                  />
+                  <div className="flex flex-col">
+                    <span>{item.label}</span>
+                    <span className="text-[10px] text-slate-500 group-hover:text-slate-400 font-normal">
                       {item.description}
-                    </div>
+                    </span>
                   </div>
                 </Link>
               );
             })}
           </nav>
 
-          {/* User info & logout */}
-          <div className="p-4 border-t border-slate-800/80 bg-slate-950/80">
-            {mounted && user ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 border border-slate-700/80 shrink-0 shadow-inner">
-                    <UserIcon className="w-4 h-4" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-bold truncate text-white">{user.fullName || user.phone}</p>
-                    <span className="inline-block px-2 py-0.5 text-[9px] font-mono font-black tracking-wider uppercase bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
-                      [{user.role}]
-                    </span>
-                  </div>
+          {/* User Footer Card */}
+          <div className="p-3 border-t border-slate-800/80">
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+                  <UserIcon className="w-4 h-4 text-cyan-400" />
                 </div>
-                <button
-                  onClick={handleLogout}
-                  title="Đăng xuất"
-                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                <div className="truncate">
+                  <p className="text-xs font-semibold text-white truncate">
+                    {user?.fullName || user?.phone || 'Nhân viên'}
+                  </p>
+                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded">
+                    {user?.role || 'STAFF'}
+                  </span>
+                </div>
               </div>
-            ) : (
-              <div className="text-xs text-slate-400">Đang tải tài khoản...</div>
-            )}
+              <button
+                onClick={handleLogout}
+                title="Đăng xuất"
+                className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </aside>
 
-        {/* Mobile menu header */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0d121f]/95 backdrop-blur-md text-white p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <span className="p-1.5 rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-black text-sm">⚡</span>
-            <span className="font-black text-sm tracking-tight">SPORTS ARENA</span>
+        {/* Mobile Top Navbar */}
+        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[#0d121f]/95 border-b border-slate-800 backdrop-blur-xl flex items-center justify-between px-4 z-30">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center font-bold text-black text-sm">
+              P
+            </div>
+            <span className="font-bold text-sm tracking-wide text-white">PHANTA</span>
           </div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -198,49 +223,50 @@ export default function RootLayout({
           </button>
         </div>
 
-        {/* Mobile Navigation Drawer */}
+        {/* Mobile Drawer Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 bg-[#090D16]/98 pt-20 p-6 flex flex-col justify-between">
-            <nav className="space-y-2">
+          <div className="md:hidden fixed inset-0 top-14 bg-[#090D16]/98 z-20 p-4 overflow-y-auto">
+            <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname.startsWith(item.href);
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 p-3.5 rounded-2xl ${
-                      isActive ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold' : 'text-slate-300 bg-slate-900/80 border border-slate-800'
+                    className={`flex items-center gap-3 p-3 rounded-xl text-sm font-medium ${
+                      isActive
+                        ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+                        : 'text-slate-300 hover:bg-slate-800/50'
                     }`}
                   >
                     <Icon className="w-5 h-5 text-cyan-400" />
-                    <span className="text-sm font-semibold">{item.label}</span>
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}
-            </nav>
-            <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="font-bold text-white text-sm">{user?.fullName || user?.phone}</p>
-                <p className="text-[10px] text-cyan-400 font-mono">[{user?.role}]</p>
-              </div>
               <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center gap-3 p-3 rounded-xl text-sm font-medium text-rose-400 hover:bg-slate-800/50 mt-4"
               >
-                Đăng xuất
+                <LogOut className="w-5 h-5" />
+                <span>Đăng xuất</span>
               </button>
-            </div>
+            </nav>
           </div>
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto w-full relative z-10">
-          {children}
+        <main className="flex-1 flex flex-col min-w-0 pt-14 md:pt-0 overflow-y-auto">
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+            {children}
+          </div>
         </main>
       </body>
-
     </html>
   );
 }

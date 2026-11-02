@@ -3,6 +3,7 @@ export enum UserRole {
   STAFF = 'STAFF',
   OWNER = 'OWNER',
   ADMIN = 'ADMIN',
+  TRAINER = 'TRAINER',
 }
 
 export enum VenueType {
@@ -35,6 +36,7 @@ export enum PaymentProvider {
   VIETQR = 'VIETQR',
   CASH = 'CASH',
   MOMO = 'MOMO',
+  INTERNAL_WALLET = 'INTERNAL_WALLET',
 }
 
 export enum PaymentStatus {
@@ -55,4 +57,181 @@ export enum MatchRequestStatus {
   OPEN = 'OPEN',
   FULL = 'FULL',
   CLOSED = 'CLOSED',
+}
+
+// ==================== EPIC E14: PT & LỚP HỌC ====================
+export enum ClassType {
+  YOGA = 'YOGA',
+  ZUMBA = 'ZUMBA',
+  PILATES = 'PILATES',
+  BOXING = 'BOXING',
+  SPINNING = 'SPINNING',
+  AEROBIC = 'AEROBIC',
+  CROSSFIT = 'CROSSFIT',
+  GENERAL = 'GENERAL',
+}
+
+export enum ClassSessionStatus {
+  SCHEDULED = 'SCHEDULED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum ClassRegistrationStatus {
+  REGISTERED = 'REGISTERED',
+  CHECKED_IN = 'CHECKED_IN',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum PtSessionStatus {
+  HELD = 'HELD',
+  CONFIRMED = 'CONFIRMED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  NO_SHOW = 'NO_SHOW',
+}
+
+export enum StaffShiftType {
+  MORNING = 'MORNING',
+  AFTERNOON = 'AFTERNOON',
+  EVENING = 'EVENING',
+  NIGHT = 'NIGHT',
+  FULL_DAY = 'FULL_DAY',
+}
+
+export enum StaffEmploymentStatus {
+  ACTIVE = 'ACTIVE',
+  ON_LEAVE = 'ON_LEAVE',
+  TERMINATED = 'TERMINATED',
+}
+
+// ==================== EPIC E14: GIẢI ĐẤU THỂ THAO & ESPORTS ====================
+export enum TournamentType {
+  SPORT = 'SPORT',
+  ESPORT = 'ESPORT',
+}
+
+export enum TournamentFormat {
+  SINGLE_ELIMINATION = 'SINGLE_ELIMINATION',
+  DOUBLE_ELIMINATION = 'DOUBLE_ELIMINATION',
+  ROUND_ROBIN = 'ROUND_ROBIN',
+  GROUP_STAGE_ELIMINATION = 'GROUP_STAGE_ELIMINATION',
+}
+
+export enum TournamentStatus {
+  DRAFT = 'DRAFT',
+  REGISTRATION_OPEN = 'REGISTRATION_OPEN',
+  REGISTRATION_CLOSED = 'REGISTRATION_CLOSED',
+  BRACKET_GENERATED = 'BRACKET_GENERATED',
+  ONGOING = 'ONGOING',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TournamentTeamStatus {
+  PENDING_PAYMENT = 'PENDING_PAYMENT',
+  CONFIRMED = 'CONFIRMED',
+  WITHDRAWN = 'WITHDRAWN',
+  DISQUALIFIED = 'DISQUALIFIED',
+}
+
+export enum TournamentMatchStatus {
+  SCHEDULED = 'SCHEDULED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  FORFEIT = 'FORFEIT',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TournamentBracketType {
+  WINNERS = 'WINNERS',
+  LOSERS = 'LOSERS',
+  FINALS = 'FINALS',
+  ROUND_ROBIN = 'ROUND_ROBIN',
+}
+
+// ==================== EPIC E12: KHU GAMING & THIẾT BỊ ====================
+export enum GamingMachineZone {
+  STANDARD = 'STANDARD',
+  VIP = 'VIP',
+  STREAMING = 'STREAMING',
+  PRIVATE_ROOM = 'PRIVATE_ROOM',
+}
+
+export enum GamingMachineStatus {
+  OFFLINE = 'OFFLINE',
+  IDLE = 'IDLE',
+  IN_USE = 'IN_USE',
+  LOCKED = 'LOCKED',
+  MAINTENANCE = 'MAINTENANCE',
+}
+
+export enum GamingSessionStatus {
+  STARTING = 'STARTING',
+  ACTIVE = 'ACTIVE',
+  OFFLINE_GRACE = 'OFFLINE_GRACE',
+  LOCKED = 'LOCKED',
+  ENDING = 'ENDING',
+  SETTLED = 'SETTLED',
+}
+
+export enum GamingRemoteAction {
+  LOCK = 'LOCK',
+  UNLOCK = 'UNLOCK',
+  MESSAGE = 'MESSAGE',
+  REBOOT = 'REBOOT',
+  SHUTDOWN = 'SHUTDOWN',
+  END_SESSION = 'END_SESSION',
+  SWITCH_MACHINE = 'SWITCH_MACHINE',
+}
+
+export enum BridgeAgentStatus {
+  ONLINE = 'ONLINE',
+  OFFLINE = 'OFFLINE',
+  ERROR = 'ERROR',
+  REVOKED = 'REVOKED',
+}
+
+export enum DeviceType {
+  RFID_READER = 'RFID_READER',
+  QR_SCANNER = 'QR_SCANNER',
+  TURNSTILE = 'TURNSTILE',
+  ESC_POS_PRINTER = 'ESC_POS_PRINTER',
+  CASH_DRAWER = 'CASH_DRAWER',
+  COURT_RELAY = 'COURT_RELAY',
+}
+
+export enum DeviceHealthStatus {
+  OK = 'OK',
+  ERROR = 'ERROR',
+  DISCONNECTED = 'DISCONNECTED',
+  OUT_OF_PAPER = 'OUT_OF_PAPER',
+  JAMMED = 'JAMMED',
+}
+
+export enum DeviceCommandType {
+  PRINT_RECEIPT = 'PRINT_RECEIPT',
+  OPEN_CASH_DRAWER = 'OPEN_CASH_DRAWER',
+  TRIGGER_TURNSTILE = 'TRIGGER_TURNSTILE',
+  SWITCH_COURT_LIGHT = 'SWITCH_COURT_LIGHT',
+  SYNC_MEMBERS = 'SYNC_MEMBERS',
+}
+
+export enum DeviceCommandStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  EXECUTED = 'EXECUTED',
+  FAILED = 'FAILED',
+  EXPIRED = 'EXPIRED',
+}
+
+export enum DeviceEventType {
+  RFID_SWIPED = 'RFID_SWIPED',
+  QR_SCANNED = 'QR_SCANNED',
+  TURNSTILE_PASSED = 'TURNSTILE_PASSED',
+  PRINTER_STATUS_CHANGED = 'PRINTER_STATUS_CHANGED',
+  DRAWER_OPENED = 'DRAWER_OPENED',
+  TAMPER_ALERT = 'TAMPER_ALERT',
 }
