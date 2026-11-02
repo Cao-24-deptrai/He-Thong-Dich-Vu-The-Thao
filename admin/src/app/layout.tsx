@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
+  LayoutDashboard,
   Building2, 
   CalendarPlus, 
   QrCode, 
@@ -58,6 +59,12 @@ export default function RootLayout({
   }
 
   const navItems = [
+    {
+      href: '/',
+      label: 'Tổng Quan & Báo Cáo',
+      icon: LayoutDashboard,
+      description: 'Chỉ số KPI, kho dụng cụ & đánh giá',
+    },
     {
       href: '/facilities',
       label: 'Cơ sở & Sân bãi',

@@ -364,4 +364,50 @@ export class RentalsService {
       tickets: unreturnedTickets,
     };
   }
+
+  // -------------------------------------------------------------
+  // REPORTS & DASHBOARD METRICS (EPIC E16)
+  // -------------------------------------------------------------
+
+  async getEquipmentStats() {
+    const equipments = await this.equipmentModel.find({ isActive: true }).exec();
+
+    let totalEquipments = equipments.length;
+    let totalStock = 0;
+    let totalRented = 0;
+    let totalDamaged = 0;
+    let totalAvailable = 0;
+
+    const sportBreakdown: Record<string, { totalQty: number; rentedQty: number; damagedQty: number; availableQty: number }> = {};
+
+    for (const eq of equipments) {
+      totalStock += eq.totalQuantity;
+      totalRented += eq.rentedQuantity;
+      totalDamaged += eq.damagedQuantity;
+      totalAvailable += eq.availableQuantity;
+
+      const st = eq.sportType || 'GENERAL';
+      if (!sportBreakdown[st]) {
+        sportBreakdown[st] = { totalQty: 0, rentedQty: 0, damagedQty: 0, availableQty: 0 };
+      }
+      sportBreakdown[st].totalQty += eq.totalQuantity;
+      sportBreakdown[st].rentedQty += eq.rentedQuantity;
+      sportBreakdown[st].damagedQty += eq.damagedQuantity;
+      sportBreakdown[st].availableQty += eq.availableQuantity;
+    }
+
+    const totalActiveTickets = await this.rentalTicketModel.countDocuments({ status: RentalTicketStatus.RENTING });
+    const totalReturnedTickets = await this.rentalTicketModel.countDocuments({ status: RentalTicketStatus.RETURNED });
+
+    return {
+      totalEquipments,
+      totalStock,
+      totalRented,
+      totalDamaged,
+      totalAvailable,
+      totalActiveTickets,
+      totalReturnedTickets,
+      sportBreakdown,
+    };
+  }
 }

@@ -81,3 +81,9 @@ export enum RentalItemCondition {
   DAMAGED = 'DAMAGED',
   LOST = 'LOST',
 }
+
+export enum MatchLevel {
+  VUI_VE = 'VUI_VE',
+  TRUNG_BINH = 'TRUNG_BINH',
+  BAN_CHUYEN = 'BAN_CHUYEN',
+}

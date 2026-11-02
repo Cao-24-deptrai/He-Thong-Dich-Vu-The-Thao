@@ -44,6 +44,16 @@ export class ReviewsController {
     return this.reviewsService.getReviewSummary(facilityId);
   }
 
+  @Get('reports/facility-breakdown')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Báo cáo xếp hạng điểm chất lượng các cơ sở theo đánh giá (Epic E16)' })
+  @ApiResponse({ status: 200, description: 'Báo cáo xếp hạng' })
+  async getFacilityBreakdown() {
+    return this.reviewsService.getFacilityRatingBreakdown();
+  }
+
   @Get()
   @ApiOperation({ summary: 'Danh sách đánh giá (hỗ trợ lọc theo cơ sở, số sao, cờ cảnh báo <= 2 sao)' })
   @ApiResponse({ status: 200, description: 'Danh sách đánh giá' })

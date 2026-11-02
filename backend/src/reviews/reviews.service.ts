@@ -164,6 +164,53 @@ export class ReviewsService {
     };
   }
 
+  /**
+   * Báo cáo phân tích chất lượng cơ sở theo đánh giá (Epic E16)
+   */
+  async getFacilityRatingBreakdown() {
+    const breakdown = await this.reviewModel.aggregate([
+      {
+        $group: {
+          _id: '$facilityId',
+          totalReviews: { $sum: 1 },
+          avgOverall: { $avg: '$overallRating' },
+          avgFacility: { $avg: '$facilityRating' },
+          avgService: { $avg: '$serviceRating' },
+          avgStaff: { $avg: '$staffRating' },
+          avgCleanliness: { $avg: '$cleanlinessRating' },
+          needsAttentionCount: { $sum: { $cond: ['$needsAttention', 1, 0] } },
+        },
+      },
+      {
+        $lookup: {
+          from: 'facilities',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'facility',
+        },
+      },
+      {
+        $unwind: { path: '$facility', preserveNullAndEmptyArrays: true },
+      },
+      {
+        $project: {
+          facilityId: '$_id',
+          facilityName: { $ifNull: ['$facility.name', 'Cơ sở thể thao'] },
+          totalReviews: 1,
+          avgOverall: { $round: ['$avgOverall', 1] },
+          avgFacility: { $round: ['$avgFacility', 1] },
+          avgService: { $round: ['$avgService', 1] },
+          avgStaff: { $round: ['$avgStaff', 1] },
+          avgCleanliness: { $round: ['$avgCleanliness', 1] },
+          needsAttentionCount: 1,
+        },
+      },
+      { $sort: { avgOverall: -1 } },
+    ]);
+
+    return breakdown;
+  }
+
   // -------------------------------------------------------------
   // QUERY & STAFF RESPONSE
   // -------------------------------------------------------------

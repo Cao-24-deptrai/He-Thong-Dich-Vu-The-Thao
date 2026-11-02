@@ -4,6 +4,7 @@ import { Model, Types } from 'mongoose';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
 import { Payment, PaymentDocument } from '../payments/schemas/payment.schema';
 import { BookingStatus, PaymentStatus } from '../common/enums';
+import { RentalsService } from '../rentals/rentals.service';
 
 @Injectable()
 export class AdminService {
@@ -12,6 +13,7 @@ export class AdminService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
+    private readonly rentalsService: RentalsService,
   ) {}
 
   /**
@@ -52,8 +54,6 @@ export class AdminService {
 
   /**
    * Xác nhận hoàn tiền thủ công (Mục 5 & Mục 4.4.2 - PATCH /admin/refund/:bookingId)
-   * Admin xác nhận đã chuyển khoản tay, cập nhật Bookings.status = REFUNDED và Payments.status = REFUNDED.
-   * Ghi chú trong code: đây là quy trình tạm, Sprint 4 sẽ thay bằng Auto-refund API gọi thẳng cổng thanh toán.
    */
   async confirmManualRefund(bookingId: string, refundNote?: string) {
     if (!Types.ObjectId.isValid(bookingId)) {
@@ -100,8 +100,6 @@ export class AdminService {
 
   /**
    * Tự động hoàn tiền gọi cổng thanh toán (Mục 6.5 - POST /admin/refund/:bookingId/auto)
-   * Thay thế quy trình thủ công: gọi thẳng API hoàn tiền cổng thanh toán (PayOS / MoMo),
-   * cập nhật Bookings.status = REFUNDED và Payments.status = REFUNDED tự động.
    */
   async autoRefund(bookingId: string, reason?: string) {
     if (!Types.ObjectId.isValid(bookingId)) {
@@ -155,6 +153,26 @@ export class AdminService {
       provider: payment?.provider || 'PAYOS',
       bookingStatus: BookingStatus.REFUNDED,
       paymentStatus: payment?.status,
+    };
+  }
+
+  /**
+   * Kiểm tra thiết bị chưa trả của ca thu ngân trước khi chốt ca (Epic E06 & E07)
+   */
+  async checkShiftRentalsBeforeClose(shiftId: string) {
+    if (!Types.ObjectId.isValid(shiftId)) {
+      throw new BadRequestException('Shift ID không hợp lệ');
+    }
+
+    const audit = await this.rentalsService.checkUnreturnedRentalsForShift(shiftId);
+    if (audit.hasUnreturned) {
+      this.logger.warn(`⚠️ Ca thu ngân ${shiftId} vẫn còn ${audit.unreturnedCount} phiếu thuê dụng cụ chưa được hoàn tất!`);
+    }
+
+    return {
+      shiftId,
+      canCloseSafely: !audit.hasUnreturned,
+      ...audit,
     };
   }
 }

@@ -492,6 +492,19 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // --- REPORTING & SHIFT AUDIT (E06 & E16) ---
+  async getEquipmentStats(): Promise<any> {
+    return this.request('/rentals/reports/stats');
+  }
+
+  async getFacilityRatingBreakdown(): Promise<any[]> {
+    return this.request('/reviews/reports/facility-breakdown');
+  }
+
+  async checkShiftUnreturnedRentals(shiftId: string): Promise<any> {
+    return this.request(`/admin/shifts/${shiftId}/unreturned-rentals`);
+  }
 }
 
 export const api = new ApiService();

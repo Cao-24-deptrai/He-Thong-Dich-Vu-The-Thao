@@ -26,6 +26,20 @@ export class RentalsController {
   constructor(private readonly rentalsService: RentalsService) {}
 
   // -------------------------------------------------------------
+  // REPORTS & DASHBOARD METRICS (EPIC E16)
+  // -------------------------------------------------------------
+
+  @Get('reports/stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Báo cáo thống kê thiết bị & tình hình cho thuê (Epic E16)' })
+  @ApiResponse({ status: 200, description: 'Báo cáo thống kê' })
+  async getEquipmentStats() {
+    return this.rentalsService.getEquipmentStats();
+  }
+
+  // -------------------------------------------------------------
   // EQUIPMENT ENDPOINTS
   // -------------------------------------------------------------
 

@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiQuery } from '@ne
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { MatchRequestsService } from './match-requests.service';
 import { CreateMatchRequestDto } from './dto/create-match-request.dto';
-import { MatchRequestStatus, UserRole } from '../common/enums';
+import { MatchRequestStatus, MatchLevel, UserRole } from '../common/enums';
 
 @ApiTags('MatchRequests (Cáp Kèo Thể Thao)')
 @Controller('match-requests')
@@ -32,11 +32,17 @@ export class MatchRequestsController {
   @ApiOperation({ summary: 'Xem danh sách các bài đăng cáp kèo' })
   @ApiQuery({ name: 'sportType', required: false, description: 'Lọc theo môn (FOOTBALL, BADMINTON, TENNIS, ESPORTS...)' })
   @ApiQuery({ name: 'status', required: false, enum: MatchRequestStatus })
+  @ApiQuery({ name: 'level', required: false, enum: MatchLevel, description: 'Lọc theo trình độ (VUI_VE, TRUNG_BINH, BAN_CHUYEN)' })
+  @ApiQuery({ name: 'fromDate', required: false, description: 'Từ ngày (ISO 8601)' })
+  @ApiQuery({ name: 'toDate', required: false, description: 'Đến ngày (ISO 8601)' })
   async findAll(
     @Query('sportType') sportType?: string,
     @Query('status') status?: MatchRequestStatus,
+    @Query('level') level?: MatchLevel,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
   ) {
-    return this.matchRequestsService.findAll(sportType, status);
+    return this.matchRequestsService.findAll(sportType, status, level, fromDate, toDate);
   }
 
   @Get(':id')
