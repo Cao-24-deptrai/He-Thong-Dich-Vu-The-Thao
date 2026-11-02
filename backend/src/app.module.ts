@@ -17,6 +17,8 @@ import { MembershipPassModule } from './membership-pass/membership-pass.module';
 import { MatchRequestsModule } from './match-requests/match-requests.module';
 import { PtClassesModule } from './pt-classes/pt-classes.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
+import { GamingModule } from './gaming/gaming.module';
+import { BridgeModule } from './bridge/bridge.module';
 
 @Module({
   imports: [
@@ -48,6 +50,8 @@ import { TournamentsModule } from './tournaments/tournaments.module';
     MatchRequestsModule,
     PtClassesModule,
     TournamentsModule,
+    GamingModule,
+    BridgeModule,
   ],
 })
 export class AppModule {}

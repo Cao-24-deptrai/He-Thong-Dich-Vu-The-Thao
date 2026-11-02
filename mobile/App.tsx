@@ -7,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { colors } from './src/theme/colors';
 import { useAuthStore } from './src/store/useAuthStore';
@@ -19,12 +20,27 @@ import { TicketScreen } from './src/screens/TicketScreen';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { GymMembershipScreen } from './src/screens/GymMembershipScreen';
 import { MatchmakingScreen } from './src/screens/MatchmakingScreen';
+import { TrainersScreen } from './src/screens/TrainersScreen';
+import { ClassesScreen } from './src/screens/ClassesScreen';
+import { TournamentsScreen } from './src/screens/TournamentsScreen';
+import { GamingBookingScreen } from './src/screens/GamingBookingScreen';
 
-type TabType = 'EXPLORE' | 'SLOTS' | 'PAYMENT' | 'TICKET' | 'HISTORY' | 'GYM' | 'MATCH';
+type TabType =
+  | 'EXPLORE'
+  | 'SLOTS'
+  | 'PAYMENT'
+  | 'TICKET'
+  | 'HISTORY'
+  | 'GYM'
+  | 'PT'
+  | 'CLASSES'
+  | 'TOURNAMENT'
+  | 'GAMING'
+  | 'MATCH';
 
 export default function App() {
   const { user, token, logout } = useAuthStore();
-  const { activeBooking, resetBooking } = useBookingStore();
+  const { activeBooking } = useBookingStore();
 
   const [activeTab, setActiveTab] = useState<TabType>('EXPLORE');
   const [ticketBookingId, setTicketBookingId] = useState<string | undefined>(undefined);
@@ -106,106 +122,105 @@ export default function App() {
           <HistoryScreen onViewTicket={handleViewTicketFromHistory} />
         )}
 
-        {activeTab === 'GYM' && (
-          <GymMembershipScreen />
-        )}
+        {activeTab === 'GYM' && <GymMembershipScreen />}
 
-        {activeTab === 'MATCH' && (
-          <MatchmakingScreen />
-        )}
+        {activeTab === 'PT' && <TrainersScreen />}
+
+        {activeTab === 'CLASSES' && <ClassesScreen />}
+
+        {activeTab === 'TOURNAMENT' && <TournamentsScreen />}
+
+        {activeTab === 'GAMING' && <GamingBookingScreen />}
+
+        {activeTab === 'MATCH' && <MatchmakingScreen />}
       </View>
 
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('EXPLORE')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'EXPLORE' && styles.activeNavText]}>
-            🏟️
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'EXPLORE' && styles.activeNavText]}>
-            Khám phá
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('SLOTS')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'SLOTS' && styles.activeNavText]}>
-            ⏰
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'SLOTS' && styles.activeNavText]}>
-            Lịch Sân
-          </Text>
-        </TouchableOpacity>
-
-        {activeBooking && activeBooking.status === 'HELD' && (
+      {/* Bottom Scrollable Navigation Bar */}
+      <View style={styles.bottomNavContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bottomNavScroll}>
           <TouchableOpacity
             style={styles.navItem}
-            onPress={() => setActiveTab('PAYMENT')}
+            onPress={() => setActiveTab('EXPLORE')}
           >
-            <View style={styles.paymentBadgeIndicator}>
-              <Text style={styles.navIcon}>💳</Text>
-              <View style={styles.badgeDot} />
-            </View>
-            <Text style={[styles.navLabel, activeTab === 'PAYMENT' && styles.activeNavText]}>
-              Thanh toán
-            </Text>
+            <Text style={[styles.navIcon, activeTab === 'EXPLORE' && styles.activeNavText]}>🏟️</Text>
+            <Text style={[styles.navLabel, activeTab === 'EXPLORE' && styles.activeNavText]}>Sân Bãi</Text>
           </TouchableOpacity>
-        )}
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => {
-            setTicketBookingId(undefined);
-            setActiveTab('TICKET');
-          }}
-        >
-          <Text style={[styles.navIcon, activeTab === 'TICKET' && styles.activeNavText]}>
-            🎟️
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'TICKET' && styles.activeNavText]}>
-            Vé Của Tôi
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('SLOTS')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'SLOTS' && styles.activeNavText]}>📅</Text>
+            <Text style={[styles.navLabel, activeTab === 'SLOTS' && styles.activeNavText]}>Lịch Đặt</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('GYM')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'GYM' && styles.activeNavText]}>
-            🏋️
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'GYM' && styles.activeNavText]}>
-            Gym
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('GYM')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'GYM' && styles.activeNavText]}>💪</Text>
+            <Text style={[styles.navLabel, activeTab === 'GYM' && styles.activeNavText]}>Gym QR</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('MATCH')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'MATCH' && styles.activeNavText]}>
-            🤝
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'MATCH' && styles.activeNavText]}>
-            Cáp Kèo
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('PT')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'PT' && styles.activeNavText]}>🏋️</Text>
+            <Text style={[styles.navLabel, activeTab === 'PT' && styles.activeNavText]}>PT 1-1</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('HISTORY')}
-        >
-          <Text style={[styles.navIcon, activeTab === 'HISTORY' && styles.activeNavText]}>
-            📜
-          </Text>
-          <Text style={[styles.navLabel, activeTab === 'HISTORY' && styles.activeNavText]}>
-            Lịch Sử
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('CLASSES')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'CLASSES' && styles.activeNavText]}>🧘</Text>
+            <Text style={[styles.navLabel, activeTab === 'CLASSES' && styles.activeNavText]}>Lớp Học</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('GAMING')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'GAMING' && styles.activeNavText]}>🎮</Text>
+            <Text style={[styles.navLabel, activeTab === 'GAMING' && styles.activeNavText]}>Gaming 100M</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('TOURNAMENT')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'TOURNAMENT' && styles.activeNavText]}>🏆</Text>
+            <Text style={[styles.navLabel, activeTab === 'TOURNAMENT' && styles.activeNavText]}>Giải Đấu</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('MATCH')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'MATCH' && styles.activeNavText]}>🤝</Text>
+            <Text style={[styles.navLabel, activeTab === 'MATCH' && styles.activeNavText]}>Cáp Kèo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => {
+              setTicketBookingId(undefined);
+              setActiveTab('TICKET');
+            }}
+          >
+            <Text style={[styles.navIcon, activeTab === 'TICKET' && styles.activeNavText]}>🎟️</Text>
+            <Text style={[styles.navLabel, activeTab === 'TICKET' && styles.activeNavText]}>Vé Của Tôi</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('HISTORY')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'HISTORY' && styles.activeNavText]}>📜</Text>
+            <Text style={[styles.navLabel, activeTab === 'HISTORY' && styles.activeNavText]}>Lịch Sử</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -240,31 +255,34 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   logoutBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: colors.surfaceLight,
   },
   logoutText: {
     fontSize: 11,
-    fontWeight: '700',
-    color: '#f87171',
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
   },
-  bottomNav: {
-    flexDirection: 'row',
+  bottomNavContainer: {
     backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    paddingVertical: 8,
-    paddingBottom: 16,
+    paddingVertical: 6,
+  },
+  bottomNavScroll: {
+    paddingHorizontal: 8,
+    alignItems: 'center',
   },
   navItem: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   navIcon: {
     fontSize: 18,
@@ -272,23 +290,11 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     fontSize: 10,
-    fontWeight: '600',
     color: colors.textSecondary,
+    fontWeight: '600',
   },
   activeNavText: {
-    color: colors.primaryLight,
-    fontWeight: '800',
-  },
-  paymentBadgeIndicator: {
-    position: 'relative',
-  },
-  badgeDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.warning,
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
