@@ -1,5 +1,5 @@
-import { Controller, Post, Get, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Post, Get, Body, Param, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { HoldBookingDto } from './dto/hold-booking.dto';
 import { WalkInBookingDto } from './dto/walk-in-booking.dto';
@@ -13,6 +13,20 @@ import { UserRole } from '../common/enums';
 @Controller('bookings')
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
+
+  @Get('slots')
+  @ApiOperation({ summary: 'Ma trận khung giờ 30 phút theo ngày thi đấu (Mục 2.1)' })
+  @ApiQuery({ name: 'venueId', required: true, description: 'ID của sân' })
+  @ApiQuery({ name: 'date', required: true, description: 'Ngày thi đấu (YYYY-MM-DD)' })
+  @ApiQuery({ name: 'granularity', required: false, description: 'Bước nhảy phút (mặc định 30, hoặc 60)' })
+  @ApiResponse({ status: 200, description: 'Ma trận khung giờ với 3 trạng thái: AVAILABLE (TRỐNG), HELD (ĐANG GIỮ CHỖ), CONFIRMED (ĐÃ ĐẶT)' })
+  async getSlotsMatrix(
+    @Query('venueId') venueId: string,
+    @Query('date') date: string,
+    @Query('granularity') granularity?: number,
+  ) {
+    return this.bookingsService.getSlotsMatrix(venueId, date, granularity ? Number(granularity) : 30);
+  }
 
   @Post('hold')
   @UseGuards(JwtAuthGuard)
@@ -29,9 +43,16 @@ export class BookingsController {
 
   @Post('walk-in')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.STAFF, UserRole.ADMIN)
+  @Roles(
+    UserRole.STAFF,
+    UserRole.CASHIER,
+    UserRole.ADMIN,
+    UserRole.SYSTEM_ADMIN,
+    UserRole.OWNER,
+    UserRole.MANAGER,
+  )
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Đặt nhanh tại quầy (Mục 5 - POST /bookings/walk-in) - Staff/Admin' })
+  @ApiOperation({ summary: 'Đặt nhanh tại quầy (Mục 5 - POST /bookings/walk-in) - Staff/Cashier/Admin' })
   @ApiResponse({ status: 201, description: 'Đặt tại quầy thành công (status = CONFIRMED)' })
   @ApiResponse({ status: 409, description: 'Trùng slot đã đặt online (SLOT_ALREADY_TAKEN_ONLINE)' })
   async createWalkIn(@Body() dto: WalkInBookingDto) {

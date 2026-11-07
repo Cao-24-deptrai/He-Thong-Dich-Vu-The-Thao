@@ -77,4 +77,21 @@ export class AuthService {
       },
     };
   }
+
+  async getSession(currentUser: any) {
+    const userId = currentUser.userId || currentUser.sub || currentUser.id;
+    const user = await this.usersService.findById(userId);
+    return {
+      authenticated: true,
+      user: {
+        id: user._id.toString(),
+        phone: user.phone,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        membershipTier: (user as any).membershipTier || 'MEMBER',
+        walletBalance: (user as any).walletBalance || 0,
+      },
+    };
+  }
 }

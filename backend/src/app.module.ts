@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -13,8 +13,18 @@ import { BookingsModule } from './bookings/bookings.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CheckinModule } from './checkin/checkin.module';
 import { AdminModule } from './admin/admin.module';
+import { CashierModule } from './cashier/cashier.module';
+import { MailModule } from './mail/mail.module';
 import { MembershipPassModule } from './membership-pass/membership-pass.module';
 import { MatchRequestsModule } from './match-requests/match-requests.module';
+import { CanteenModule } from './canteen/canteen.module';
+import { RentalsModule } from './rentals/rentals.module';
+import { PoolModule } from './pool/pool.module';
+import { GymModule } from './gym/gym.module';
+import { GamingModule } from './gaming/gaming.module';
+import { WalletModule } from './wallet/wallet.module';
+import { VouchersModule } from './vouchers/vouchers.module';
+import { ClientIdentifierMiddleware } from './common/middleware/client-identifier.middleware';
 
 @Module({
   imports: [
@@ -42,8 +52,21 @@ import { MatchRequestsModule } from './match-requests/match-requests.module';
     PaymentsModule,
     CheckinModule,
     AdminModule,
+    CashierModule,
+    MailModule,
     MembershipPassModule,
     MatchRequestsModule,
+    CanteenModule,
+    RentalsModule,
+    PoolModule,
+    GymModule,
+    GamingModule,
+    WalletModule,
+    VouchersModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(ClientIdentifierMiddleware).forRoutes('*');
+  }
+}

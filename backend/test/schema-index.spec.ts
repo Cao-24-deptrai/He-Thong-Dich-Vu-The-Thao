@@ -57,7 +57,7 @@ describe('Mongoose Schemas & Index Verification (Mục 3 Spec)', () => {
     expect(uniqueIndex).toBeDefined();
     expect(uniqueIndex.unique).toBe(true);
     expect(uniqueIndex.partialFilterExpression).toEqual({
-      status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED] },
+      status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
     });
   });
 

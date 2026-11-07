@@ -22,8 +22,8 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('User authentication required');
     }
 
-    // ADMIN has full access across all endpoints
-    if (user.role === UserRole.ADMIN) {
+    // ADMIN and SYSTEM_ADMIN have full access across all endpoints
+    if (user.role === UserRole.ADMIN || user.role === UserRole.SYSTEM_ADMIN) {
       return true;
     }
 

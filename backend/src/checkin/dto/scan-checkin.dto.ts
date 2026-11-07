@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ScanCheckinDto {
-  @ApiProperty({ description: 'Chuỗi JWT động từ mã QR vé của khách (sống 60s)' })
-  @IsNotEmpty({ message: 'QR Token không được để trống' })
+  @ApiProperty({ description: 'Chuỗi JWT động từ mã QR vé của khách (sống 60s)', required: false })
+  @IsOptional()
   @IsString()
-  qrToken: string;
+  qrToken?: string;
+
+  @ApiProperty({ description: 'Mã vé check-in (ví dụ: PHANTA-BK1001)', required: false })
+  @IsOptional()
+  @IsString()
+  checkInCode?: string;
 }

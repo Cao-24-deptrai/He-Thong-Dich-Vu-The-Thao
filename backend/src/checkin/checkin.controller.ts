@@ -31,13 +31,20 @@ export class CheckinController {
   @Post('checkin/scan')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.STAFF, UserRole.ADMIN)
+  @Roles(
+    UserRole.STAFF,
+    UserRole.CASHIER,
+    UserRole.ADMIN,
+    UserRole.SYSTEM_ADMIN,
+    UserRole.OWNER,
+    UserRole.MANAGER,
+  )
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Quét mã QR check-in tại quầy (Mục 5 - POST /checkin/scan) - Staff/Admin' })
-  @ApiResponse({ status: 200, description: 'Check-in thành công, đánh dấu isCheckedIn = true' })
+  @ApiOperation({ summary: 'Quét mã QR / nhập mã vé check-in tại quầy (Mục 5 - POST /checkin/scan) & mở cổng xoay' })
+  @ApiResponse({ status: 200, description: 'Check-in thành công, status = CHECKED_IN & mở cổng xoay' })
   @ApiResponse({ status: 400, description: 'QR hết hạn hoặc không hợp lệ' })
   @ApiResponse({ status: 409, description: 'Vé đã được check-in trước đó (chống quét trùng)' })
   async scanCheckin(@Body() dto: ScanCheckinDto) {
-    return this.checkinService.scanCheckin(dto.qrToken);
+    return this.checkinService.scanCheckin(dto);
   }
 }

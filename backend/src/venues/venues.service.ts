@@ -43,6 +43,9 @@ export class VenuesService {
     }
 
     const venue = new this.venueModel({
+      courtCode: dto.courtCode,
+      isComposite: dto.isComposite || false,
+      baseUnitCodes: dto.baseUnitCodes || [],
       facilityId: new Types.ObjectId(dto.facilityId),
       name: dto.name,
       type: venueType,
@@ -64,6 +67,9 @@ export class VenuesService {
     }
 
     if (dto.name !== undefined) venue.name = dto.name;
+    if (dto.courtCode !== undefined) venue.courtCode = dto.courtCode;
+    if (dto.isComposite !== undefined) venue.isComposite = dto.isComposite;
+    if (dto.baseUnitCodes !== undefined) venue.baseUnitCodes = dto.baseUnitCodes;
     if (dto.type !== undefined) venue.type = dto.type;
     if (dto.venueType !== undefined && Object.values(VenueType).includes(dto.venueType as any)) {
       venue.type = dto.venueType as any;

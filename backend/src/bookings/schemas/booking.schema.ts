@@ -83,6 +83,57 @@ export class Booking {
   @Prop({ type: String })
   note?: string;
 
+  @ApiProperty({ description: 'Human readable check-in code', example: 'PHANTA-BK8832', required: false })
+  @Prop({ type: String })
+  checkInCode?: string;
+
+  @ApiProperty({
+    description: 'Equipment rental line items attached to booking',
+    example: [{ itemId: 'ball-1', name: 'Bóng Molten Vantaggio 5000', quantity: 1, price: 50000 }],
+    required: false,
+  })
+  @Prop({
+    type: [
+      {
+        itemId: { type: String },
+        name: { type: String },
+        quantity: { type: Number, default: 1 },
+        price: { type: Number, default: 0 },
+      },
+    ],
+    default: [],
+  })
+  equipmentRentals?: Array<{
+    itemId: string;
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
+
+  @ApiProperty({ description: 'Applied voucher promo code', required: false })
+  @Prop({ type: String })
+  voucherCode?: string;
+
+  @ApiProperty({ description: 'Discount amount in VND', default: 0 })
+  @Prop({ type: Number, default: 0 })
+  discountAmount?: number;
+
+  @ApiProperty({ description: 'VAT tax rate in percent', default: 8 })
+  @Prop({ type: Number, default: 8 })
+  vatRate?: number;
+
+  @ApiProperty({ description: 'VAT tax amount in VND', default: 0 })
+  @Prop({ type: Number, default: 0 })
+  vatAmount?: number;
+
+  @ApiProperty({ description: 'Security deposit amount in VND', default: 0 })
+  @Prop({ type: Number, default: 0 })
+  depositAmount?: number;
+
+  @ApiProperty({ description: 'Penalty surcharge amount in VND', default: 0 })
+  @Prop({ type: Number, default: 0 })
+  penaltyAmount?: number;
+
   @ApiProperty({ description: 'Manual refund transaction note', required: false })
   @Prop({ type: String })
   refundNote?: string;
@@ -104,7 +155,7 @@ BookingSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED] },
+      status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
     },
   },
 );

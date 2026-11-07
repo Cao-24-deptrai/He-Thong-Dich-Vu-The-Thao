@@ -33,6 +33,59 @@ export class BookingsService {
    * Lớp 2: Business Hold ghi MongoDB (status=HELD, holdExpiresAt=now+10m) -> Nhả Mutex ngay
    * Lớp 3: Unique Partial Index của MongoDB
    */
+  /**
+   * AC-23 (Sân ghép): Lấy danh sách ID tất cả các sân có liên kết xung đột
+   * Đặt Sân 7A tự động chiếm và khóa F1 và F2; ngược lại đặt F1 hoặc F2 thì Sân 7A cũng bị khóa.
+   */
+  async getConflictingVenueIds(venue: VenueDocument): Promise<Types.ObjectId[]> {
+    const conflictingIds: Types.ObjectId[] = [venue._id];
+
+    if (venue.isComposite && venue.baseUnitCodes && venue.baseUnitCodes.length > 0) {
+      // SÂN GHÉP (Ví dụ: Sân 7A) -> Tìm các sân con F1, F2
+      const objectIdCodes = venue.baseUnitCodes
+        .filter((code) => Types.ObjectId.isValid(code))
+        .map((id) => new Types.ObjectId(id));
+
+      const childVenues = await this.venueModel
+        .find({
+          facilityId: venue.facilityId,
+          $or: [
+            { courtCode: { $in: venue.baseUnitCodes } },
+            ...(objectIdCodes.length > 0 ? [{ _id: { $in: objectIdCodes } }] : []),
+          ],
+        })
+        .select('_id')
+        .exec();
+
+      for (const child of childVenues) {
+        if (!conflictingIds.some((id) => id.equals(child._id))) {
+          conflictingIds.push(child._id);
+        }
+      }
+    } else {
+      // SÂN CON (Ví dụ: F1 hoặc F2) -> Tìm sân ghép chứa courtCode này
+      const possibleCodes = [venue.courtCode, venue._id.toString()].filter(Boolean) as string[];
+      if (possibleCodes.length > 0) {
+        const parentCompositeVenues = await this.venueModel
+          .find({
+            facilityId: venue.facilityId,
+            isComposite: true,
+            baseUnitCodes: { $in: possibleCodes },
+          })
+          .select('_id')
+          .exec();
+
+        for (const parent of parentCompositeVenues) {
+          if (!conflictingIds.some((id) => id.equals(parent._id))) {
+            conflictingIds.push(parent._id);
+          }
+        }
+      }
+    }
+
+    return conflictingIds;
+  }
+
   async holdBooking(userId: string, dto: HoldBookingDto): Promise<BookingDocument> {
     // 1. Kiểm tra Venue có tồn tại không
     const venue = await this.venueModel.findById(dto.venueId).exec();
@@ -55,18 +108,23 @@ export class BookingsService {
     }
 
     try {
+      // AC-23: Lấy toàn bộ sân có liên kết phụ thuộc (Sân ghép & Sân con)
+      const conflictingVenueIds = await this.getConflictingVenueIds(venue);
+
       // --- LỚP 2: Business Hold (Kiểm tra DB) ---
       const now = new Date();
-      const existingBooking = await this.bookingModel
-        .findOne({
-          venueId: new Types.ObjectId(dto.venueId),
+      const existingBookings = await this.bookingModel
+        .find({
+          venueId: { $in: conflictingVenueIds },
           bookingDate,
-          startTime: dto.startTime,
-          status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED] },
+          startTime: { $lt: dto.endTime },
+          endTime: { $gt: dto.startTime },
+          status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
         })
+        .populate('venueId')
         .exec();
 
-      if (existingBooking) {
+      for (const existingBooking of existingBookings) {
         // Nếu booking là HELD nhưng đã quá hạn -> tự động expire để tái sử dụng
         if (
           existingBooking.status === BookingStatus.HELD &&
@@ -76,10 +134,18 @@ export class BookingsService {
           existingBooking.status = BookingStatus.EXPIRED;
           await existingBooking.save();
         } else {
+          const bookedVenue = existingBooking.venueId as any;
+          const isCurrentVenue = bookedVenue?._id?.toString() === venue._id.toString();
+          const detailMsg = isCurrentVenue
+            ? 'Khung giờ này đã có người giữ chỗ hoặc đặt thành công'
+            : venue.isComposite
+            ? `Khung giờ này đã bị khóa do sân con cơ sở (${bookedVenue?.name || bookedVenue?.courtCode}) đã có người đặt (AC-23)`
+            : `Khung giờ này đã bị khóa do sân ghép (${bookedVenue?.name || bookedVenue?.courtCode}) đã có người đặt (AC-23)`;
+
           throw new ConflictException({
             statusCode: 409,
             errorCode: 'SLOT_ALREADY_TAKEN',
-            message: 'Khung giờ này đã có người giữ chỗ hoặc đặt thành công',
+            message: detailMsg,
           });
         }
       }
@@ -94,8 +160,16 @@ export class BookingsService {
           pricePerHour = peak.price;
         }
       }
-      const durationHours = 1; // 1 slot mặc định 1 giờ
-      let totalPrice = pricePerHour * durationHours;
+      let durationHours = 1; // 1 slot mặc định 1 giờ
+      if (dto.startTime && dto.endTime) {
+        const [startH, startM] = dto.startTime.split(':').map(Number);
+        const [endH, endM] = dto.endTime.split(':').map(Number);
+        const diffMinutes = (endH * 60 + (endM || 0)) - (startH * 60 + (startM || 0));
+        if (diffMinutes > 0) {
+          durationHours = diffMinutes / 60;
+        }
+      }
+      let totalPrice = Math.round(pricePerHour * durationHours);
 
       // Hỗ trợ Combo Giờ Đêm Esports (Mục 6.2)
       if (
@@ -124,15 +198,17 @@ export class BookingsService {
       // --- LỚP 3: Lưu vào MongoDB (Bảo vệ bởi Unique Partial Index) ---
       const savedBooking = await newBooking.save();
 
-      // Broadcast sự kiện Socket.io (Mục 2.4 & 4.1)
-      this.eventsGateway.broadcastSlotStatusChanged({
-        venueId: dto.venueId,
-        bookingDate: dto.bookingDate,
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        status: BookingStatus.HELD,
-        holdExpiresAt,
-      });
+      // Broadcast sự kiện Socket.io cho sân đặt và các sân liên kết (AC-23)
+      for (const vId of conflictingVenueIds) {
+        this.eventsGateway.broadcastSlotStatusChanged({
+          venueId: vId.toString(),
+          bookingDate: dto.bookingDate,
+          startTime: dto.startTime,
+          endTime: dto.endTime,
+          status: BookingStatus.HELD,
+          holdExpiresAt,
+        });
+      }
 
       return savedBooking;
     } finally {
@@ -153,10 +229,11 @@ export class BookingsService {
     const bookingDate = new Date(`${dateStr}T00:00:00.000Z`);
     const now = new Date();
 
-    // Lấy tất cả các booking của venue trong ngày
+    // AC-23: Lấy tất cả các booking của venue và sân liên kết trong ngày
+    const conflictingVenueIds = await this.getConflictingVenueIds(venue);
     const bookings = await this.bookingModel
       .find({
-        venueId: new Types.ObjectId(venueId),
+        venueId: { $in: conflictingVenueIds },
         bookingDate,
         status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED] },
       })
@@ -238,6 +315,164 @@ export class BookingsService {
       venueId,
       venueName: venue.name,
       date: dateStr,
+      slots,
+    };
+  }
+
+  /**
+   * Ma trận khung giờ 30 phút theo ngày thi đấu (Mục 2.1)
+   * Biểu diễn 3 trạng thái: AVAILABLE (TRỐNG), HELD (ĐANG GIỮ CHỖ), CONFIRMED (ĐÃ ĐẶT)
+   * Tự động tính giá peak hours (+20% hoặc theo pricingRules), hỗ trợ bước nhảy linh hoạt (30m, 60m)
+   */
+  async getSlotsMatrix(venueId: string, dateStr: string, granularityMinutes = 30) {
+    if (!venueId) {
+      throw new BadRequestException('venueId không được để trống');
+    }
+    if (!dateStr) {
+      throw new BadRequestException('date không được để trống (định dạng YYYY-MM-DD)');
+    }
+
+    const venue = await this.venueModel.findById(venueId).exec();
+    if (!venue) {
+      throw new NotFoundException('Không tìm thấy sân');
+    }
+
+    const bookingDate = new Date(`${dateStr}T00:00:00.000Z`);
+    const now = new Date();
+
+    // AC-23: Lấy tất cả các booking của venue và các sân liên kết (Sân ghép / Sân con)
+    const conflictingVenueIds = await this.getConflictingVenueIds(venue);
+    const bookings = await this.bookingModel
+      .find({
+        venueId: { $in: conflictingVenueIds },
+        bookingDate,
+        status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
+      })
+      .populate('venueId')
+      .exec();
+
+    // Làm sạch expired holds
+    const activeBookings: BookingDocument[] = [];
+    for (const b of bookings) {
+      if (b.status === BookingStatus.HELD && b.holdExpiresAt && b.holdExpiresAt <= now) {
+        b.status = BookingStatus.EXPIRED;
+        await b.save();
+      } else {
+        activeBookings.push(b);
+      }
+    }
+
+    const openTimeStr = venue.operatingHours?.openTime || '06:00';
+    const closeTimeStr = venue.operatingHours?.closeTime || '22:00';
+    const [openHour, openMin] = openTimeStr.split(':').map(Number);
+    const [closeHour, closeMin] = closeTimeStr.split(':').map(Number);
+
+    const startTotalMinutes = (openHour || 6) * 60 + (openMin || 0);
+    const endTotalMinutes = (closeHour || 22) * 60 + (closeMin || 0);
+
+    const step = Math.max(15, Math.min(120, granularityMinutes || 30));
+    const slots = [];
+
+    for (let currentMinutes = startTotalMinutes; currentMinutes < endTotalMinutes; currentMinutes += step) {
+      const nextMinutes = currentMinutes + step;
+      if (nextMinutes > endTotalMinutes) break;
+
+      const sh = Math.floor(currentMinutes / 60).toString().padStart(2, '0');
+      const sm = (currentMinutes % 60).toString().padStart(2, '0');
+      const eh = Math.floor(nextMinutes / 60).toString().padStart(2, '0');
+      const em = (nextMinutes % 60).toString().padStart(2, '0');
+
+      const startTime = `${sh}:${sm}`;
+      const endTime = `${eh}:${em}`;
+
+      // Tìm booking giao với khoảng [startTime, endTime)
+      const matched = activeBookings.find((b) => b.startTime < endTime && b.endTime > startTime);
+
+      let status = 'AVAILABLE';
+      let statusLabel = 'TRỐNG';
+      let holdExpiresAt: Date | undefined = undefined;
+      let bookingInfo: any = undefined;
+
+      if (matched) {
+        if (matched.status === BookingStatus.CONFIRMED || matched.status === BookingStatus.CHECKED_IN) {
+          status = 'CONFIRMED';
+          statusLabel = 'ĐÃ ĐẶT';
+        } else if (matched.status === BookingStatus.HELD) {
+          status = 'HELD';
+          statusLabel = 'ĐANG GIỮ CHỖ';
+          holdExpiresAt = matched.holdExpiresAt;
+        }
+        bookingInfo = {
+          bookingId: matched._id,
+          customerName: matched.customerName || (matched.userId ? 'Hội viên' : 'Khách vãng lai'),
+          isWalkIn: matched.isWalkIn || false,
+        };
+      }
+
+      // Tính giá và kiểm tra peak hour
+      let pricePerHour = venue.basePricePerHour || 250000;
+      let isPeak = false;
+
+      // Giờ cao điểm: nếu cấu hình pricingRules.peakHours thì ưu tiên, nếu không mặc định 17:00 - 21:00 (+20%)
+      if (venue.pricingRules?.peakHours && Array.isArray(venue.pricingRules.peakHours)) {
+        const peak = venue.pricingRules.peakHours.find(
+          (p: any) => startTime >= p.startTime && startTime < p.endTime,
+        );
+        if (peak) {
+          isPeak = true;
+          if (typeof peak.price === 'number') {
+            pricePerHour = peak.price;
+          }
+        }
+      } else if (startTime >= '17:00' && startTime < '21:00') {
+        isPeak = true;
+        pricePerHour = Math.round(pricePerHour * 1.2);
+      }
+
+      const slotPrice = Math.round(pricePerHour * (step / 60));
+
+      slots.push({
+        slot: `${startTime} - ${endTime}`,
+        startTime,
+        endTime,
+        status,
+        statusLabel,
+        price: slotPrice,
+        pricePerHour,
+        isPeak,
+        holdExpiresAt,
+        bookingInfo,
+      });
+    }
+
+    // Hỗ trợ Combo Giờ Đêm Esports
+    if (
+      venue.type === VenueType.ESPORT_VIP ||
+      venue.type === VenueType.ESPORT_NORMAL ||
+      venue.pricingRules?.nightCombo?.enabled
+    ) {
+      const nightMatched = activeBookings.find((b) => b.startTime < '06:00' && b.endTime > '23:00');
+      slots.push({
+        slot: '23:00 - 06:00 (Combo Đêm)',
+        startTime: '23:00',
+        endTime: '06:00',
+        status: nightMatched ? nightMatched.status : 'AVAILABLE',
+        statusLabel: nightMatched ? (nightMatched.status === BookingStatus.HELD ? 'ĐANG GIỮ CHỖ' : 'ĐÃ ĐẶT') : 'TRỐNG',
+        price: venue.pricingRules?.nightCombo?.comboPrice || 70000,
+        pricePerHour: venue.pricingRules?.nightCombo?.comboPrice || 70000,
+        isNightCombo: true,
+        isPeak: false,
+        holdExpiresAt: nightMatched?.holdExpiresAt,
+      });
+    }
+
+    return {
+      venueId,
+      venueName: venue.name,
+      courtCode: venue.courtCode,
+      sportCategory: venue.sportCategory || venue.type,
+      date: dateStr,
+      granularityMinutes: step,
       slots,
     };
   }
@@ -396,6 +631,27 @@ export class BookingsService {
       totalPrice = venue.pricingRules.nightCombo.comboPrice || 70000;
     }
 
+    // AC-23: Kiểm tra xung đột sân ghép và sân con
+    const conflictingVenueIds = await this.getConflictingVenueIds(venue);
+    const existingActive = await this.bookingModel
+      .findOne({
+        venueId: { $in: conflictingVenueIds },
+        bookingDate,
+        startTime: { $lt: dto.endTime },
+        endTime: { $gt: dto.startTime },
+        status: { $in: [BookingStatus.HELD, BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
+      })
+      .populate('venueId')
+      .exec();
+
+    if (existingActive) {
+      throw new ConflictException({
+        statusCode: 409,
+        errorCode: 'SLOT_ALREADY_TAKEN',
+        message: 'Khung giờ này đã có người đặt hoặc bị chiếm bởi sân liên kết (AC-23)',
+      });
+    }
+
     try {
       const walkInBooking = new this.bookingModel({
         userId: null, // Walk-in không định danh
@@ -416,14 +672,16 @@ export class BookingsService {
 
       const saved = await walkInBooking.save();
 
-      // Broadcast Socket.io slot chuyển đỏ (CONFIRMED)
-      this.eventsGateway.broadcastSlotStatusChanged({
-        venueId: dto.venueId,
-        bookingDate: dto.bookingDate,
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        status: BookingStatus.CONFIRMED,
-      });
+      // Broadcast Socket.io slot chuyển đỏ (CONFIRMED) cho toàn bộ sân liên kết (AC-23)
+      for (const vId of conflictingVenueIds) {
+        this.eventsGateway.broadcastSlotStatusChanged({
+          venueId: vId.toString(),
+          bookingDate: dto.bookingDate,
+          startTime: dto.startTime,
+          endTime: dto.endTime,
+          status: BookingStatus.CONFIRMED,
+        });
+      }
 
       return saved;
     } catch (err: any) {

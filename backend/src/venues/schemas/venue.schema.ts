@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory, raw } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { VenueType } from '../../common/enums';
+import { VenueType, SportCategory } from '../../common/enums';
 
 export type VenueDocument = Venue & Document;
 
@@ -26,6 +26,73 @@ export class Venue {
   @ApiProperty({ description: 'Base price per hour in VND', example: 250000 })
   @Prop({ type: Number, required: true })
   basePricePerHour: number;
+
+  @ApiProperty({ description: 'Court code identifier', example: 'F1' })
+  @Prop({ type: String, required: false })
+  courtCode?: string;
+
+  @ApiProperty({ description: 'Liệu đây có phải là sân ghép (ví dụ Sân 7, Sân 11)', default: false })
+  @Prop({ type: Boolean, default: false })
+  isComposite: boolean;
+
+  @ApiProperty({
+    description: 'Danh sách ID hoặc mã các sân cơ sở cấu thành sân ghép này (Base units)',
+    example: ['F1', 'F2'],
+    type: [String],
+    default: [],
+  })
+  @Prop({ type: [String], default: [] })
+  baseUnitCodes: string[];
+
+  @ApiProperty({ enum: SportCategory, default: SportCategory.SOCCER })
+  @Prop({
+    type: String,
+    enum: Object.values(SportCategory),
+    default: SportCategory.SOCCER,
+  })
+  sportCategory: SportCategory;
+
+  @ApiProperty({
+    description: '3D coordinate position in interactive spatial map',
+    example: { x: -35, y: 0.5, z: -20 },
+    required: false,
+  })
+  @Prop(
+    raw({
+      x: { type: Number, default: 0 },
+      y: { type: Number, default: 0 },
+      z: { type: Number, default: 0 },
+    }),
+  )
+  position3D?: {
+    x: number;
+    y: number;
+    z: number;
+  };
+
+  @ApiProperty({ description: 'Current live occupancy headcount', default: 0 })
+  @Prop({ type: Number, default: 0 })
+  currentOccupancy: number;
+
+  @ApiProperty({ description: 'Maximum safe capacity headcount', default: 14 })
+  @Prop({ type: Number, default: 14 })
+  maxCapacity: number;
+
+  @ApiProperty({ description: 'Venue operational status', example: 'AVAILABLE', default: 'AVAILABLE' })
+  @Prop({ type: String, default: 'AVAILABLE' })
+  status: string;
+
+  @ApiProperty({ description: 'Evening lighting fee per hour in VND', default: 50000 })
+  @Prop({ type: Number, default: 50000 })
+  lightingFeePerHour?: number;
+
+  @ApiProperty({ description: 'Image URL of court or venue', required: false })
+  @Prop({ type: String })
+  imageUrl?: string;
+
+  @ApiProperty({ description: 'Description and specifications', required: false })
+  @Prop({ type: String })
+  description?: string;
 
   @ApiProperty({
     description: 'Dynamic pricing rules (e.g. peak hours, weekends)',
@@ -78,3 +145,5 @@ export class Venue {
 
 export const VenueSchema = SchemaFactory.createForClass(Venue);
 VenueSchema.index({ facilityId: 1 });
+VenueSchema.index({ sportCategory: 1, isActive: 1 });
+VenueSchema.index({ status: 1 });

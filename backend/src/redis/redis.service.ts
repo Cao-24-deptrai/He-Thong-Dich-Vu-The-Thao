@@ -8,6 +8,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis | null = null;
   private isConnected = false;
   private inMemoryLocks = new Map<string, { ownerId: string; expiresAt: number }>();
+  private inMemoryCache = new Map<string, { value: string; expiresAt: number }>();
 
   // Lua script để nhả lock an toàn (chỉ giải phóng khi đúng ownerId)
   private readonly RELEASE_LOCK_LUA = `
@@ -124,5 +125,43 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   getIsConnected(): boolean {
     return this.isConnected;
+  }
+
+  async get(key: string): Promise<string | null> {
+    if (this.isConnected && this.client) {
+      try {
+        return await this.client.get(key);
+      } catch (err) {
+        this.logger.error(`Redis get error: ${err.message}`);
+      }
+    }
+    const item = this.inMemoryCache.get(key);
+    if (!item) return null;
+    if (item.expiresAt < Date.now()) {
+      this.inMemoryCache.delete(key);
+      return null;
+    }
+    return item.value;
+  }
+
+  async set(key: string, value: string, ttlSeconds = 60): Promise<void> {
+    if (this.isConnected && this.client) {
+      try {
+        await this.client.set(key, value, 'EX', ttlSeconds);
+        return;
+      } catch (err) {
+        this.logger.error(`Redis set error: ${err.message}`);
+      }
+    }
+    this.inMemoryCache.set(key, { value, expiresAt: Date.now() + ttlSeconds * 1000 });
+  }
+
+  async del(key: string): Promise<void> {
+    if (this.isConnected && this.client) {
+      try {
+        await this.client.del(key);
+      } catch (_) {}
+    }
+    this.inMemoryCache.delete(key);
   }
 }

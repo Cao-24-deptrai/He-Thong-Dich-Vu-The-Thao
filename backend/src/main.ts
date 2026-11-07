@@ -2,6 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
+import * as fs from 'fs';
+import * as express from 'express';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -12,10 +15,50 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('port') || 3000;
 
-  // Bật CORS cho Web Admin và Mobile App
+  // Phục vụ tĩnh thư mục uploads cho hình ảnh sản phẩm / avatar
+  const uploadsDir = join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+
+  // Bật CORS cho cả 3 Giao diện: Web Admin, Web Thu Ngân POS và App Khách Hàng Mobile
+  const allowedOrigins = [
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8081',
+    'http://127.0.0.1:8081',
+    'http://localhost:19006',
+    'http://127.0.0.1:19006',
+  ];
+
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      // Cho phép requests không có origin (curl, mobile apps) hoặc từ các origin hợp lệ
+      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'Accept',
+      'X-Requested-With',
+      'X-Client-Type',
+      'X-Client-Version',
+      'X-Station-Id',
+      'Idempotency-Key',
+    ],
+    exposedHeaders: [
+      'Content-Disposition',
+      'X-Client-Type',
+      'X-Response-Time',
+    ],
     credentials: true,
   });
 

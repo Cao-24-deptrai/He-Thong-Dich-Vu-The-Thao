@@ -2,7 +2,7 @@ export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   mongodb: {
-    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/sports_booking?replicaSet=rs0',
+    uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/sports_booking',
   },
   redis: {
     host: process.env.REDIS_HOST || '127.0.0.1',

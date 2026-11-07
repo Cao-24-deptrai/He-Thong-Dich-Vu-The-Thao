@@ -12,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
 import { BookingStatus } from '../common/enums';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class CheckinService {
@@ -20,6 +21,7 @@ export class CheckinService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     private jwtService: JwtService,
+    private eventsGateway: EventsGateway,
   ) {}
 
   /**
@@ -93,40 +95,61 @@ export class CheckinService {
   }
 
   /**
-   * Quét mã QR check-in tại quầy - Mục 4.5 của spec
+   * Quét mã QR check-in hoặc nhập mã vé tại quầy - Mục 4.5 của spec
    */
-  async scanCheckin(qrToken: string) {
-    let decoded: any;
-    try {
-      decoded = this.jwtService.verify(qrToken);
-    } catch (err) {
-      throw new BadRequestException({
-        statusCode: 400,
-        errorCode: 'QR_TOKEN_EXPIRED',
-        message: 'Mã QR đã hết hạn (quá 60s) hoặc không hợp lệ. Vui lòng mở lại ứng dụng để lấy mã mới!',
-      });
+  async scanCheckin(param: string | { qrToken?: string; checkInCode?: string }) {
+    let bookingId: string | null = null;
+    let checkInCode: string | null = null;
+
+    if (typeof param === 'string') {
+      if (param.startsWith('PHANTA-') || param.startsWith('BK-')) {
+        checkInCode = param;
+      } else {
+        try {
+          const decoded = this.jwtService.verify(param);
+          bookingId = decoded.bookingId;
+        } catch (_) {
+          checkInCode = param;
+        }
+      }
+    } else {
+      if (param.checkInCode) {
+        checkInCode = param.checkInCode;
+      } else if (param.qrToken) {
+        if (param.qrToken.startsWith('PHANTA-') || param.qrToken.startsWith('BK-')) {
+          checkInCode = param.qrToken;
+        } else {
+          try {
+            const decoded = this.jwtService.verify(param.qrToken);
+            bookingId = decoded.bookingId;
+          } catch (err) {
+            throw new BadRequestException({
+              statusCode: 400,
+              errorCode: 'QR_TOKEN_EXPIRED',
+              message: 'Mã QR đã hết hạn (quá 60s) hoặc không hợp lệ. Vui lòng mở lại ứng dụng để lấy mã mới!',
+            });
+          }
+        }
+      }
     }
 
-    const { bookingId } = decoded;
-    if (!bookingId) {
-      throw new BadRequestException({
-        statusCode: 400,
-        errorCode: 'INVALID_QR_TOKEN',
-        message: 'Mã QR không chứa thông tin đặt chỗ hợp lệ.',
-      });
+    let booking: BookingDocument | null = null;
+    if (bookingId) {
+      booking = await this.bookingModel.findById(bookingId).populate('venueId').populate('userId').exec();
+    } else if (checkInCode) {
+      booking = await this.bookingModel.findOne({ checkInCode }).populate('venueId').populate('userId').exec();
     }
 
-    const booking = await this.bookingModel.findById(bookingId).populate('venueId').exec();
     if (!booking) {
       throw new NotFoundException('Không tìm thấy thông tin đơn đặt chỗ');
     }
 
     // Kiểm tra chống quét trùng (Mục 4.5.3)
-    if (booking.isCheckedIn) {
+    if (booking.isCheckedIn || booking.status === BookingStatus.CHECKED_IN) {
       throw new ConflictException({
         statusCode: 409,
         errorCode: 'ALREADY_CHECKED_IN',
-        message: `Vé này đã được check-in vào lúc ${booking.checkedInAt ? new Date(booking.checkedInAt).toLocaleTimeString() : 'trước đó'}!`,
+        message: `Vé này đã được check-in vào lúc ${booking.checkedInAt ? new Date(booking.checkedInAt).toLocaleTimeString('vi-VN') : 'trước đó'}!`,
         checkedInAt: booking.checkedInAt,
       });
     }
@@ -141,19 +164,34 @@ export class CheckinService {
 
     // Đánh dấu check-in thành công (Mục 4.5.3)
     booking.isCheckedIn = true;
+    booking.status = BookingStatus.CHECKED_IN;
     booking.checkedInAt = new Date();
     await booking.save();
 
-    this.logger.log(`✅ Quét check-in thành công cho booking ${booking._id}`);
+    const customerName = (booking.userId as any)?.fullName || booking.customerName || 'Khách thể thao';
+    const venueName = (booking.venueId as any)?.name || 'Sân Phanta';
+    const timeSlot = `${booking.startTime} - ${booking.endTime}`;
+
+    this.eventsGateway.broadcastCheckinSuccess({
+      bookingId: booking._id.toString(),
+      venueId: (booking.venueId as any)?._id?.toString() || booking.venueId?.toString(),
+      customerName,
+      timeSlot,
+    });
+
+    this.logger.log(`✅ Quét check-in thành công cho booking ${booking._id} (${checkInCode || bookingId})`);
 
     return {
       success: true,
-      message: 'Check-in thành công! Chúc quý khách chơi thể thao vui vẻ.',
+      message: 'Check-in thành công! Cổng xoay Turnstile đã mở.',
       booking,
       bookingId: booking._id,
+      checkInCode: booking.checkInCode,
       checkedInAt: booking.checkedInAt,
-      venueName: (booking.venueId as any)?.name,
-      timeSlot: `${booking.startTime} - ${booking.endTime}`,
+      customerName,
+      venueName,
+      timeSlot,
+      status: BookingStatus.CHECKED_IN,
     };
   }
 }

@@ -27,6 +27,9 @@ export class FacilitiesService {
         coordinates: [lng, lat],
       },
       sportTypes,
+      operatingHours: dto.operatingHours || { openTime: '06:00', closeTime: '23:00' },
+      phone: dto.phone,
+      description: dto.description,
       ownerId: ownerId ? new Types.ObjectId(ownerId) : undefined,
       isActive: true,
     });
@@ -38,6 +41,9 @@ export class FacilitiesService {
 
     if (dto.name !== undefined) facility.name = dto.name;
     if (dto.address !== undefined) facility.address = dto.address;
+    if (dto.phone !== undefined) facility.phone = dto.phone;
+    if (dto.description !== undefined) facility.description = dto.description;
+    if (dto.operatingHours !== undefined) facility.operatingHours = dto.operatingHours;
     if (dto.sportTypes !== undefined) {
       facility.sportTypes = dto.sportTypes;
     } else if (dto.sportType !== undefined) {
@@ -93,7 +99,7 @@ export class FacilitiesService {
     return facility.save();
   }
 
-  async findAll(query: QueryFacilityDto): Promise<FacilityDocument[]> {
+  async findAll(query: QueryFacilityDto = {}): Promise<FacilityDocument[]> {
     const filter: any = {};
 
     const includeInactive = query.includeInactive === true || query.includeInactive === 'true';
@@ -127,5 +133,28 @@ export class FacilitiesService {
       throw new NotFoundException('Không tìm thấy tổ hợp thể thao');
     }
     return facility;
+  }
+
+  /**
+   * Lấy thông tin cơ sở duy nhất của hệ thống (SRS v2.0 - GET /api/facility)
+   */
+    async getSingleFacility(): Promise<any> {
+    let facility = await this.facilityModel.findOne({ isActive: true }).exec();
+    if (!facility) {
+      facility = await this.facilityModel.findOne().exec();
+    }
+    if (!facility) {
+      throw new NotFoundException('Chưa có thông tin cơ sở tổ hợp thể thao');
+    }
+    const facObj = (facility as any).toObject ? (facility as any).toObject() : facility;
+    return {
+      ...facObj,
+      openHour: facObj.openHour || facObj.operatingHours?.openTime || '06:00',
+      closeHour: facObj.closeHour || facObj.operatingHours?.closeTime || '23:00',
+      operatingHours: facObj.operatingHours || {
+        openTime: facObj.openHour || '06:00',
+        closeTime: facObj.closeHour || '23:00',
+      },
+    };
   }
 }

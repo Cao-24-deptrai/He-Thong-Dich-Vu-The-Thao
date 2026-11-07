@@ -1,0 +1,10 @@
+export * from './auth.module.js';
+export * from './services/auth.service.js';
+export * from './services/otp.service.js';
+export * from './services/audit-log.service.js';
+export * from './services/password.service.js';
+export * from './decorators/auth.decorators.js';
+export * from './guards/jwt-auth.guard.js';
+export * from './guards/roles.guard.js';
+export { User, UserDocument } from './schemas/user.schema.js';
+export { AuditLog, AuditLogDocument } from './schemas/audit-log.schema.js';

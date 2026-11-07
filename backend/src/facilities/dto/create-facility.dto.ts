@@ -37,4 +37,25 @@ export class CreateFacilityDto {
   @IsOptional()
   @IsString()
   sportType?: string;
+
+  @ApiProperty({
+    example: { openTime: '06:00', closeTime: '23:00' },
+    required: false,
+    description: 'Giờ mở cửa và đóng cửa của cơ sở',
+  })
+  @IsOptional()
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
+
+  @ApiProperty({ example: '0901234567', required: false, description: 'Số điện thoại hotline cơ sở' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({ example: 'Tổ hợp thể thao và giải trí Phanta Sports', required: false })
+  @IsOptional()
+  @IsString()
+  description?: string;
 }

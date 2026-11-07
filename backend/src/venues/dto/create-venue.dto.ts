@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsEnum, IsNumber, IsOptional, IsObject } from 'class-validator';
+import { IsNotEmpty, IsString, IsEnum, IsNumber, IsOptional, IsObject, IsBoolean, IsArray } from 'class-validator';
 import { VenueType } from '../../common/enums';
 
 export class CreateVenueDto {
@@ -21,6 +21,22 @@ export class CreateVenueDto {
   @IsOptional()
   @IsString()
   venueType?: string;
+
+  @ApiProperty({ description: 'Mã định danh sân (F1, S7-A, S11,...)', example: 'F1', required: false })
+  @IsOptional()
+  @IsString()
+  courtCode?: string;
+
+  @ApiProperty({ description: 'Có phải sân ghép hay không', example: false, default: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isComposite?: boolean;
+
+  @ApiProperty({ description: 'Danh sách mã sân cơ sở cấu thành', example: ['F1', 'F2'], required: false })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  baseUnitCodes?: string[];
 
   @ApiProperty({ example: 250000, description: 'Giá gốc mỗi giờ (VNĐ)', required: false })
   @IsOptional()

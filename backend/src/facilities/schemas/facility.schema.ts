@@ -33,6 +33,30 @@ export class Facility {
   @Prop({ type: [String], default: [] })
   sportTypes: string[];
 
+  @ApiProperty({
+    description: 'Giờ mở/đóng cửa của cơ sở tổ hợp (BR-01: 06:00 - 23:00)',
+    example: { openTime: '06:00', closeTime: '23:00' },
+    required: false,
+  })
+  @Prop(
+    raw({
+      openTime: { type: String, default: '06:00' },
+      closeTime: { type: String, default: '23:00' },
+    }),
+  )
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
+
+  @ApiProperty({ description: 'Hotline hoặc số điện thoại liên hệ cơ sở', required: false })
+  @Prop({ type: String })
+  phone?: string;
+
+  @ApiProperty({ description: 'Mô tả tổng quan cơ sở tổ hợp', required: false })
+  @Prop({ type: String })
+  description?: string;
+
   @ApiProperty({ description: 'Owner user ID', required: false })
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   ownerId?: Types.ObjectId;
