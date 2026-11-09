@@ -1,0 +1,31 @@
+{
+  "name": "@sports/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "echo 'Contracts tested via Zod schemas'",
+    "contracts:gen": "echo 'Generating contracts types'",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@sports/shared": "workspace:*",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "openapi-typescript": "^7.6.1",
+    "typescript": "^5.7.3"
+  }
+}
