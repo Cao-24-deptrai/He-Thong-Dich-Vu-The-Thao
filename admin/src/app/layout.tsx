@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
+  LayoutDashboard,
   Building2, 
   CalendarPlus, 
   QrCode, 
@@ -20,6 +21,8 @@ import {
   Trophy,
   Gamepad2,
   Cpu
+  PackageCheck,
+  Star
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -59,6 +62,12 @@ export default function RootLayout({
   }
 
   const navItems = [
+    {
+      href: '/',
+      label: 'Tổng Quan & Báo Cáo',
+      icon: LayoutDashboard,
+      description: 'Chỉ số KPI, kho dụng cụ & đánh giá',
+    },
     {
       href: '/facilities',
       label: 'Cơ sở & Sân bãi',
@@ -118,6 +127,18 @@ export default function RootLayout({
       label: 'Cáp Kèo Thể Thao',
       icon: Users,
       description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+    },
+    {
+      href: '/rentals',
+      label: 'Thuê Dụng Cụ (M13)',
+      icon: PackageCheck,
+      description: 'Quản lý thiết bị, cọc & quầy giao nhận',
+    },
+    {
+      href: '/reviews',
+      label: 'Đánh Giá & Phản Hồi (E15)',
+      icon: Star,
+      description: 'Chăm sóc khách hàng & cảnh báo sao thấp',
     },
   ];
 

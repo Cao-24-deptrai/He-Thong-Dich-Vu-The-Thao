@@ -62,6 +62,101 @@ export interface VenueAvailability {
   slots: SlotAvailability[];
 }
 
+
+
+export interface StaffResponse {
+  respondedBy: string;
+  responderName: string;
+  content: string;
+  respondedAt: string;
+}
+
+export interface Review {
+  _id: string;
+  bookingId: string;
+  customerId: string;
+  customerName: string;
+  customerPhone?: string;
+  facilityId: string;
+  venueId?: string;
+  facilityRating: number;
+  serviceRating: number;
+  staffRating: number;
+  cleanlinessRating: number;
+  overallRating: number;
+  comment: string;
+  staffId?: string;
+  needsAttention: boolean;
+  staffResponse?: StaffResponse;
+  createdAt: string;
+}
+
+export interface ReviewSummary {
+  totalReviews: number;
+  avgOverall: number;
+  avgFacility: number;
+  avgService: number;
+  avgStaff: number;
+  avgCleanliness: number;
+  starsBreakdown: { [key: number]: number };
+  needsAttentionCount: number;
+}
+
+export interface Equipment {
+  _id: string;
+  code: string;
+  name: string;
+  sportType: 'FOOTBALL' | 'TENNIS' | 'BADMINTON' | 'BASKETBALL' | 'GENERAL';
+  pricingType: 'PER_TURN' | 'HOURLY';
+  price: number;
+  depositAmount: number;
+  damageFee: number;
+  lostFee: number;
+  totalQuantity: number;
+  rentedQuantity: number;
+  damagedQuantity: number;
+  availableQuantity: number;
+  imageUrl?: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface RentalTicketItem {
+  equipmentId: string;
+  code: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  depositPerUnit: number;
+  pricingType: 'PER_TURN' | 'HOURLY';
+  subtotalPrice: number;
+  subtotalDeposit: number;
+  returnCondition?: 'GOOD' | 'DAMAGED' | 'LOST';
+  penaltyFee?: number;
+}
+
+export interface RentalTicket {
+  _id: string;
+  ticketCode: string;
+  shiftId?: string;
+  cashierId: string;
+  customerId?: string;
+  customerPhone: string;
+  customerName?: string;
+  bookingId?: string;
+  items: RentalTicketItem[];
+  rentedAt: string;
+  dueAt: string;
+  returnedAt?: string;
+  totalRentalAmount: number;
+  totalDepositAmount: number;
+  totalPenaltyFee: number;
+  refundDepositAmount: number;
+  paymentMethod: 'CASH' | 'VIETQR' | 'MOMO';
+  status: 'RENTING' | 'RETURNED' | 'CANCELLED';
+  notes?: string;
+}
+
 export interface Booking {
   _id: string;
   bookingCode?: string;
@@ -287,10 +382,128 @@ class ApiService {
     return this.request<any[]>(`/match-requests${query}`);
   }
 
+
+  // --- EQUIPMENT RENTAL (M13 - E07) ---
+  async getEquipments(params?: { sportType?: string; search?: string; availableOnly?: boolean }): Promise<Equipment[]> {
+    const q = new URLSearchParams();
+    if (params?.sportType) q.append('sportType', params.sportType);
+    if (params?.search) q.append('search', params.search);
+    if (params?.availableOnly) q.append('availableOnly', 'true');
+    const query = q.toString() ? `?${q.toString()}` : '';
+    return this.request<Equipment[]>(`/rentals/equipments${query}`);
+  }
+
+  async createEquipment(data: Partial<Equipment>): Promise<Equipment> {
+    return this.request<Equipment>('/rentals/equipments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEquipment(id: string, data: Partial<Equipment>): Promise<Equipment> {
+    return this.request<Equipment>(`/rentals/equipments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async createRentalTicket(payload: {
+    customerPhone: string;
+    customerName?: string;
+    bookingId?: string;
+    shiftId?: string;
+    items: { equipmentId: string; quantity: number }[];
+    rentalHours?: number;
+    paymentMethod?: string;
+    notes?: string;
+  }): Promise<RentalTicket> {
+    return this.request<RentalTicket>('/rentals/tickets', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getRentalTickets(params?: { status?: string; customerPhone?: string; shiftId?: string; bookingId?: string }): Promise<RentalTicket[]> {
+    const q = new URLSearchParams();
+    if (params?.status) q.append('status', params.status);
+    if (params?.customerPhone) q.append('customerPhone', params.customerPhone);
+    if (params?.shiftId) q.append('shiftId', params.shiftId);
+    if (params?.bookingId) q.append('bookingId', params.bookingId);
+    const query = q.toString() ? `?${q.toString()}` : '';
+    return this.request<RentalTicket[]>(`/rentals/tickets${query}`);
+  }
+
+  async returnRentalTicket(id: string, payload: {
+    items: { equipmentId: string; condition: 'GOOD' | 'DAMAGED' | 'LOST'; quantity: number; customPenaltyFee?: number }[];
+    notes?: string;
+  }): Promise<RentalTicket> {
+    return this.request<RentalTicket>(`/rentals/tickets/${id}/return`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+
+  // --- REVIEWS & COMMUNITY (E15) ---
+  async getReviewSummary(facilityId?: string): Promise<ReviewSummary> {
+    const query = facilityId ? `?facilityId=${facilityId}` : '';
+    return this.request<ReviewSummary>(`/reviews/summary${query}`);
+  }
+
+  async getReviews(params?: { facilityId?: string; venueId?: string; needsAttention?: boolean; rating?: number }): Promise<Review[]> {
+    const q = new URLSearchParams();
+    if (params?.facilityId) q.append('facilityId', params.facilityId);
+    if (params?.venueId) q.append('venueId', params.venueId);
+    if (params?.needsAttention !== undefined) q.append('needsAttention', String(params.needsAttention));
+    if (params?.rating) q.append('rating', String(params.rating));
+    const query = q.toString() ? `?${q.toString()}` : '';
+    return this.request<Review[]>(`/reviews${query}`);
+  }
+
+  async createReview(payload: {
+    bookingId: string;
+    facilityRating: number;
+    serviceRating: number;
+    staffRating: number;
+    cleanlinessRating: number;
+    comment: string;
+  }): Promise<Review> {
+    return this.request<Review>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async respondToReview(id: string, content: string): Promise<Review> {
+    return this.request<Review>(`/reviews/${id}/respond`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async dismissReviewAttention(id: string): Promise<Review> {
+    return this.request<Review>(`/reviews/${id}/dismiss`, {
+      method: 'PATCH',
+    });
+  }
+
   async cancelMatchRequest(id: string): Promise<any> {
     return this.request<any>(`/match-requests/${id}/cancel`, {
       method: 'POST',
     });
+  }
+
+  // --- REPORTING & SHIFT AUDIT (E06 & E16) ---
+  async getEquipmentStats(): Promise<any> {
+    return this.request('/rentals/reports/stats');
+  }
+
+  async getFacilityRatingBreakdown(): Promise<any[]> {
+    return this.request('/reviews/reports/facility-breakdown');
+  }
+
+  async checkShiftUnreturnedRentals(shiftId: string): Promise<any> {
+    return this.request(`/admin/shifts/${shiftId}/unreturned-rentals`);
   }
 }
 

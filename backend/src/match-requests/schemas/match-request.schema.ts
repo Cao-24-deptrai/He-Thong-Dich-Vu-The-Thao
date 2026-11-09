@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
-import { MatchRequestStatus } from '../../common/enums';
+import { MatchRequestStatus, MatchLevel } from '../../common/enums';
 
 export type MatchRequestDocument = MatchRequest & Document;
 
@@ -31,6 +31,14 @@ export class MatchRequest {
   @Prop({ type: Number, default: 0 })
   slotsFilled: number;
 
+  @ApiProperty({ enum: MatchLevel, default: MatchLevel.VUI_VE })
+  @Prop({
+    type: String,
+    enum: Object.values(MatchLevel),
+    default: MatchLevel.VUI_VE,
+  })
+  level: MatchLevel;
+
   @ApiProperty({ enum: MatchRequestStatus, default: MatchRequestStatus.OPEN })
   @Prop({
     type: String,
@@ -47,3 +55,4 @@ export class MatchRequest {
 export const MatchRequestSchema = SchemaFactory.createForClass(MatchRequest);
 MatchRequestSchema.index({ creatorId: 1 });
 MatchRequestSchema.index({ matchDate: 1, status: 1 });
+MatchRequestSchema.index({ level: 1, sportType: 1 });

@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsString, IsNumber, Min, IsOptional, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, Min, IsOptional, IsDateString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { MatchLevel } from '../../common/enums';
 
 export class CreateMatchRequestDto {
   @ApiProperty({ description: 'Môn thể thao (FOOTBALL, BADMINTON, TENNIS, ESPORTS, GYM...)', example: 'FOOTBALL' })
@@ -22,4 +23,9 @@ export class CreateMatchRequestDto {
   @Min(1)
   @IsNotEmpty()
   slotsNeeded: number;
+
+  @ApiProperty({ description: 'Trình độ mong muốn', enum: MatchLevel, default: MatchLevel.VUI_VE, required: false })
+  @IsEnum(MatchLevel)
+  @IsOptional()
+  level?: MatchLevel;
 }

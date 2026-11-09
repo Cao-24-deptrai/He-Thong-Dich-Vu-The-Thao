@@ -11,7 +11,7 @@ import {
   MatchRequest,
   MatchRequestDocument,
 } from './schemas/match-request.schema';
-import { MatchRequestStatus } from '../common/enums';
+import { MatchRequestStatus, MatchLevel } from '../common/enums';
 import { CreateMatchRequestDto } from './dto/create-match-request.dto';
 import { EventsGateway } from '../events/events.gateway';
 
@@ -42,11 +42,12 @@ export class MatchRequestsService {
       slotsNeeded: dto.slotsNeeded,
       slotsFilled: 0,
       joinedUserIds: [],
+      level: dto.level || MatchLevel.VUI_VE,
       status: MatchRequestStatus.OPEN,
     });
 
     const saved = await matchRequest.save();
-    this.logger.log(`⚽ Tạo bài cáp kèo thành công: ID ${saved._id} môn ${saved.sportType} bởi User ${creatorId}`);
+    this.logger.log(`⚽ Tạo bài cáp kèo thành công: ID ${saved._id} môn ${saved.sportType} (${saved.level}) bởi User ${creatorId}`);
 
     // Broadcast sự kiện kèo mới
     this.eventsGateway.server.emit('new_match_request', {
@@ -54,15 +55,22 @@ export class MatchRequestsService {
       sportType: saved.sportType,
       matchDate: saved.matchDate,
       slotsNeeded: saved.slotsNeeded,
+      level: saved.level,
     });
 
     return saved;
   }
 
   /**
-   * Lấy danh sách kèo thể thao đang tìm người (Mục 5)
+   * Lấy danh sách kèo thể thao đang tìm người (Mục 5) kèm bộ lọc trình độ và ngày
    */
-  async findAll(sportType?: string, status?: MatchRequestStatus) {
+  async findAll(
+    sportType?: string,
+    status?: MatchRequestStatus,
+    level?: MatchLevel,
+    fromDate?: string,
+    toDate?: string,
+  ) {
     const filter: any = {};
     if (status) {
       filter.status = status;
@@ -72,6 +80,20 @@ export class MatchRequestsService {
 
     if (sportType) {
       filter.sportType = sportType.toUpperCase();
+    }
+
+    if (level) {
+      filter.level = level;
+    }
+
+    if (fromDate || toDate) {
+      filter.matchDate = {};
+      if (fromDate) {
+        filter.matchDate.$gte = new Date(fromDate);
+      }
+      if (toDate) {
+        filter.matchDate.$lte = new Date(toDate);
+      }
     }
 
     return this.matchRequestModel
