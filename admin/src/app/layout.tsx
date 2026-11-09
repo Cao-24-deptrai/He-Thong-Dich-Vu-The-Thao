@@ -20,7 +20,7 @@ import {
   Award,
   Trophy,
   Gamepad2,
-  Cpu
+  Cpu,
   PackageCheck,
   Star
 } from 'lucide-react';

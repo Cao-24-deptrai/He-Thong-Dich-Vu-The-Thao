@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import { BridgeAgent, BridgeAgentDocument } from './schemas/bridge-agent.schema';
 import { CreateBridgeAgentDto, AgentHandshakeDto, AgentHeartbeatDto } from './dto/bridge.dto';
-import { BridgeAgentStatus, DeviceType } from '../../common/enums';
+import { BridgeAgentStatus, DeviceType } from '../common/enums';
 
 @Injectable()
 export class BridgeAgentService {
@@ -79,7 +79,8 @@ export class BridgeAgentService {
   }
 
   async getAgents(): Promise<BridgeAgent[]> {
-    return this.agentModel.find().lean();
+    //return this.agentModel.find().lean();
+    return this.agentModel.find().lean() as unknown as BridgeAgent[];
   }
 
   async seedDefaultAgents(): Promise<number> {

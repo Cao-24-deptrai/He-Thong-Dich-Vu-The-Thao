@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { GamingMachineZone } from '../../common/enums';
+import { GamingMachineZone } from '../common/enums';
 
 @Injectable()
 export class GamingPricingService {

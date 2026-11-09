@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DeviceCommand, DeviceCommandDocument } from './schemas/device-command.schema';
 import { CreateDeviceCommandDto } from './dto/bridge.dto';
-import { DeviceCommandStatus } from '../../common/enums';
+import { DeviceCommandStatus } from '../common/enums';
 
 @Injectable()
 export class DeviceCommandService {
