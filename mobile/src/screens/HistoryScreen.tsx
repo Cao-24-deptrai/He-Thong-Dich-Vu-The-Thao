@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   bookingCode: {
     fontSize: 11,
     color: colors.textMuted,
-    fontFamily: 'monospace',
+    
     marginTop: 2,
   },
   statusBadge: {
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: colors.success,
-    fontFamily: 'monospace',
+    
   },
   cardActions: {
     flexDirection: 'row',

@@ -16,13 +16,13 @@ import { Facility } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
 
 const SPORT_CATEGORIES = [
-  { key: 'ALL', label: 'Tất cả', icon: '⚡' },
+  { key: 'ALL', label: 'Tất cả', icon: '🏆' },
   { key: 'FOOTBALL', label: 'Bóng đá', icon: '⚽' },
   { key: 'BADMINTON', label: 'Cầu lông', icon: '🏸' },
-  { key: 'PICKLEBALL', label: 'Pickleball', icon: '🏓' },
+  { key: 'PICKLEBALL', label: 'Pickleball', icon: '🎾' },
   { key: 'TENNIS', label: 'Tennis', icon: '🎾' },
   { key: 'ESPORTS', label: 'Esports', icon: '🎮' },
-  { key: 'GYM', label: 'Gym', icon: '🏋️' },
+  { key: 'GYM', label: 'Gym & Fitness', icon: '🏋️' },
 ];
 
 interface Props {
@@ -69,7 +69,23 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Khám Phá Sân Bãi</Text>
-          <Text style={styles.headerSubtitle}>Tìm kiếm & đặt sân thể thao, esports gần bạn nhất</Text>
+          <Text style={styles.headerSubtitle}>
+            Hệ thống sân thể thao & esports thông minh, giá động thời gian thực
+          </Text>
+        </View>
+
+        {/* Dynamic Pricing & Operating Rule Banner (BR-01, BR-04) */}
+        <View style={styles.ruleBanner}>
+          <View style={styles.ruleBannerIcon}>
+            <Text style={{ fontSize: 16 }}>⚡</Text>
+          </View>
+          <View style={styles.ruleBannerContent}>
+            <Text style={styles.ruleBannerTitle}>Quy Tắc Đặt Sân & Biểu Giá Động (BR-04)</Text>
+            <Text style={styles.ruleBannerDesc}>
+              • Mở cửa: 06:00 - 23:00 (Block 30 phút){'\n'}
+              • Phụ thu cao điểm: +50.000đ/h (17:30 - 21:00 T2-T6 & cả ngày T7, CN)
+            </Text>
+          </View>
         </View>
 
         {/* Search Input */}
@@ -77,7 +93,7 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm tên sân, địa chỉ, quận huyện..."
+            placeholder="Tìm tên cơ sở, địa chỉ, quận huyện..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -118,7 +134,7 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
         ) : filteredFacilities.length === 0 ? (
           <View style={styles.centerContainer}>
             <Text style={styles.emptyIcon}>🏟️</Text>
-            <Text style={styles.emptyTitle}>Chưa có sân nào</Text>
+            <Text style={styles.emptyTitle}>Chưa có cơ sở nào</Text>
             <Text style={styles.emptySubtitle}>Không tìm thấy cơ sở thể thao phù hợp bộ lọc.</Text>
           </View>
         ) : (
@@ -126,6 +142,7 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
             data={filteredFacilities}
             keyExtractor={(item) => item._id}
             contentContainerStyle={styles.facilityList}
+            showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
               <TouchableOpacity
                 style={styles.facilityCard}
@@ -144,23 +161,32 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
                   </View>
                 </View>
 
+                {/* Court configuration support tag (BR-02, BR-03) */}
+                <View style={styles.courtSupportBox}>
+                  <Text style={styles.courtSupportText}>
+                    ⚡ Hỗ trợ: Sân 5 chuẩn • Sân 7 ghép (F1+F2) • Sân 11 ghép (F1..F6)
+                  </Text>
+                </View>
+
                 {/* Tags & Time */}
                 <View style={styles.cardFooter}>
-                  <View style={styles.sportTag}>
-                    <Text style={styles.sportTagText}>
-                      {item.sportTypes?.join(' • ') || 'THỂ THAO'}
-                    </Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, flex: 1 }}>
+                    {(item.sportTypes && item.sportTypes.length > 0 ? item.sportTypes : ['THỂ THAO']).map((st, sidx) => (
+                      <View key={sidx} style={styles.sportTag}>
+                        <Text style={styles.sportTagText}>{st}</Text>
+                      </View>
+                    ))}
                   </View>
 
                   <View style={styles.openHourBadge}>
                     <Text style={styles.openHourText}>
-                      🕒 {item.openHour || '06:00'} - {item.closeHour || '22:00'}
+                      🕒 {item.openHour || '06:00'} - {item.closeHour || '23:00'}
                     </Text>
                   </View>
                 </View>
 
                 <View style={styles.cardAction}>
-                  <Text style={styles.cardActionText}>Xem lịch trống & Đặt sân →</Text>
+                  <Text style={styles.cardActionText}>Xem sơ đồ & Chọn sân →</Text>
                 </View>
               </TouchableOpacity>
             )}
@@ -182,7 +208,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 22,
@@ -190,9 +216,43 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  ruleBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(6, 182, 212, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(6, 182, 212, 0.25)',
+    borderRadius: 14,
+    padding: 10,
+    marginBottom: 12,
+  },
+  ruleBannerIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: 'rgba(6, 182, 212, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  ruleBannerContent: {
+    flex: 1,
+  },
+  ruleBannerTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#00f2fe',
+    textTransform: 'uppercase',
+  },
+  ruleBannerDesc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -203,7 +263,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   searchIcon: {
     fontSize: 16,
@@ -215,7 +275,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   categoriesWrapper: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   categoryList: {
     gap: 8,
@@ -257,8 +317,8 @@ const styles = StyleSheet.create({
   },
   facilityCard: {
     backgroundColor: '#111827',
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     shadowColor: '#000',
@@ -271,9 +331,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#090d16',
     alignItems: 'center',
     justifyContent: 'center',
@@ -282,13 +342,13 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cardIcon: {
-    fontSize: 24,
+    fontSize: 22,
   },
   cardHeaderInfo: {
     flex: 1,
   },
   facilityName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
     color: '#ffffff',
   },
@@ -297,28 +357,41 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 3,
   },
+  courtSupportBox: {
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.2)',
+  },
+  courtSupportText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#fbbf24',
+  },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 14,
-    paddingTop: 12,
+    marginTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   sportTag: {
     backgroundColor: 'rgba(0, 242, 254, 0.12)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: 'rgba(0, 242, 254, 0.25)',
   },
   sportTagText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#00f2fe',
-    fontFamily: 'monospace',
   },
   openHourBadge: {
     flexDirection: 'row',
@@ -327,10 +400,9 @@ const styles = StyleSheet.create({
   openHourText: {
     fontSize: 11,
     color: colors.textMuted,
-    fontFamily: 'monospace',
   },
   cardAction: {
-    marginTop: 12,
+    marginTop: 10,
     alignItems: 'flex-end',
   },
   cardActionText: {

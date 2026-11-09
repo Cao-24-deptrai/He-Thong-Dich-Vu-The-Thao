@@ -179,19 +179,19 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <div className="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs flex items-center gap-2">
             <span className="text-slate-400 font-medium">Tổng sân:</span>
-            <strong className="text-white font-mono">{venues.length}</strong>
+            <strong className="text-white ">{venues.length}</strong>
           </div>
           <div className="px-3 py-1.5 rounded-xl bg-emerald-950/50 border border-emerald-700/40 text-xs flex items-center gap-2 text-emerald-300">
             <span>Còn trống:</span>
-            <strong className="font-mono font-bold">{availableCount}</strong>
+            <strong className=" font-bold">{availableCount}</strong>
           </div>
           <div className="px-3 py-1.5 rounded-xl bg-rose-950/50 border border-rose-700/40 text-xs flex items-center gap-2 text-rose-300">
             <span>Đã đặt:</span>
-            <strong className="font-mono font-bold">{confirmedCount}</strong>
+            <strong className=" font-bold">{confirmedCount}</strong>
           </div>
           <div className="px-3 py-1.5 rounded-xl bg-blue-950/50 border border-blue-700/40 text-xs flex items-center gap-2 text-blue-300">
             <span>Công suất:</span>
-            <strong className="font-mono font-bold">{occupancyRate}%</strong>
+            <strong className=" font-bold">{occupancyRate}%</strong>
           </div>
 
           {/* Zoom & Refresh Controls */}
@@ -244,7 +244,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                 <Layers className="w-3.5 h-3.5 text-blue-400" />
                 Danh Sách Sân
               </span>
-              <span className="text-[10px] text-slate-500 font-mono">06:00 - 23:00</span>
+              <span className="text-[10px] text-slate-500 ">06:00 - 23:00</span>
             </div>
 
             {/* Hourly Headers */}
@@ -257,10 +257,10 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                     slot.isPeak ? 'bg-amber-500/10' : ''
                   }`}
                 >
-                  <div className="text-xs font-mono font-bold text-slate-200">
+                  <div className="text-xs font-bold text-slate-200">
                     {slot.startStr}
                   </div>
-                  <div className="text-[9px] text-slate-500 font-mono">
+                  <div className="text-[9px] text-slate-500 ">
                     {slot.endStr}
                   </div>
                   {slot.isPeak && (
@@ -319,7 +319,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                         <span className="text-[10px] text-slate-400 truncate max-w-[90px]">
                           {venue.venueType || 'Tiêu chuẩn'}
                         </span>
-                        <span className="text-[11px] font-mono font-bold text-emerald-400">
+                        <span className="text-[11px] font-bold text-emerald-400">
                           {((venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ
                         </span>
                       </div>
@@ -382,7 +382,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                               className={`h-14 rounded-xl border p-1.5 flex flex-col justify-between transition-all duration-150 ${cellBg}`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-mono font-bold opacity-90">
+                                <span className="text-[10px] font-bold opacity-90">
                                   {slot.startTime}
                                 </span>
                                 <span
@@ -402,7 +402,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                                 {statusText}
                               </div>
 
-                              <div className="text-[9px] font-mono opacity-80 truncate">
+                              <div className="text-[9px] opacity-80 truncate">
                                 {(slot.price || 0).toLocaleString('vi-VN')} đ
                               </div>
                             </div>
@@ -447,16 +447,16 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
         </div>
 
         {hoveredSlot && (
-          <div className="text-xs text-slate-300 flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-lg border border-slate-800">
-            <span className="font-bold text-white">{hoveredSlot.venue.name}</span>
-            <span>•</span>
-            <span className="font-mono text-cyan-400 font-bold">
-              {hoveredSlot.slot.startTime} - {hoveredSlot.slot.endTime}
-            </span>
-            <span>•</span>
-            <span className="font-mono text-emerald-400 font-bold">
-              {(hoveredSlot.slot.price || 0).toLocaleString('vi-VN')} đ
-            </span>
+          <div className="bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800 flex flex-col items-end">
+            <div className="text-xs font-bold text-white">{hoveredSlot.venue.name}</div>
+            <div className="text-[11px] flex items-center gap-2 mt-0.5">
+              <span className="text-cyan-400 font-semibold">
+                {hoveredSlot.slot.startTime} - {hoveredSlot.slot.endTime}
+              </span>
+              <span className="text-emerald-400 font-bold">
+                {(hoveredSlot.slot.price || 0).toLocaleString('vi-VN')} đ
+              </span>
+            </div>
           </div>
         )}
       </div>

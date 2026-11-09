@@ -14,7 +14,9 @@ import {
 import { colors } from '../theme/colors';
 import { api } from '../api/client';
 
-export const MatchmakingScreen: React.FC = () => {
+interface MatchmakingScreenProps { onBack?: () => void; }
+
+export const MatchmakingScreen: React.FC<MatchmakingScreenProps> = ({ onBack }) => {
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSport, setSelectedSport] = useState<string>('');

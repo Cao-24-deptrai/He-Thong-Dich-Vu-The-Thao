@@ -123,7 +123,7 @@ export const AuthScreen: React.FC = () => {
             <Text style={styles.label}>Mật khẩu *</Text>
             <TextInput
               style={styles.input}
-              placeholder="••••••••"
+              placeholder="Nhập mật khẩu..."
               placeholderTextColor={colors.textMuted}
               secureTextEntry
               value={password}
@@ -315,6 +315,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textMuted,
     marginTop: 2,
-    fontFamily: 'monospace',
+    
   },
 });

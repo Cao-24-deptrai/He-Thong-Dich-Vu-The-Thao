@@ -292,7 +292,7 @@ export default function WalkInBookingPage() {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer font-mono"
+              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer "
             />
           </div>
 
@@ -391,7 +391,7 @@ export default function WalkInBookingPage() {
               <div className="absolute right-0 top-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] font-mono tracking-widest text-cyan-400 uppercase font-extrabold">
+                  <span className="text-[10px] tracking-widest text-cyan-400 uppercase font-extrabold">
                     {selectedFacility?.name || 'Cơ sở Thể Thao'}
                   </span>
                   <h3 className="text-xl font-black text-white mt-0.5">
@@ -403,7 +403,7 @@ export default function WalkInBookingPage() {
                 </div>
                 <div className="text-right">
                   <span className="text-xs text-slate-400 font-medium">Tổng tiền thanh toán</span>
-                  <div className="text-2xl font-black text-emerald-400 font-mono">
+                  <div className="text-2xl font-black text-emerald-400 ">
                     {selectedSlot.price.toLocaleString('vi-VN')} đ
                   </div>
                   <span className="text-[10px] text-slate-400">Đã bao gồm VAT & ánh sáng</span>
@@ -413,13 +413,13 @@ export default function WalkInBookingPage() {
               <div className="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-cyan-400" />
-                  <span className="font-mono font-bold text-white text-sm">
+                  <span className=" font-bold text-white text-sm">
                     {selectedSlot.startTime} - {selectedSlot.endTime}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-300">
                   <Calendar className="w-4 h-4 text-blue-400" />
-                  <span className="font-mono">{selectedDate}</span>
+                  <span className="">{selectedDate}</span>
                 </div>
               </div>
             </div>
@@ -490,7 +490,7 @@ export default function WalkInBookingPage() {
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-bold text-slate-700">Tiền khách đưa (Tendered):</span>
-                <span className="font-mono font-black text-slate-900 text-sm">
+                <span className=" font-black text-slate-900 text-sm">
                   {cashTendered.toLocaleString('vi-VN')} đ
                 </span>
               </div>
@@ -530,7 +530,7 @@ export default function WalkInBookingPage() {
               {/* Change calculation */}
               <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-600">Tiền thối lại khách:</span>
-                <span className={`text-base font-black font-mono ${cashChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <span className={`text-base font-black  ${cashChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                   {cashChange.toLocaleString('vi-VN')} đ
                 </span>
               </div>
@@ -618,7 +618,7 @@ export default function WalkInBookingPage() {
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="Ví dụ: 0912345678"
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono"
+                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
               />
             </div>
 
@@ -641,7 +641,7 @@ export default function WalkInBookingPage() {
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                   CẦN THANH TOÁN
                 </span>
-                <div className="text-xl font-black font-mono text-emerald-400">
+                <div className="text-xl font-black text-emerald-400">
                   {priceToPay.toLocaleString('vi-VN')} đ
                 </div>
               </div>
@@ -716,7 +716,7 @@ export default function WalkInBookingPage() {
               <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800 text-left space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400">Số tiền cần thanh toán:</span>
-                  <span className="font-mono font-black text-emerald-400 text-lg">
+                  <span className=" font-black text-emerald-400 text-lg">
                     {priceToPay.toLocaleString('vi-VN')} đ
                   </span>
                 </div>
@@ -726,7 +726,7 @@ export default function WalkInBookingPage() {
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400">Số tài khoản:</span>
-                  <span className="font-mono font-bold text-cyan-400">0999999999</span>
+                  <span className=" font-bold text-cyan-400">0999999999</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-400">Chủ tài khoản:</span>
@@ -757,7 +757,7 @@ export default function WalkInBookingPage() {
             </button>
 
             {/* Receipt Printable Area (80mm format) */}
-            <div id="printable-receipt" className="text-slate-900 font-mono text-xs space-y-3 p-2 border-b border-dashed border-slate-300">
+            <div id="printable-receipt" className="text-slate-900 text-xs space-y-3 p-2 border-b border-dashed border-slate-300">
               <div className="text-center space-y-1">
                 <h2 className="text-base font-black uppercase tracking-wider">
                   SPORTS & ESPORTS ARENA

@@ -93,6 +93,9 @@ export default function FacilitiesPage() {
   // Create Venue form
   const [venueForm, setVenueForm] = useState({
     name: '',
+    courtCode: '',
+    isComposite: false,
+    baseUnitCodes: [] as string[],
     venueType: 'Standard',
     defaultPrice: 200000,
     hasPeakHour: true,
@@ -110,6 +113,9 @@ export default function FacilitiesPage() {
   const [editVenueForm, setEditVenueForm] = useState({
     _id: '',
     name: '',
+    courtCode: '',
+    isComposite: false,
+    baseUnitCodes: [] as string[],
     venueType: 'Standard',
     defaultPrice: 200000,
     hasPeakHour: true,
@@ -268,6 +274,9 @@ export default function FacilitiesPage() {
       await api.createVenue({
         facilityId: selectedFacility._id,
         name: venueForm.name,
+        courtCode: venueForm.courtCode?.trim().toUpperCase() || undefined,
+        isComposite: !!venueForm.isComposite,
+        baseUnitCodes: venueForm.isComposite ? venueForm.baseUnitCodes : [],
         venueType: venueForm.venueType,
         defaultPrice: Number(venueForm.defaultPrice),
         pricingConfig,
@@ -285,6 +294,9 @@ export default function FacilitiesPage() {
       setShowVenueModal(false);
       setVenueForm({
         name: '',
+        courtCode: '',
+        isComposite: false,
+        baseUnitCodes: [],
         venueType: 'Standard',
         defaultPrice: 200000,
         hasPeakHour: true,
@@ -314,6 +326,9 @@ export default function FacilitiesPage() {
     setEditVenueForm({
       _id: venue._id,
       name: venue.name,
+      courtCode: venue.courtCode || '',
+      isComposite: !!venue.isComposite,
+      baseUnitCodes: venue.baseUnitCodes || [],
       venueType: venue.venueType || 'Standard',
       defaultPrice: defaultPriceVal,
       hasPeakHour: !!peakRule,
@@ -347,6 +362,9 @@ export default function FacilitiesPage() {
 
       await api.updateVenue(editVenueForm._id, {
         name: editVenueForm.name,
+        courtCode: editVenueForm.courtCode?.trim().toUpperCase() || undefined,
+        isComposite: !!editVenueForm.isComposite,
+        baseUnitCodes: editVenueForm.isComposite ? editVenueForm.baseUnitCodes : [],
         venueType: editVenueForm.venueType,
         defaultPrice: Number(editVenueForm.defaultPrice),
         pricingConfig,
@@ -430,7 +448,7 @@ export default function FacilitiesPage() {
             <div>
               <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
                 Quản Lý Cơ Sở & Sân Bãi
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 ">
                   FULL CRUD
                 </span>
               </h1>
@@ -555,7 +573,7 @@ export default function FacilitiesPage() {
                       </div>
 
                       <div className="flex items-center gap-1.5">
-                        <span className="px-2.5 py-1 text-[10px] font-mono font-black uppercase rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                        <span className="px-2.5 py-1 text-[10px] font-black uppercase rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
                           {sportLabel.split(' ')[0]}
                         </span>
                         {/* Facility Quick Actions */}
@@ -579,7 +597,7 @@ export default function FacilitiesPage() {
                     </div>
 
                     <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-                      <div className="flex items-center gap-1.5 font-mono">
+                      <div className="flex items-center gap-1.5 ">
                         <Clock className="w-3.5 h-3.5 text-slate-500" />
                         <span>{fac.openHour || '06:00'} - {fac.closeHour || '23:00'}</span>
                       </div>
@@ -637,6 +655,26 @@ export default function FacilitiesPage() {
                 </div>
               </div>
 
+                            {/* Dynamic Pricing BR-04 Notice Banner */}
+              <div className="bg-gradient-to-r from-blue-950/40 via-cyan-950/30 to-slate-900/80 p-4 rounded-3xl border border-cyan-800/40 flex items-center justify-between text-xs text-slate-300 backdrop-blur-md">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                    <Sparkles className="w-5 h-5 text-cyan-300" />
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-white text-sm flex items-center gap-2">
+                      Quy tắc giá động (BR-04 & BR-01)
+                      <span className="text-[10px] px-2 py-0.5 rounded font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        HỆ THỐNG ĐANG ÁP DỤNG
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                      Mở cửa 06:00 - 23:00 • Block tính giá 30 phút • Giờ cao điểm: +50.000đ/h (17:30 - 21:00 T2-T6 & cả ngày T7, CN)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {venuesLoading ? (
                 <div className="p-12 text-center text-slate-500 bg-slate-900/60 rounded-3xl border border-slate-800">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
@@ -666,17 +704,33 @@ export default function FacilitiesPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="font-black text-white text-base">{venue.name}</h3>
+                              {venue.courtCode && (
+                                <span className="px-2 py-0.5 text-[10px] font-black rounded-md bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 font-mono tracking-wider">
+                                  #{venue.courtCode}
+                                </span>
+                              )}
                               {!isVenueActive && (
                                 <span className="px-1.5 py-0.5 text-[9px] font-black rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                                   NGỪNG HOẠT ĐỘNG
                                 </span>
                               )}
                             </div>
-                            <span className="inline-block mt-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300 border border-slate-700">
-                              {venue.venueType || 'Tiêu chuẩn'}
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300 border border-slate-700">
+                                {venue.venueType || 'Tiêu chuẩn'}
+                              </span>
+                              {venue.isComposite ? (
+                                <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                                  ⚡ SÂN GHÉP ({venue.baseUnitCodes && venue.baseUnitCodes.length > 0 ? venue.baseUnitCodes.join(' + ') : 'Chưa cấu hình'})
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800/60 text-slate-400 border border-slate-800">
+                                  Sân đơn chuẩn
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-1.5">
@@ -707,11 +761,11 @@ export default function FacilitiesPage() {
 
                         {/* Timing and Policy Details */}
                         <div className="mt-3 pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-                          <div className="flex items-center gap-1 font-mono">
+                          <div className="flex items-center gap-1 ">
                             <Clock className="w-3 h-3 text-cyan-400" />
                             <span>{opHours.openTime} - {opHours.closeTime}</span>
                           </div>
-                          <div className="flex items-center gap-1 font-mono justify-end">
+                          <div className="flex items-center gap-1 justify-end">
                             <RotateCcw className="w-3 h-3 text-amber-400" />
                             <span>Hoàn 100%: &gt;{cancelPol.hoursBeforeForFullRefund}h</span>
                           </div>
@@ -724,7 +778,7 @@ export default function FacilitiesPage() {
                               <DollarSign className="w-3.5 h-3.5 text-slate-500" />
                               Giá giờ tiêu chuẩn:
                             </span>
-                            <span className="font-mono font-black text-emerald-400">
+                            <span className=" font-black text-emerald-400">
                               {((venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ/h
                             </span>
                           </div>
@@ -739,7 +793,7 @@ export default function FacilitiesPage() {
                                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                                   Giờ vàng ({rule.startTime} - {rule.endTime}):
                                 </span>
-                                <span className="font-mono font-black text-amber-300">
+                                <span className=" font-black text-amber-300">
                                   {(rule.price ?? 0).toLocaleString('vi-VN')} đ/h
                                 </span>
                               </div>
@@ -835,7 +889,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={facilityForm.openHour}
                     onChange={(e) => setFacilityForm({ ...facilityForm, openHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none "
                   />
                 </div>
                 <div>
@@ -846,7 +900,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={facilityForm.closeHour}
                     onChange={(e) => setFacilityForm({ ...facilityForm, closeHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none "
                   />
                 </div>
               </div>
@@ -940,7 +994,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editFacilityForm.openHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, openHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none "
                   />
                 </div>
                 <div>
@@ -951,7 +1005,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editFacilityForm.closeHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, closeHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none "
                   />
                 </div>
               </div>
@@ -1007,18 +1061,99 @@ export default function FacilitiesPage() {
             </h3>
 
             <form onSubmit={handleCreateVenue} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Tên sân con
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={venueForm.name}
-                  onChange={(e) => setVenueForm({ ...venueForm, name: e.target.value })}
-                  placeholder="Ví dụ: Sân 5A, Sân 5B hoặc Phòng VIP 1"
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
+                            <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Tên sân con
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={venueForm.name}
+                    onChange={(e) => setVenueForm({ ...venueForm, name: e.target.value })}
+                    placeholder="Ví dụ: Sân 1 (Sân 5 người A)"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Mã định danh sân (courtCode)
+                  </label>
+                  <input
+                    type="text"
+                    value={venueForm.courtCode}
+                    onChange={(e) => setVenueForm({ ...venueForm, courtCode: e.target.value.toUpperCase().trim() })}
+                    placeholder="Ví dụ: F1, S7-A, S11"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              {/* Sân ghép linh hoạt (Composite Court - BR-02, BR-03) */}
+              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-amber-400" />
+                      Sân ghép linh hoạt (Composite Court)
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Gộp từ 2 hoặc nhiều sân con chuẩn (ví dụ Sân 7 gộp 2 sân 5)
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={venueForm.isComposite}
+                    onChange={(e) => setVenueForm({ ...venueForm, isComposite: e.target.checked })}
+                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                  />
+                </div>
+
+                {venueForm.isComposite && (
+                  <div className="pt-2 border-t border-slate-800 space-y-2">
+                    <label className="block text-[11px] font-bold text-amber-300">
+                      Mã các sân con thành phần (baseUnitCodes):
+                    </label>
+                    <input
+                      type="text"
+                      value={venueForm.baseUnitCodes.join(', ')}
+                      onChange={(e) => {
+                        const parts = e.target.value.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+                        setVenueForm({ ...venueForm, baseUnitCodes: parts });
+                      }}
+                      placeholder="Ví dụ: F1, F2 (ngăn cách bởi dấu phẩy)"
+                      className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl font-mono"
+                    />
+                    {venues.filter((v) => !v.isComposite && v.courtCode).length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] text-slate-400">
+                        <span>Gợi ý sân con có sẵn:</span>
+                        {venues.filter((v) => !v.isComposite && v.courtCode).map((v) => {
+                          const code = v.courtCode!;
+                          const isPicked = venueForm.baseUnitCodes.includes(code);
+                          return (
+                            <button
+                              type="button"
+                              key={code}
+                              onClick={() => {
+                                const next = isPicked
+                                  ? venueForm.baseUnitCodes.filter((c) => c !== code)
+                                  : [...venueForm.baseUnitCodes, code];
+                                setVenueForm({ ...venueForm, baseUnitCodes: next });
+                              }}
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition ${
+                                isPicked
+                                  ? 'bg-amber-500 text-slate-950 border border-amber-400'
+                                  : 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500'
+                              }`}
+                            >
+                              {isPicked ? `✓ ${code}` : `+ ${code}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1045,7 +1180,7 @@ export default function FacilitiesPage() {
                     step={10000}
                     value={venueForm.defaultPrice}
                     onChange={(e) => setVenueForm({ ...venueForm, defaultPrice: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none "
                   />
                 </div>
               </div>
@@ -1060,7 +1195,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={venueForm.openTime}
                     onChange={(e) => setVenueForm({ ...venueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl font-mono"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl "
                   />
                 </div>
                 <div>
@@ -1071,7 +1206,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={venueForm.closeTime}
                     onChange={(e) => setVenueForm({ ...venueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl font-mono"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl "
                   />
                 </div>
               </div>
@@ -1099,7 +1234,7 @@ export default function FacilitiesPage() {
                         type="time"
                         value={venueForm.peakStart}
                         onChange={(e) => setVenueForm({ ...venueForm, peakStart: e.target.value })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                     <div>
@@ -1108,7 +1243,7 @@ export default function FacilitiesPage() {
                         type="time"
                         value={venueForm.peakEnd}
                         onChange={(e) => setVenueForm({ ...venueForm, peakEnd: e.target.value })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                     <div>
@@ -1118,7 +1253,7 @@ export default function FacilitiesPage() {
                         step={10000}
                         value={venueForm.peakPrice}
                         onChange={(e) => setVenueForm({ ...venueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                   </div>
@@ -1138,7 +1273,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={venueForm.hoursBeforeForFullRefund}
                       onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                     />
                   </div>
                   <div>
@@ -1147,7 +1282,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={venueForm.hoursBeforeForNoRefund}
                       onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                     />
                   </div>
                 </div>
@@ -1190,17 +1325,98 @@ export default function FacilitiesPage() {
             </h3>
 
             <form onSubmit={handleUpdateVenue} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Tên sân con
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editVenueForm.name}
-                  onChange={(e) => setEditVenueForm({ ...editVenueForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
+                            <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Tên sân con
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVenueForm.name}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                    Mã định danh sân (courtCode)
+                  </label>
+                  <input
+                    type="text"
+                    value={editVenueForm.courtCode}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, courtCode: e.target.value.toUpperCase().trim() })}
+                    placeholder="Ví dụ: F1, S7-A, S11"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              {/* Sân ghép linh hoạt (Composite Court - BR-02, BR-03) */}
+              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-amber-400" />
+                      Sân ghép linh hoạt (Composite Court)
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Gộp từ 2 hoặc nhiều sân con chuẩn (ví dụ Sân 7 gộp 2 sân 5)
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={editVenueForm.isComposite}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, isComposite: e.target.checked })}
+                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                  />
+                </div>
+
+                {editVenueForm.isComposite && (
+                  <div className="pt-2 border-t border-slate-800 space-y-2">
+                    <label className="block text-[11px] font-bold text-amber-300">
+                      Mã các sân con thành phần (baseUnitCodes):
+                    </label>
+                    <input
+                      type="text"
+                      value={editVenueForm.baseUnitCodes.join(', ')}
+                      onChange={(e) => {
+                        const parts = e.target.value.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+                        setEditVenueForm({ ...editVenueForm, baseUnitCodes: parts });
+                      }}
+                      placeholder="Ví dụ: F1, F2 (ngăn cách bởi dấu phẩy)"
+                      className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl font-mono"
+                    />
+                    {venues.filter((v) => !v.isComposite && v.courtCode && v._id !== editVenueForm._id).length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1 text-[11px] text-slate-400">
+                        <span>Gợi ý sân con có sẵn:</span>
+                        {venues.filter((v) => !v.isComposite && v.courtCode && v._id !== editVenueForm._id).map((v) => {
+                          const code = v.courtCode!;
+                          const isPicked = editVenueForm.baseUnitCodes.includes(code);
+                          return (
+                            <button
+                              type="button"
+                              key={code}
+                              onClick={() => {
+                                const next = isPicked
+                                  ? editVenueForm.baseUnitCodes.filter((c) => c !== code)
+                                  : [...editVenueForm.baseUnitCodes, code];
+                                setEditVenueForm({ ...editVenueForm, baseUnitCodes: next });
+                              }}
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition ${
+                                isPicked
+                                  ? 'bg-amber-500 text-slate-950 border border-amber-400'
+                                  : 'bg-slate-800 text-slate-300 border border-slate-700 hover:border-slate-500'
+                              }`}
+                            >
+                              {isPicked ? `✓ ${code}` : `+ ${code}`}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1226,7 +1442,7 @@ export default function FacilitiesPage() {
                     step={10000}
                     value={editVenueForm.defaultPrice}
                     onChange={(e) => setEditVenueForm({ ...editVenueForm, defaultPrice: Number(e.target.value) })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none "
                   />
                 </div>
               </div>
@@ -1241,7 +1457,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editVenueForm.openTime}
                     onChange={(e) => setEditVenueForm({ ...editVenueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl font-mono"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl "
                   />
                 </div>
                 <div>
@@ -1252,7 +1468,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editVenueForm.closeTime}
                     onChange={(e) => setEditVenueForm({ ...editVenueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl font-mono"
+                    className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 text-white rounded-xl "
                   />
                 </div>
               </div>
@@ -1280,7 +1496,7 @@ export default function FacilitiesPage() {
                         type="time"
                         value={editVenueForm.peakStart}
                         onChange={(e) => setEditVenueForm({ ...editVenueForm, peakStart: e.target.value })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                     <div>
@@ -1289,7 +1505,7 @@ export default function FacilitiesPage() {
                         type="time"
                         value={editVenueForm.peakEnd}
                         onChange={(e) => setEditVenueForm({ ...editVenueForm, peakEnd: e.target.value })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                     <div>
@@ -1299,7 +1515,7 @@ export default function FacilitiesPage() {
                         step={10000}
                         value={editVenueForm.peakPrice}
                         onChange={(e) => setEditVenueForm({ ...editVenueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                        className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                       />
                     </div>
                   </div>
@@ -1319,7 +1535,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={editVenueForm.hoursBeforeForFullRefund}
                       onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                     />
                   </div>
                   <div>
@@ -1328,7 +1544,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={editVenueForm.hoursBeforeForNoRefund}
                       onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full p-2 text-xs bg-slate-950 border border-slate-700 text-white rounded-lg "
                     />
                   </div>
                 </div>

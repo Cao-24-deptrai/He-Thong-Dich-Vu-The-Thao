@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
@@ -34,13 +33,12 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [holding, setHolding] = useState(false);
 
-
   // Generate 5 upcoming days
   const dateOptions = Array.from({ length: 5 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().split('T')[0];
-    const dayName = i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : `T${d.getDay() + 1}`;
+    const dayName = i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : `Thứ ${d.getDay() + 1 === 1 ? 'CN' : d.getDay() + 1}`;
     const dayMonth = `${d.getDate()}/${d.getMonth() + 1}`;
     return { dateStr, dayName, dayMonth };
   });
@@ -84,7 +82,7 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
     loadAvailability();
   }, [selectedVenue, selectedDate]);
 
-  // Real-time Socket.io listener for slot changes (Mục 2.4 & 5.2)
+  // Real-time Socket.io listener for slot changes
   useEffect(() => {
     const unsubscribe = subscribeSlotChanges((data) => {
       if (
@@ -130,7 +128,6 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
     } catch (err: any) {
       const msg = err.message || 'Khung giờ này đã được giữ chỗ hoặc đặt!';
       Alert.alert('Không thể giữ chỗ', msg);
-      // Reload slots
       loadAvailability();
     } finally {
       setHolding(false);
@@ -149,7 +146,9 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
             <Text style={styles.topBarTitle} numberOfLines={1}>
               {selectedFacility?.name || 'Chọn Sân'}
             </Text>
-            <Text style={styles.topBarSubtitle}>Lưới 16 khung giờ trực tiếp (06:00 - 22:00)</Text>
+            <Text style={styles.topBarSubtitle}>
+              Giờ mở cửa: {selectedFacility?.openHour || '06:00'} - {selectedFacility?.closeHour || '23:00'} (Block 30 phút)
+            </Text>
           </View>
         </View>
 
@@ -161,7 +160,7 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
               onPress={() => setViewMode('2D')}
             >
               <Text style={[styles.viewModeBtnText, viewMode === '2D' && styles.viewModeBtnTextActive]}>
-                🗺️ Sơ đồ 2D (Pitch Map)
+                🏟️ Sơ Đồ 2D (Pitch Map)
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -169,7 +168,7 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
               onPress={() => setViewMode('LIST')}
             >
               <Text style={[styles.viewModeBtnText, viewMode === 'LIST' && styles.viewModeBtnTextActive]}>
-                📋 Danh sách (List)
+                📋 Danh Sách (List)
               </Text>
             </TouchableOpacity>
           </View>
@@ -194,12 +193,28 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
                   return (
                     <TouchableOpacity
                       key={v._id}
-                      style={[styles.venuePill, isSelected && styles.activeVenuePill]}
+                      style={[
+                        styles.venuePill,
+                        v.isComposite && styles.compositeVenuePill,
+                        isSelected && styles.activeVenuePill,
+                      ]}
                       onPress={() => setSelectedVenue(v)}
                     >
-                      <Text style={[styles.venuePillName, isSelected && styles.activeVenuePillName]}>
-                        {v.name}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={[styles.venuePillName, isSelected && styles.activeVenuePillName]}>
+                          {v.name}
+                        </Text>
+                        {v.courtCode && (
+                          <Text style={[styles.courtCodeBadge, isSelected && { color: '#090d16', backgroundColor: '#fff' }]}>
+                            #{v.courtCode}
+                          </Text>
+                        )}
+                      </View>
+                      {v.isComposite && (
+                        <Text style={[styles.compositeNote, isSelected && { color: 'rgba(9, 13, 22, 0.8)' }]}>
+                          ⚡ Ghép ({v.baseUnitCodes?.join('+')})
+                        </Text>
+                      )}
                       <Text style={[styles.venuePillPrice, isSelected && styles.activeVenuePillPrice]}>
                         {price.toLocaleString('vi-VN')} đ/h
                       </Text>
@@ -211,8 +226,7 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
           )}
 
           {/* Date Picker Tabs */}
-          <Text style={styles.sectionTitle}>2. CHỌN NGÀY ĐẶT</Text>
-
+          <Text style={styles.sectionTitle}>2. CHỌN NGÀY ĐẶT SÂN</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
             {dateOptions.map((opt) => {
               const isSelected = selectedDate === opt.dateStr;
@@ -233,12 +247,20 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
             })}
           </ScrollView>
 
-          {/* 16 Slots Grid */}
+          {/* Dynamic Pricing BR-04 Notice Banner */}
+          <View style={styles.pricingNotice}>
+            <Text style={styles.pricingNoticeTitle}>⚡ Biểu Giá Động Theo BR-04:</Text>
+            <Text style={styles.pricingNoticeDesc}>
+              • Giá niêm yết theo block 30 phút • Giờ vàng cao điểm: Phụ thu +25.000đ/block (+50.000đ/giờ) vào 17:30 - 21:00 (T2-T6) & toàn bộ Thứ 7, CN.
+            </Text>
+          </View>
+
+          {/* Slots Grid */}
           <View style={styles.slotHeaderRow}>
-            <Text style={styles.sectionTitle}>3. CHỌN KHUNG GIỜ</Text>
+            <Text style={styles.sectionTitle}>3. CHỌN KHUNG GIỜ HOẠT ĐỘNG</Text>
             <View style={styles.liveBadge}>
               <View style={styles.liveDot} />
-              <Text style={styles.liveText}>Realtime</Text>
+              <Text style={styles.liveText}>Thời gian thực</Text>
             </View>
           </View>
 
@@ -287,7 +309,7 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
                       {s.price.toLocaleString('vi-VN')} đ
                     </Text>
                     <Text style={[styles.slotStatus, labelStyle, isSelected && styles.textWhite]}>
-                      {isSelected ? 'Đã chọn' : statusLabel}
+                      {isSelected ? '✓ Đã chọn' : statusLabel}
                     </Text>
                   </TouchableOpacity>
                 );
@@ -303,11 +325,11 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-              <Text style={styles.legendText}>Đang giữ</Text>
+              <Text style={styles.legendText}>Đang giữ (10p)</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.danger }]} />
-              <Text style={styles.legendText}>Đã đặt</Text>
+              <Text style={styles.legendText}>Đã thanh toán</Text>
             </View>
           </View>
         </ScrollView>
@@ -315,12 +337,21 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
         {/* Bottom Booking Action Bar */}
         <View style={styles.bottomBar}>
           <View style={styles.bottomBarInfo}>
-            <Text style={styles.bottomBarLabel}>Khung giờ đã chọn:</Text>
-            <Text style={styles.bottomBarValue}>
-              {selectedSlot
-                ? `${selectedSlot.startTime} - ${selectedSlot.endTime} • ${selectedSlot.price.toLocaleString('vi-VN')} đ`
-                : 'Chưa chọn khung giờ'}
-            </Text>
+            {selectedSlot ? (
+              <>
+                <Text style={[styles.bottomBarValue, { fontSize: 15, fontWeight: '800' }]}>
+                  {selectedVenue?.name} ({selectedSlot.startTime} - {selectedSlot.endTime})
+                </Text>
+                <Text style={[styles.bottomBarLabel, { color: colors.primary, fontWeight: '800', marginTop: 2 }]}>
+                  {selectedSlot.price.toLocaleString('vi-VN')} đ
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.bottomBarLabel}>Khung giờ đã chọn:</Text>
+                <Text style={styles.bottomBarValue}>Chưa chọn khung giờ</Text>
+              </>
+            )}
           </View>
 
           <TouchableOpacity
@@ -374,7 +405,7 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
   },
   topBarSubtitle: {
@@ -384,81 +415,150 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
-  sectionTitle: {
+  viewModeToggleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  viewModeBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewModeBtnActive: {
+    backgroundColor: 'rgba(6, 182, 212, 0.2)',
+    borderColor: '#00f2fe',
+  },
+  viewModeBtnText: {
     fontSize: 12,
     fontWeight: '700',
     color: colors.textSecondary,
-    marginBottom: 10,
+  },
+  viewModeBtnTextActive: {
+    color: '#00f2fe',
+    fontWeight: '800',
+  },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.textSecondary,
+    marginBottom: 8,
     letterSpacing: 0.5,
   },
   pillsRow: {
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   venuePill: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
   },
+  compositeVenuePill: {
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+  },
   activeVenuePill: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#00f2fe',
+    borderColor: '#00f2fe',
   },
   venuePillName: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
     color: colors.textPrimary,
   },
   activeVenuePillName: {
-    color: '#fff',
+    color: '#090d16',
   },
-  venuePillPrice: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
+  courtCodeBadge: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#00f2fe',
+    backgroundColor: 'rgba(6, 182, 212, 0.2)',
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: 4,
     fontFamily: 'monospace',
   },
+  compositeNote: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#fbbf24',
+    marginTop: 2,
+  },
+  venuePillPrice: {
+    fontSize: 10,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
   activeVenuePillPrice: {
-    color: 'rgba(255,255,255,0.8)',
+    color: 'rgba(9, 13, 22, 0.85)',
+    fontWeight: '700',
   },
   dateTab: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: colors.surface,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
-    minWidth: 70,
+    minWidth: 68,
   },
   activeDateTab: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: '#00f2fe',
+    borderColor: '#00f2fe',
   },
   dateDayName: {
-    fontSize: 11,
+    fontSize: 10,
     color: colors.textMuted,
     fontWeight: '600',
   },
   dateDayMonth: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: colors.textPrimary,
     marginTop: 2,
   },
   activeDateText: {
-    color: '#fff',
+    color: '#090d16',
+    fontWeight: '800',
+  },
+  pricingNotice: {
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.25)',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 16,
+  },
+  pricingNoticeTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#fbbf24',
+    textTransform: 'uppercase',
+  },
+  pricingNoticeDesc: {
+    fontSize: 10,
+    color: colors.textSecondary,
+    marginTop: 2,
+    lineHeight: 14,
   },
   slotHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   liveBadge: {
     flexDirection: 'row',
@@ -466,7 +566,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: 8,
   },
   liveDot: {
     width: 6,
@@ -492,14 +592,14 @@ const styles = StyleSheet.create({
   slotsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     marginBottom: 16,
   },
   slotCard: {
-    width: '22.5%',
+    width: '23%',
     aspectRatio: 1.1,
-    borderRadius: 14,
-    padding: 8,
+    borderRadius: 12,
+    padding: 6,
     justifyContent: 'space-between',
     borderWidth: 1,
   },
@@ -518,22 +618,21 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   slotCardSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primaryLight,
+    backgroundColor: '#00f2fe',
+    borderColor: '#00f2fe',
   },
   slotTime: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: colors.textPrimary,
   },
   slotPrice: {
-    fontSize: 10,
+    fontSize: 9,
     color: colors.textSecondary,
-    fontFamily: 'monospace',
   },
   slotStatus: {
-    fontSize: 9,
-    fontWeight: '700',
+    fontSize: 8,
+    fontWeight: '800',
   },
   slotStatusAvailable: {
     color: colors.success,
@@ -545,39 +644,40 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   textWhite: {
-    color: '#fff',
+    color: '#090d16',
+    fontWeight: '900',
   },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16,
-    marginTop: 10,
+    paddingVertical: 8,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
   legendDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
   },
   legendText: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    backgroundColor: '#090d16',
     borderTopWidth: 1,
     borderTopColor: colors.border,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -588,57 +688,28 @@ const styles = StyleSheet.create({
   },
   bottomBarLabel: {
     fontSize: 11,
-    color: colors.textMuted,
+    color: colors.textSecondary,
   },
   bottomBarValue: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
-    marginTop: 2,
   },
   holdBtn: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#00f2fe',
     paddingHorizontal: 18,
     paddingVertical: 12,
     borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   holdBtnDisabled: {
+    backgroundColor: colors.surfaceLight,
     opacity: 0.5,
   },
   holdBtnText: {
-    color: '#fff',
     fontSize: 13,
-    fontWeight: '700',
-  },
-  viewModeToggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  viewModeBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  viewModeBtnActive: {
-    backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  viewModeBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  viewModeBtnTextActive: {
-    color: '#ffffff',
+    fontWeight: '900',
+    color: '#090d16',
   },
 });
-
