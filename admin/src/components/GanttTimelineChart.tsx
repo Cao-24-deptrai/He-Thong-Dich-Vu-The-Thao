@@ -10,9 +10,13 @@ import {
   RefreshCw, 
   Calendar,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Zap,
+  Radio,
+  AlertTriangle
 } from 'lucide-react';
-import { api, Venue, SlotAvailability } from '@/lib/api';
+import { io, Socket } from 'socket.io-client';
+import { api, Venue, SlotAvailability, findLinkedVenues, getVenueLeaves } from '@/lib/api';
 
 interface GanttTimelineChartProps {
   venues: Venue[];
@@ -43,6 +47,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
   // Map venueId -> list of slots
   const [availabilityMap, setAvailabilityMap] = useState<Record<string, SlotAvailability[]>>({});
   const [loading, setLoading] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
   const [zoomLevel, setZoomLevel] = useState<'sm' | 'md' | 'lg'>('md');
   const [hoveredSlot, setHoveredSlot] = useState<{ venue: Venue; slot: SlotAvailability } | null>(null);
 
@@ -87,6 +92,65 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
     loadAllVenuesAvailability();
   }, [venues, selectedDate]);
 
+  // Cập nhật thời gian thực qua WebSocket (Socket.io) - Live Sync
+  useEffect(() => {
+    let socket: Socket | null = null;
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3000';
+      socket = io(backendUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        timeout: 5000,
+      });
+
+      socket.on('connect', () => {
+        setWsConnected(true);
+        venues.forEach((v) => {
+          socket?.emit('subscribe_venue', { venueId: v._id });
+        });
+      });
+
+      socket.on('disconnect', () => {
+        setWsConnected(false);
+      });
+
+      // Lắng nghe sự kiện slot_status_changed từ Backend
+      socket.on('slot_status_changed', (payload: any) => {
+        if (!payload?.venueId) return;
+
+        if (payload.bookingDate === selectedDate) {
+          setAvailabilityMap((prev) => {
+            const vSlots = prev[payload.venueId];
+            if (!vSlots) return prev;
+            const updated = vSlots.map((s) => {
+              if (s.startTime === payload.startTime) {
+                return {
+                  ...s,
+                  status: payload.status,
+                  isAvailable: payload.status === 'AVAILABLE',
+                  holdExpiresAt: payload.holdExpiresAt,
+                };
+              }
+              return s;
+            });
+            return { ...prev, [payload.venueId]: updated };
+          });
+
+          // Tải lại để cập nhật toàn bộ các sân ghép liên đới
+          loadAllVenuesAvailability();
+        }
+      });
+    } catch (e) {
+      console.warn('[WebSocket] Cannot init socket client:', e);
+    }
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [venues, selectedDate]);
+
   // Calculate Now indicator
   useEffect(() => {
     if (!isToday) {
@@ -126,6 +190,11 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
   const availableCount = allSlots.filter((s) => s.status === 'AVAILABLE').length;
   const occupancyRate = totalSlotsCount > 0 ? Math.round(((confirmedCount + heldCount) / totalSlotsCount) * 100) : 0;
 
+  // Sân ghép liên đới
+  const activeVenue = venues.find((v) => v._id === selectedVenueId);
+  const linkedVenues = activeVenue ? findLinkedVenues(activeVenue, venues) : [];
+  const linkedVenueIds = new Set(linkedVenues.map((v) => v._id));
+
   // Column width by zoom
   const colWidth = zoomLevel === 'sm' ? 68 : zoomLevel === 'md' ? 88 : 115;
 
@@ -162,12 +231,19 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
               <Calendar className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="text-base font-extrabold text-white tracking-tight flex items-center gap-2">
-                Bảng Lịch Timeline Gantt Chart Trực Quan
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Live Sync
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-extrabold text-white tracking-tight">
+                  Bảng Lịch Timeline Gantt Chart Trực Quan
+                </h2>
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border flex items-center gap-1 ${
+                  wsConnected 
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                }`}>
+                  <Radio className={`w-3 h-3 ${wsConnected ? 'animate-pulse text-emerald-400' : 'text-amber-400'}`} />
+                  {wsConnected ? 'Live Socket.io' : 'Live Sync'}
                 </span>
-              </h2>
+              </div>
               <p className="text-xs text-slate-400 mt-0.5">
                 Kéo chuột hoặc bấm vào ô giờ để chọn nhanh sân & khung giờ đặt chỗ
               </p>
@@ -298,22 +374,38 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
               venues.map((venue) => {
                 const venueSlots = availabilityMap[venue._id] || [];
                 const isVenueSelected = selectedVenueId === venue._id;
+                const isLinked = linkedVenueIds.has(venue._id);
 
                 return (
                   <div
                     key={venue._id}
                     className={`flex items-center hover:bg-slate-800/30 transition-colors ${
-                      isVenueSelected ? 'bg-blue-950/20' : ''
+                      isVenueSelected ? 'bg-blue-950/20' : isLinked ? 'bg-amber-950/10' : ''
                     }`}
                   >
                     {/* Sticky Left Venue Info Cell */}
                     <div
                       className={`sticky left-0 z-10 w-52 shrink-0 p-3 bg-slate-900 border-r border-slate-800 ${
-                        isVenueSelected ? 'bg-blue-950/40 border-l-4 border-l-cyan-400' : ''
+                        isVenueSelected 
+                          ? 'bg-blue-950/40 border-l-4 border-l-cyan-400' 
+                          : isLinked
+                          ? 'border-l-4 border-l-amber-500 bg-amber-950/30'
+                          : ''
                       }`}
                     >
-                      <div className="font-bold text-sm text-white truncate" title={venue.name}>
-                        {venue.name}
+                      <div className="flex items-center gap-1.5">
+                        <div className="font-bold text-sm text-white truncate" title={venue.name}>
+                          {venue.name}
+                        </div>
+                        {isLinked && (
+                          <span 
+                            title={`Chung mặt sân cơ sở với sân đang chọn (${activeVenue?.name})`}
+                            className="px-1 py-0.2 text-[8px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded flex items-center gap-0.5 shrink-0"
+                          >
+                            <Zap className="w-2.5 h-2.5 text-amber-400" />
+                            Ghép
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-[10px] text-slate-400 truncate max-w-[90px]">
@@ -333,18 +425,24 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                           startTime: hInfo.startStr,
                           endTime: hInfo.endStr,
                           price: (venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000,
-                          status: 'AVAILABLE',
+                          status: 'AVAILABLE' as const,
                           isAvailable: true,
                         };
-
 
                         const isSelected =
                           selectedVenueId === venue._id &&
                           selectedSlot?.startTime === slot.startTime;
 
+                        // Check if this slot conflicts with selectedSlot on a linked composite venue
+                        const isCrossConflict =
+                          isLinked &&
+                          selectedSlot &&
+                          selectedSlot.startTime === slot.startTime;
+
                         const isAvailable = slot.status === 'AVAILABLE';
                         const isHeld = slot.status === 'HELD';
                         const isConfirmed = slot.status === 'CONFIRMED';
+                        const isMaintenance = slot.status === 'MAINTENANCE';
                         const isPast = slot.status === 'PAST';
 
                         let cellBg = 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400 hover:bg-emerald-500/25 hover:border-emerald-400 cursor-pointer';
@@ -356,9 +454,17 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                         } else if (isConfirmed) {
                           cellBg = 'bg-rose-950/35 border-rose-700/50 text-rose-300 cursor-not-allowed';
                           statusText = 'Đã đặt';
+                        } else if (isMaintenance) {
+                          cellBg = 'bg-slate-900/80 border-slate-800 text-slate-500 cursor-not-allowed opacity-60';
+                          statusText = 'Bảo trì';
                         } else if (isPast) {
                           cellBg = 'bg-slate-900/60 border-slate-800 text-slate-600 cursor-not-allowed';
                           statusText = 'Qua giờ';
+                        }
+
+                        if (isCrossConflict) {
+                          cellBg = 'bg-amber-500/25 border-amber-400 text-amber-200 ring-1 ring-amber-400 border-dashed';
+                          statusText = '⚡ Sẽ khóa';
                         }
 
                         if (isSelected) {
@@ -387,7 +493,9 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                                 </span>
                                 <span
                                   className={`w-2 h-2 rounded-full ${
-                                    isAvailable
+                                    isSelected
+                                      ? 'bg-cyan-400 shadow-[0_0_6px_#06b6d4]'
+                                      : isAvailable
                                       ? 'bg-emerald-400 shadow-[0_0_6px_#10b981]'
                                       : isHeld
                                       ? 'bg-amber-400'
@@ -426,19 +534,19 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
           </span>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-emerald-500/20 border border-emerald-500/40" />
-            <span className="text-emerald-300 font-medium">Trống (Sẵn sàng đặt)</span>
+            <span className="text-emerald-300 font-medium">Trống (Sẵn sàng)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-amber-500/20 border border-amber-500/40" />
-            <span className="text-amber-300 font-medium">Đang giữ chỗ (10 phút)</span>
+            <span className="text-amber-300 font-medium">Đang giữ chỗ (10p)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-rose-500/20 border border-rose-500/40" />
-            <span className="text-rose-300 font-medium">Đã thanh toán</span>
+            <span className="text-rose-300 font-medium">Đã đặt / Đã thanh toán</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-md bg-slate-800 border border-slate-700" />
-            <span className="text-slate-500 font-medium">Đã qua giờ</span>
+            <span className="w-3 h-3 rounded-md bg-amber-500/30 border border-amber-400 border-dashed" />
+            <span className="text-amber-300 font-medium">Sân ghép liên đới</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-cyan-500/30 border border-cyan-400 ring-1 ring-cyan-400" />

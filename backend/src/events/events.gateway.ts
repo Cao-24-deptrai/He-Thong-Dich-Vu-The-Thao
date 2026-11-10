@@ -75,4 +75,30 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `Broadcast slot_status_changed: Venue ${payload.venueId} | Slot ${payload.startTime} | Status: ${payload.status}`,
     );
   }
+
+  /**
+   * Broadcast sự kiện vé check-in thành công tới màn hình quầy lễ tân và client
+   */
+  broadcastBookingCheckedIn(payload: {
+    bookingId: string;
+    bookingCode?: string;
+    ticketCode?: string;
+    venueId?: string;
+    venueName?: string;
+    bookingDate?: string;
+    startTime?: string;
+    endTime?: string;
+    customerName?: string;
+    customerPhone?: string;
+    checkedInAt: Date;
+    checkinMethod?: string;
+  }) {
+    if (this.server) {
+      this.server.emit('booking_checked_in', payload);
+      if (payload.venueId) {
+        this.server.to(`venue_${payload.venueId}`).emit('booking_checked_in', payload);
+      }
+    }
+    this.logger.log(`Broadcast booking_checked_in: Booking ${payload.bookingId} (${payload.bookingCode || ''})`);
+  }
 }

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({ description: 'Số điện thoại đăng nhập', example: '0912345678' })
@@ -11,4 +11,14 @@ export class LoginDto {
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   @IsString()
   password: string;
+
+  @ApiProperty({ description: 'Unique device identifier', required: false, default: 'default-device' })
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
+  @ApiProperty({ description: 'Device human-readable name', required: false, example: 'Chrome on Windows 11' })
+  @IsOptional()
+  @IsString()
+  deviceName?: string;
 }

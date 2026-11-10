@@ -1,12 +1,16 @@
 export enum UserRole {
   CUSTOMER = 'CUSTOMER',
   STAFF = 'STAFF',
+  MANAGER = 'MANAGER',
   OWNER = 'OWNER',
   ADMIN = 'ADMIN',
+  PT = 'PT',
 }
 
 export enum VenueType {
   FOOTBALL_5 = 'FOOTBALL_5',
+  FOOTBALL_7 = 'FOOTBALL_7',
+  FOOTBALL_11 = 'FOOTBALL_11',
   BADMINTON = 'BADMINTON',
   TENNIS = 'TENNIS',
   GYM = 'GYM',

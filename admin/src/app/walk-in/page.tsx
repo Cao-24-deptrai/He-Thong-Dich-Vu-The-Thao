@@ -24,9 +24,12 @@ import {
   ShieldCheck,
   Receipt,
   X,
-  Maximize2
+  Maximize2,
+  Repeat,
+  Check,
+  CalendarRange
 } from 'lucide-react';
-import { api, Facility, Venue, SlotAvailability, Booking } from '@/lib/api';
+import { api, Facility, Venue, SlotAvailability, Booking, findLinkedVenues, CheckRecurringResult } from '@/lib/api';
 import { GanttTimelineChart } from '@/components/GanttTimelineChart';
 import QRCode from 'qrcode';
 
@@ -94,6 +97,17 @@ export default function WalkInBookingPage() {
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
+
+  // Recurring booking modal state (FR-04, US-027)
+  const [showRecurringModal, setShowRecurringModal] = useState(false);
+  const [recurringWeeks, setRecurringWeeks] = useState<number>(4);
+  const [recurringDays, setRecurringDays] = useState<number[]>([new Date().getDay()]);
+  const [recurringStartTime, setRecurringStartTime] = useState<string>('18:00');
+  const [recurringEndTime, setRecurringEndTime] = useState<string>('19:30');
+  const [checkingRecurring, setCheckingRecurring] = useState(false);
+  const [recurringDryRun, setRecurringDryRun] = useState<CheckRecurringResult | null>(null);
+  const [submittingRecurring, setSubmittingRecurring] = useState(false);
+  const [recurringSuccess, setRecurringSuccess] = useState<any | null>(null);
 
   // Load facilities on mount
   useEffect(() => {
@@ -244,7 +258,76 @@ export default function WalkInBookingPage() {
     }
   };
 
+  const toggleDayOfWeek = (day: number) => {
+    if (recurringDays.includes(day)) {
+      if (recurringDays.length > 1) {
+        setRecurringDays(recurringDays.filter((d) => d !== day));
+      }
+    } else {
+      setRecurringDays([...recurringDays, day].sort());
+    }
+    setRecurringDryRun(null);
+  };
+
+  const handleDryRunCheck = async () => {
+    if (!selectedVenue) {
+      alert('Vui lòng chọn một sân trước');
+      return;
+    }
+    setCheckingRecurring(true);
+    try {
+      const res = await api.checkRecurringBooking({
+        venueId: selectedVenue._id,
+        startDate: selectedDate,
+        weekCount: recurringWeeks,
+        daysOfWeek: recurringDays,
+        startTime: recurringStartTime,
+        endTime: recurringEndTime,
+      });
+      setRecurringDryRun(res);
+      if (res.hasConflict) {
+        playSound('conflict');
+      } else {
+        playSound('success');
+      }
+    } catch (err: any) {
+      console.error('Check recurring error:', err);
+      alert(err.message || 'Lỗi kiểm tra tính khả dụng của chuỗi định kỳ');
+    } finally {
+      setCheckingRecurring(false);
+    }
+  };
+
+  const handleConfirmRecurringWalkIn = async () => {
+    if (!selectedVenue) return;
+    setSubmittingRecurring(true);
+    try {
+      const res = await api.createWalkInRecurringBooking({
+        venueId: selectedVenue._id,
+        startDate: selectedDate,
+        weekCount: recurringWeeks,
+        daysOfWeek: recurringDays,
+        startTime: recurringStartTime,
+        endTime: recurringEndTime,
+        customerName: customerName.trim() || 'Khách Định Kỳ',
+        customerPhone: customerPhone.trim() || '0900000000',
+        paymentMethod,
+        note: `Định kỳ ${recurringWeeks} tuần tại quầy lễ tân`,
+      });
+      playSound('success');
+      setRecurringSuccess(res);
+      setRecurringDryRun(null);
+    } catch (err: any) {
+      console.error('Recurring walk-in error:', err);
+      playSound('conflict');
+      alert(err.message || 'Không thể tạo đơn đặt sân định kỳ. Vui lòng kiểm tra lại ngày trùng.');
+    } finally {
+      setSubmittingRecurring(false);
+    }
+  };
+
   const selectedFacility = facilities.find((f) => f._id === selectedFacilityId);
+  const linkedVenues = selectedVenue ? findLinkedVenues(selectedVenue, venues) : [];
 
   return (
     <div className="space-y-8 pb-20">
@@ -307,6 +390,19 @@ export default function WalkInBookingPage() {
             }`}
           >
             Hôm nay
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowRecurringModal(true);
+              setRecurringDryRun(null);
+              setRecurringSuccess(null);
+            }}
+            className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition"
+          >
+            <Repeat className="w-3.5 h-3.5" />
+            Đặt Lịch Định Kỳ (2-12 tuần)
           </button>
         </div>
       </div>
@@ -422,6 +518,22 @@ export default function WalkInBookingPage() {
                   <span className="font-mono">{selectedDate}</span>
                 </div>
               </div>
+
+              {/* Cảnh báo Sân Ghép Liên Đới (Composite Pitches Engine) */}
+              {linkedVenues.length > 0 && (
+                <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
+                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <span className="font-bold text-amber-300">
+                      ⚡ Cảnh báo Sân Ghép Liên Đới:
+                    </span>{' '}
+                    Sân <strong className="text-white">{selectedVenue.name}</strong> dùng chung mặt sân với:{' '}
+                    <strong className="text-amber-300">
+                      {linkedVenues.map((v) => v.name).join(', ')}
+                    </strong>. Khi đặt quầy, khung giờ {selectedSlot.startTime} - {selectedSlot.endTime} của các sân trên sẽ tự động bị chiếm chỗ (Leaf Units Engine).
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-2 bg-slate-50/50">
@@ -739,6 +851,262 @@ export default function WalkInBookingPage() {
                 className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
               >
                 Đã Khách Hàng Quét Xong (Đóng Màn Hình)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: ĐẶT SÂN ĐỊNH KỲ TẠI QUẦY (RECURRING BOOKING - FR-04, US-027) */}
+      {showRecurringModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => {
+                setShowRecurringModal(false);
+                setRecurringDryRun(null);
+                setRecurringSuccess(null);
+              }}
+              className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md">
+                <Repeat className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-slate-900">
+                  Đặt Sân Định Kỳ Tại Quầy (FR-04, US-027)
+                </h2>
+                <p className="text-xs text-slate-500">
+                  Chuỗi đặt sân lặp lại hàng tuần từ 2 đến 12 tuần dành cho khách quen / cơ quan
+                </p>
+              </div>
+            </div>
+
+            {/* Sân thi đấu */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Chọn Sân thi đấu</label>
+              <select
+                value={selectedVenue?._id || ''}
+                onChange={(e) => {
+                  const v = venues.find((item) => item._id === e.target.value);
+                  if (v) setSelectedVenue(v);
+                  setRecurringDryRun(null);
+                }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {venues.map((v) => (
+                  <option key={v._id} value={v._id}>
+                    {v.name} ({v.venueType || 'Tiêu chuẩn'}) - {((v as any).defaultPrice ?? (v as any).basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ/h
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Form grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Ngày bắt đầu chuỗi</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setRecurringDryRun(null);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Số tuần đặt (2 - 12 tuần)</label>
+                <input
+                  type="number"
+                  min={2}
+                  max={12}
+                  value={recurringWeeks}
+                  onChange={(e) => {
+                    setRecurringWeeks(Math.max(2, Math.min(12, parseInt(e.target.value, 10) || 2)));
+                    setRecurringDryRun(null);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Giờ bắt đầu</label>
+                <input
+                  type="time"
+                  value={recurringStartTime}
+                  onChange={(e) => {
+                    setRecurringStartTime(e.target.value);
+                    setRecurringDryRun(null);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Giờ kết thúc</label>
+                <input
+                  type="time"
+                  value={recurringEndTime}
+                  onChange={(e) => {
+                    setRecurringEndTime(e.target.value);
+                    setRecurringDryRun(null);
+                  }}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Thứ trong tuần */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">
+                Các thứ lặp lại trong tuần
+              </label>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { label: 'CN', day: 0 },
+                  { label: 'T2', day: 1 },
+                  { label: 'T3', day: 2 },
+                  { label: 'T4', day: 3 },
+                  { label: 'T5', day: 4 },
+                  { label: 'T6', day: 5 },
+                  { label: 'T7', day: 6 },
+                ].map((item) => {
+                  const isChecked = recurringDays.includes(item.day);
+                  return (
+                    <button
+                      key={item.day}
+                      type="button"
+                      onClick={() => toggleDayOfWeek(item.day)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition border ${
+                        isChecked
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Khách hàng */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Tên khách / Đội</label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Số điện thoại</label>
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Dry-run Result Box */}
+            {recurringDryRun && (
+              <div
+                className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
+                  recurringDryRun.hasConflict
+                    ? 'bg-rose-50 border-rose-200 text-rose-900'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5">
+                    {recurringDryRun.hasConflict ? (
+                      <>
+                        <AlertTriangle className="w-4 h-4 text-rose-600" />
+                        Xung đột: Phát hiện {recurringDryRun.conflictCount} buổi bị trùng lịch
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        Toàn bộ {recurringDryRun.totalSessions} buổi đều khả dụng!
+                      </>
+                    )}
+                  </span>
+                  <span className="font-mono font-bold">
+                    Tổng: {recurringDryRun.totalPrice.toLocaleString('vi-VN')} đ
+                  </span>
+                </div>
+
+                <div className="max-h-36 overflow-y-auto space-y-1 pr-1 font-mono text-[11px]">
+                  {recurringDryRun.checkedDates.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex justify-between items-center px-2 py-1 rounded-lg ${
+                        item.isAvailable ? 'bg-white/80' : 'bg-rose-100 text-rose-800 font-bold'
+                      }`}
+                    >
+                      <span>
+                        Buổi {idx + 1}: {item.date}
+                      </span>
+                      <span>{item.isAvailable ? '✓ Trống' : `✕ ${item.conflictReason || 'Đã có người đặt'}`}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Thành công */}
+            {recurringSuccess && (
+              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2">
+                <div className="font-bold text-sm flex items-center gap-2 text-emerald-800">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  ĐÃ KHỞI TẠO THÀNH CÔNG CHUỖI ĐẶT ĐỊNH KỲ!
+                </div>
+                <p>
+                  Mã nhóm:{' '}
+                  <strong className="font-mono text-emerald-900">{recurringSuccess.recurringGroupId}</strong>
+                </p>
+                <p>
+                  Tổng số buổi: <strong>{recurringSuccess.totalSessions} buổi</strong> - Tổng tiền:{' '}
+                  <strong className="font-mono">{recurringSuccess.totalPrice.toLocaleString('vi-VN')} đ</strong>
+                </p>
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleDryRunCheck}
+                disabled={checkingRecurring || submittingRecurring}
+                className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition"
+              >
+                <CalendarRange className="w-4 h-4 text-indigo-600" />
+                {checkingRecurring ? 'Đang kiểm tra...' : 'Kiểm tra xung đột lịch (Dry-run)'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmRecurringWalkIn}
+                disabled={
+                  checkingRecurring ||
+                  submittingRecurring ||
+                  Boolean(recurringDryRun && recurringDryRun.hasConflict)
+                }
+                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+              >
+                <Check className="w-4 h-4" />
+                {submittingRecurring ? 'Đang khởi tạo...' : 'Xác nhận Đặt Chuỗi Định Kỳ'}
               </button>
             </div>
           </div>

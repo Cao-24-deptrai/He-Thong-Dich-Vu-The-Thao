@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import configuration from './config/configuration';
 import { RedisModule } from './redis/redis.module';
 import { EventsModule } from './events/events.module';
@@ -23,6 +24,7 @@ import { MatchRequestsModule } from './match-requests/match-requests.module';
       load: [configuration],
       envFilePath: ['.env', '.env.local'],
     }),
+    EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

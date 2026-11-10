@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Booking, BookingSchema } from './schemas/booking.schema';
+import { BookingSlot, BookingSlotSchema } from './schemas/booking-slot.schema';
 import { Venue, VenueSchema } from '../venues/schemas/venue.schema';
 import { BookingsService } from './bookings.service';
 import { BookingsController } from './bookings.controller';
@@ -12,6 +13,7 @@ import { EventsModule } from '../events/events.module';
   imports: [
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
+      { name: BookingSlot.name, schema: BookingSlotSchema },
       { name: Venue.name, schema: VenueSchema },
     ]),
     RedisModule,

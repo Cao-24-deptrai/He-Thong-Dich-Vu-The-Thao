@@ -3,12 +3,16 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
+import { User, UserSchema } from '../users/schemas/user.schema';
 import { CheckinService } from './checkin.service';
 import { CheckinController } from './checkin.controller';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Booking.name, schema: BookingSchema }]),
+    MongooseModule.forFeature([
+      { name: Booking.name, schema: BookingSchema },
+      { name: User.name, schema: UserSchema },
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

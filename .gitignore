@@ -44,6 +44,12 @@ logs/
 */.DS_Store
 Thumbs.db
 
+# Local DB & IDE
+.data/
+*/.data/
+.vscode/
+*/.vscode/
+
 # Separate projects
 cyber-cinema/
 *.docx

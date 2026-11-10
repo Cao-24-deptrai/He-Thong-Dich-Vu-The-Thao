@@ -1,0 +1,14 @@
+{
+  "name": "sports-booking-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:mongo": "node backend/scripts/start-mongo.js",
+    "seed": "npm --prefix backend run seed",
+    "start:backend": "npm --prefix backend run start:dev",
+    "start:admin": "npm --prefix admin run dev",
+    "build": "npm --prefix backend run build",
+    "test": "npm --prefix backend test",
+    "test:e2e": "npm --prefix backend run test:e2e"
+  }
+}
