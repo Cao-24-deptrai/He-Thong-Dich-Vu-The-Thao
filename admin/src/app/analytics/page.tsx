@@ -1,0 +1,9 @@
+'use client';
+import { useState } from 'react';
+const base=process.env.NEXT_PUBLIC_API_URL||'http://localhost:3000';
+type Stats={bookings:number;paymentRevenue:number;canteenRevenue:number;canteenOrders:number;refundCases:number;note:string};
+export default function AnalyticsPage(){
+ const [from,setFrom]=useState(''),[to,setTo]=useState(''),[data,setData]=useState<Stats|null>(null),[error,setError]=useState('');
+ async function load(){try{setError('');const q=new URLSearchParams();if(from)q.set('from',from);if(to)q.set('to',to);const res=await fetch(base+'/analytics/summary?'+q.toString(),{headers:{Authorization:'Bearer '+(localStorage.getItem('access_token')||'')}});const d=await res.json();if(!res.ok)throw Error(d.message||'HTTP '+res.status);setData(d)}catch(e:any){setError(e.message)}}
+ return <div className="p-6 space-y-6"><h1 className="text-3xl font-bold">E16 · Báo cáo doanh thu</h1><div className="flex gap-2 flex-wrap"><label>Từ <input className="p-2 bg-slate-800 rounded" type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>Đến <input className="p-2 bg-slate-800 rounded" type="date" value={to} onChange={e=>setTo(e.target.value)}/></label><button className="p-2 rounded bg-cyan-700" onClick={load}>Xem báo cáo</button></div>{error&&<p className="text-rose-400">{error}</p>}{data&&<><div className="grid md:grid-cols-3 gap-4">{[['Đơn đặt sân',data.bookings],['Doanh thu thanh toán',data.paymentRevenue.toLocaleString('vi-VN')+' đ'],['Doanh thu POS',data.canteenRevenue.toLocaleString('vi-VN')+' đ'],['Đơn POS',data.canteenOrders],['Hồ sơ hoàn tiền',data.refundCases]].map(([k,v])=><div key={k} className="rounded-xl bg-slate-900 border border-slate-800 p-5"><p className="text-slate-400">{k}</p><p className="text-2xl font-bold mt-2">{v}</p></div>)}</div><p className="text-slate-400">{data.note}</p></>}</div>;
+}
