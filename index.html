@@ -1,0 +1,2256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phanta Sports App v3 - E08 (Ví & Sổ Cái) | E09 (Thuế & HĐĐT) | E10 (Thông Báo Đa Kênh)</title>
+
+  <!-- Inline SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%239CFF93'/><text x='12' y='17' font-size='14' font-weight='900' text-anchor='middle' fill='%23121512'>P</text></svg>">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Barlow (Athletic Display & Headings) + Lexend (Crisp High-Contrast Body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,700;1,800&family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- QRCode.js library for Dynamic QR code generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              lime: '#9CFF93',
+              emerald: '#1ED760',
+              forest: '#16A34A',
+              orange: '#EA580C',
+              orangeLight: '#FB923C',
+              gold: '#F59E0B',
+              coral: '#EF4444',
+              purple: '#A855F7',
+              dark: '#121512',
+              surface: '#191C14',
+              surface2: '#22261E',
+              borderDark: 'rgba(156, 255, 147, 0.22)'
+            }
+          },
+          fontFamily: {
+            display: ['"Barlow"', 'sans-serif'],
+            heading: ['"Barlow"', 'sans-serif'],
+            body: ['"Lexend"', 'sans-serif'],
+            sans: ['"Lexend"', 'sans-serif'],
+            mono: ['"Lexend"', '"Barlow"', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* =========================================================
+       HIGH-ENERGY ATHLETIC DESIGN SYSTEM (WCAG AA COMPLIANT)
+       ========================================================= */
+
+    /* DARK THEME (DEFAULT HIGH-ENERGY ATHLETIC) */
+    :root {
+      --bg-page: #0C0F0C;
+      --bg-header: rgba(18, 21, 18, 0.95);
+      --bg-phone: #121512;
+      --bg-surface: #191C14;
+      --bg-card: #191C14;
+      --bg-card-inner: #22261E;
+      --bg-card-hover: #262C22;
+      --bg-nav: rgba(18, 21, 18, 0.96);
+      
+      --border-color: rgba(156, 255, 147, 0.22);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(234, 88, 12, 0.35);
+      
+      --text-main: #F3F4F6;
+      --text-heading: #FFFFFF;
+      --text-sub: #A1A79F;
+      --text-muted: #6B7280;
+      
+      --pitch-green: #9CFF93;      /* Electric Neon Lime */
+      --pitch-forest: #1ED760;
+      --burnt-orange: #EA580C;     /* High-Energy Athletic Orange */
+      --burnt-orange-light: #FB923C;
+      --championship-gold: #F59E0B;
+      --epic-purple: #C084FC;       /* Màu phân vai của Ngọc (E08, E09, E10) */
+      
+      --frame-border: #1C2018;
+      --frame-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.92), 0 0 0 12px #1C2018, 0 0 0 14px #121512;
+      --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* LIGHT THEME (HIGH-CONTRAST WCAG AA COMPLIANT) */
+    body.light-theme {
+      --bg-page: #F1F5F2;
+      --bg-header: rgba(255, 255, 255, 0.96);
+      --bg-phone: #FFFFFF;
+      --bg-surface: #FFFFFF;
+      --bg-card: #FFFFFF;
+      --bg-card-inner: #F0FDF4;
+      --bg-card-hover: #E8F5E9;
+      --bg-nav: rgba(255, 255, 255, 0.97);
+      
+      --border-color: #CBD5E1;
+      --border-subtle: #E2E8F0;
+      --border-accent: rgba(194, 65, 12, 0.25);
+      
+      --text-main: #1E293B;
+      --text-heading: #0B0E0B;
+      --text-sub: #475569;
+      --text-muted: #64748B;
+      
+      --pitch-green: #16A34A;
+      --pitch-forest: #15803D;
+      --burnt-orange: #C2410C;
+      --burnt-orange-light: #EA580C;
+      --championship-gold: #B45309;
+      --epic-purple: #7E22CE;
+      
+      --frame-border: #CBD5E1;
+      --frame-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.12), 0 0 0 12px #E2E8F0, 0 0 0 14px #CBD5E1;
+      --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    body {
+      font-family: 'Lexend', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      letter-spacing: 0.025em;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+
+    h1, h2, h3, h4, h5, h6, .font-display, .font-heading {
+      font-family: 'Barlow', sans-serif;
+      letter-spacing: 0.04em;
+      font-weight: 800;
+    }
+
+    .font-mono, code, kbd, samp, pre {
+      font-family: 'Lexend', 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif !important;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-phone);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 9999px;
+    }
+
+    .iphone-frame {
+      width: 390px;
+      height: 844px;
+      border-radius: 54px;
+      background: var(--bg-phone);
+      box-shadow: var(--frame-shadow);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border-color);
+      transition: background-color 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+
+    .dynamic-island {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 130px;
+      height: 32px;
+      background: #000000;
+      border-radius: 20px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      cursor: pointer;
+    }
+    .dynamic-island:hover {
+      width: 210px;
+    }
+
+    .btn-athletic-primary {
+      background: var(--pitch-green);
+      color: #121512;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    body.light-theme .btn-athletic-primary {
+      color: #FFFFFF !important;
+      background: #16A34A !important;
+    }
+    .btn-athletic-primary:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-athletic-orange {
+      background: var(--burnt-orange);
+      color: #FFFFFF;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .btn-athletic-orange:hover {
+      background: var(--burnt-orange-light);
+      transform: translateY(-1.5px);
+    }
+
+    .btn-athletic-purple {
+      background: #9333EA;
+      color: #FFFFFF;
+      font-family: 'Barlow', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      border-radius: 14px;
+      padding: 10px 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .btn-athletic-purple:hover {
+      background: #A855F7;
+      transform: translateY(-1.5px);
+    }
+
+    .btn-athletic-outline {
+      background: transparent;
+      border: 1.5px solid var(--border-color);
+      color: var(--text-main);
+      font-family: 'Barlow', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      border-radius: 14px;
+      padding: 9px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      text-transform: uppercase;
+    }
+    .btn-athletic-outline:hover {
+      border-color: var(--pitch-green);
+      color: var(--pitch-green);
+      background: rgba(156, 255, 147, 0.08);
+    }
+
+    .athletic-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      box-shadow: var(--card-shadow);
+    }
+
+    .sticky-top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 35;
+      width: 100%;
+      padding-top: 48px;
+      padding-bottom: 12px;
+      padding-left: 16px;
+      padding-right: 16px;
+      background-color: var(--bg-phone);
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    body.light-theme .sticky-top-nav {
+      background-color: #FFFFFF !important;
+      border-bottom-color: #E2E8F0 !important;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .sport-chip {
+      padding: 6px 14px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--bg-card-inner);
+      color: var(--text-sub);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.18s ease;
+    }
+    .sport-chip.active {
+      background: var(--pitch-green) !important;
+      color: #121512 !important;
+      border-color: var(--pitch-green) !important;
+      font-weight: 800;
+    }
+    body.light-theme .sport-chip.active {
+      background: #16A34A !important;
+      color: #FFFFFF !important;
+      border-color: #16A34A !important;
+    }
+
+    .mobile-bottom-nav {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      height: 64px;
+      background: var(--bg-nav);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      padding: 4px 6px;
+      z-index: 45;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    }
+
+    #nav-pill-indicator {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      height: 56px;
+      border-radius: 18px;
+      background: var(--pitch-green);
+      transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), width 0.3s ease, opacity 0.2s ease;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0;
+    }
+    body.light-theme #nav-pill-indicator {
+      background: #16A34A !important;
+    }
+
+    .nav-item {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: transparent !important;
+    }
+    .nav-item.active {
+      color: #0B0E0B !important;
+      font-weight: 800;
+    }
+    body.light-theme .nav-item.active {
+      color: #FFFFFF !important;
+    }
+
+    /* IN-APP REAL-TIME TOAST NOTIFICATION (E10) */
+    #inapp-toast-banner {
+      position: absolute;
+      top: 50px;
+      left: 14px;
+      right: 14px;
+      z-index: 60;
+      background: rgba(25, 28, 20, 0.98);
+      border: 1.5px solid var(--pitch-green);
+      border-radius: 18px;
+      padding: 10px 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      backdrop-filter: blur(12px);
+      transform: translateY(-120%);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+      cursor: pointer;
+    }
+    #inapp-toast-banner.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    body.light-theme #inapp-toast-banner {
+      background: rgba(255, 255, 255, 0.98) !important;
+      border-color: #16A34A !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+    }
+
+    /* SERVICES DROP-UP DRAWER */
+    #services-dropup-menu {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      box-shadow: 0 -12px 35px -5px rgba(0, 0, 0, 0.55);
+      border-top-left-radius: 28px;
+      border-top-right-radius: 28px;
+    }
+
+    .menu-service-item {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 8px 4px !important;
+      min-height: 58px !important;
+      border-radius: 14px !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+    }
+    .menu-service-item:hover {
+      border-color: var(--pitch-green) !important;
+      background: rgba(156, 255, 147, 0.08) !important;
+    }
+    .active-menu-service {
+      border-color: var(--pitch-green) !important;
+      background-color: rgba(156, 255, 147, 0.15) !important;
+    }
+
+    /* HÓA ĐƠN VAT CHUẨN NĐ 123 (E09) */
+    .invoice-vat-container {
+      background: #FFFFFF;
+      color: #1E293B;
+      border: 1.5px solid #CBD5E1;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 11px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .invoice-stamp {
+      border: 2px solid #EF4444;
+      color: #DC2626;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 9px;
+      transform: rotate(-5deg);
+      display: inline-block;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- ==================== TOP SYSTEM CONTROL BAR ==================== -->
+  <header class="sticky top-0 z-50 bg-[var(--bg-header)] border-b border-[var(--border-color)] backdrop-blur-md px-4 py-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#9CFF93] via-[#1ED760] to-[#16A34A] flex items-center justify-center font-barlow text-gray-950 text-lg font-black tracking-tighter shadow-md">
+        PS
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="text-lg font-barlow font-black tracking-wider text-[var(--text-heading)]">PHANTA SPORTS</span>
+          <span class="px-2 py-0.5 text-[10px] font-black rounded-md bg-[var(--epic-purple)]/20 text-[var(--epic-purple)] border border-[var(--epic-purple)]/40 font-mono">EPIC E08 - E09 - E10</span>
+          <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-[var(--pitch-green)]/15 text-[var(--pitch-green)] border border-[var(--pitch-green)]/30 font-mono">PHÂN VAI: NGỌC (T2)</span>
+        </div>
+        <p class="text-xs font-bold text-[var(--text-heading)]">Ví Nội Bộ (M07) • Hóa Đơn Điện Tử VAT (M08) • Thông Báo Đa Kênh (M09)</p>
+      </div>
+    </div>
+
+    <!-- Quick Navigation, Theme Toggle & Mode -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button onclick="toggleTheme()" id="theme-toggle-btn" class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] text-xs font-bold text-[var(--pitch-green)] hover:border-[var(--pitch-green)] transition-all shadow-sm">
+        <svg id="theme-sun-icon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        <svg id="theme-moon-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        <span id="theme-text">Giao Diện Sáng</span>
+      </button>
+
+      <!-- Screen Selector (Includes E08, E09, E10) -->
+      <div class="flex items-center bg-[var(--bg-card)] border border-[var(--border-color)] px-3 py-1.5 rounded-xl gap-2 shadow-sm">
+        <span class="text-xs text-[var(--epic-purple)] font-black uppercase tracking-wider font-barlow">Màn hình:</span>
+        <select id="screen-selector" onchange="jumpToScreen(this.value)" class="bg-transparent text-xs text-[var(--text-heading)] font-semibold focus:outline-none cursor-pointer pr-1">
+          <optgroup label="TRỌNG TÂM E08, E09, E10 (NGỌC T2)">
+            <option value="screen-wallet" selected>★ E08: Ví Phanta Pay & Sổ Cái Bất Biến (M07)</option>
+            <option value="screen-invoice">★ E09: Quản Lý Thuế & Hóa Đơn Điện Tử VAT (M08)</option>
+            <option value="screen-notifications">★ E10: Trung Tâm Thông Báo Đa Kênh FCM/ZNS (M09)</option>
+          </optgroup>
+          <optgroup label="DỊCH VỤ & TIỆN ÍCH LIÊN KẾT">
+            <option value="screen-home">1. Trang Chủ Phanta Mobile</option>
+            <option value="screen-booking">2. Đặt Sân & Tính Thuế VAT 8%</option>
+            <option value="screen-vouchers">Kho Voucher & Ưu Đãi Hội Viên</option>
+            <option value="screen-ticket">3. Vé QR Động 60s (HMAC)</option>
+            <option value="screen-gym-pool">4. Thẻ Gym Face ID & 2 Hồ Bơi</option>
+            <option value="screen-gaming">5. Cyber Gaming 100 PC</option>
+            <option value="screen-process">6. Quy Trình 6 Bước Khách Hàng</option>
+            <option value="screen-tournaments">7. Giải Đấu & Tranh Cúp</option>
+            <option value="screen-coaches">8. Huấn Luyện Viên PT 1-1</option>
+            <option value="screen-matchmaking">9. Sàn Cáp Kèo Giao Hữu</option>
+            <option value="screen-ratings">11. Đánh Giá 4 Tiêu Chí</option>
+            <option value="screen-chat">12. Hỗ Trợ Trực Tuyến 24/7</option>
+            <option value="screen-profile">13. Tài Khoản & Hội Viên Gold</option>
+            <option value="screen-offline">15. Chế Độ Ngoại Tuyến</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="flex items-center bg-[var(--bg-card)] border border-[var(--border-color)] p-1 rounded-xl shadow-sm">
+        <button onclick="setViewMode('simulator')" id="btn-mode-simulator" class="px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide bg-[var(--pitch-green)] text-gray-950 transition-all flex items-center gap-1.5 shadow-sm">
+          Mô Phỏng Điện Thoại
+        </button>
+        <button onclick="setViewMode('gallery')" id="btn-mode-gallery" class="px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide text-[var(--text-sub)] hover:text-[var(--text-heading)] transition-all flex items-center gap-1.5">
+          Figma Canvas (Tất Cả)
+        </button>
+      </div>
+
+      <!-- Quick Action: Trigger Test Notification (E10) -->
+      <button onclick="triggerSamplePushNotification()" class="px-3 py-1.5 rounded-xl bg-[var(--epic-purple)]/20 border border-[var(--epic-purple)]/50 text-[var(--epic-purple)] font-barlow font-bold text-xs flex items-center gap-1.5 hover:bg-[var(--epic-purple)]/30 transition-all shadow-sm">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        Bắn Test FCM / ZNS (E10)
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== POPUP DIALOG MODAL ==================== -->
+  <div id="global-dialog-backdrop" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 transition-all duration-200">
+    <div id="global-dialog-box" class="w-full max-w-sm rounded-3xl p-5 border shadow-2xl transform transition-all duration-200 scale-95" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-main);">
+      <div class="flex items-center gap-3 mb-3 pb-3 border-b border-[var(--border-subtle)]">
+        <div class="w-9 h-9 rounded-xl bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center font-bold text-lg shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <h3 id="dialog-title" class="font-barlow font-black text-base text-[var(--text-heading)] uppercase tracking-wide">THÔNG BÁO HỆ THỐNG</h3>
+          <span class="text-[10px] text-[var(--pitch-green)] font-mono">PHANTA SPORTS CORE M07/M08/M09</span>
+        </div>
+      </div>
+      <p id="dialog-message" class="text-xs text-[var(--text-main)] leading-relaxed mb-4">Nội dung thông báo</p>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeDialog()" class="btn-athletic-primary px-4 py-2 text-xs">
+          ĐÃ HIỂU
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN VIEWPORT ==================== -->
+  <main class="w-full py-6 px-4 flex flex-col items-center justify-center min-h-[calc(100vh-65px)]">
+
+    <!-- ==================== MODE 1: SIMULATOR ==================== -->
+    <div id="simulator-view" class="flex flex-col items-center">
+      <div class="iphone-frame">
+        <!-- Dynamic Island -->
+        <div class="dynamic-island" onclick="triggerDynamicIsland()">
+          <div class="w-2.5 h-2.5 rounded-full bg-[#1ED760]"></div>
+          <div id="island-text" class="text-[10px] font-mono text-white font-bold tracking-tight">VÍ: 1.250.000đ</div>
+          <div class="w-2.5 h-2.5 rounded-full bg-purple-500/30 flex items-center justify-center text-purple-300">
+            <span class="text-[9px] font-bold">E</span>
+          </div>
+        </div>
+
+        <!-- Floating In-App Real-time Push Notification Banner (E10) -->
+        <div id="inapp-toast-banner" onclick="handleInAppToastClick()">
+          <div class="flex items-start gap-2.5">
+            <div id="toast-icon-box" class="w-7 h-7 rounded-lg bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center shrink-0 mt-0.5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <span id="toast-channel-badge" class="px-1.5 py-0.2 rounded bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] font-mono font-bold text-[8px]">FCM PUSH</span>
+                <span class="text-[9px] text-[var(--text-muted)] font-mono">Vừa xong</span>
+              </div>
+              <h5 id="toast-title" class="text-xs font-barlow font-black text-[var(--text-heading)] mt-0.5">Biến động số dư ví</h5>
+              <p id="toast-body" class="text-[10px] text-[var(--text-sub)] line-clamp-2 leading-tight">Nạp thành công +500.000đ qua VietQR PayOS.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phone Screen Content Viewport -->
+        <div id="phone-screen-container" class="w-full flex-1 overflow-y-auto pt-0 pb-24 px-0 transition-colors duration-200 relative">
+          <!-- Dynamically injected screens -->
+        </div>
+
+        <!-- SERVICES DROPUP DRAWER (13 DỊCH VỤ - BỔ SUNG HÓA ĐƠN ĐIỆN TỬ E09) -->
+        <div id="services-dropup-menu" class="hidden absolute bottom-[72px] left-3 right-3 p-3.5 z-40 transition-all duration-300">
+          <div class="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border-subtle)]">
+            <span class="text-[10px] font-mono font-bold text-[var(--pitch-green)] uppercase">DANH MỤC DỊCH VỤ & TIỆN ÍCH PHANTA</span>
+            <button onclick="toggleServicesDropup(false)" class="text-xs text-[var(--text-sub)] hover:text-[var(--text-heading)] p-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+            <!-- 1. Ví Pay (E08) -->
+            <div id="menu-service-screen-wallet" onclick="selectServiceScreen('screen-wallet')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke-width="1.8"/><path stroke-width="1.8" d="M2 10h20M6 15h4"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Ví Pay (E08)</span>
+            </div>
+
+            <!-- 2. Hóa Đơn VAT (E09) MỚI -->
+            <div id="menu-service-screen-invoice" onclick="selectServiceScreen('screen-invoice')" class="menu-service-item bg-[var(--epic-purple)]/15 border border-[var(--epic-purple)]/40">
+              <svg class="w-5 h-5 mb-1 text-[var(--epic-purple)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              <span class="font-bold text-[var(--epic-purple)]">HĐĐT VAT (E09)</span>
+            </div>
+
+            <!-- 3. Thông Báo (E10) -->
+            <div id="menu-service-screen-notifications" onclick="selectServiceScreen('screen-notifications')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[#FB923C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Thông Báo (E10)</span>
+            </div>
+
+            <!-- 4. Vé QR 60s -->
+            <div id="menu-service-screen-ticket" onclick="selectServiceScreen('screen-ticket')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" stroke-width="1.8"/><path d="M7 8h2v2H7zM15 8h2v2h-2zM7 14h2v2H7zM11 12h2v2h-2zM15 14h2v2h-2z"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Vé QR 60s</span>
+            </div>
+
+            <!-- 5. Gym & Bơi -->
+            <div id="menu-service-screen-gym-pool" onclick="selectServiceScreen('screen-gym-pool')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Gym & Bơi</span>
+            </div>
+
+            <!-- 6. Phanta Gaming -->
+            <div id="menu-service-screen-gaming" onclick="selectServiceScreen('screen-gaming')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3" stroke-width="1.8"/><path stroke-linecap="round" stroke-width="2" d="M6 12h4m-2-2v4m9-2h.01m3 0h.01"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Gaming 100 PC</span>
+            </div>
+
+            <!-- 7. HLV & PT -->
+            <div id="menu-service-screen-coaches" onclick="selectServiceScreen('screen-coaches')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">HLV & PT</span>
+            </div>
+
+            <!-- 8. Cáp Kèo -->
+            <div id="menu-service-screen-matchmaking" onclick="selectServiceScreen('screen-matchmaking')" class="menu-service-item bg-[var(--bg-card-inner)] border border-[var(--border-color)]">
+              <svg class="w-5 h-5 mb-1 text-[#FB923C]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              <span class="font-bold text-[var(--text-heading)]">Cáp Kèo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floating Bottom Dock Navigation -->
+        <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+          <div id="nav-pill-indicator"></div>
+
+          <button onclick="jumpToScreen('screen-home')" id="nav-btn-home" class="nav-item">
+            <svg class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span class="text-[9px] font-bold mt-0.5">Trang chủ</span>
+          </button>
+          <button onclick="jumpToScreen('screen-booking')" id="nav-btn-booking" class="nav-item">
+            <svg class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="text-[9px] font-bold mt-0.5">Đặt sân</span>
+          </button>
+          
+          <!-- Middle Special Services Button -->
+          <button onclick="toggleServicesDropup()" id="nav-btn-services" class="w-11 h-11 rounded-2xl bg-[#ffc697] text-gray-900 flex items-center justify-center transition-all justify-self-center z-20 shadow-md">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </button>
+
+          <button onclick="jumpToScreen('screen-wallet')" id="nav-btn-wallet" class="nav-item active">
+            <svg class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>
+            <span class="text-[9px] font-bold mt-0.5">Ví Pay</span>
+          </button>
+          <button onclick="jumpToScreen('screen-profile')" id="nav-btn-profile" class="nav-item">
+            <svg class="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span class="text-[9px] font-bold mt-0.5">Cá nhân</span>
+          </button>
+        </nav>
+
+        <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/30 rounded-full z-50 pointer-events-none"></div>
+      </div>
+    </div>
+
+    <!-- ==================== MODE 2: FIGMA CANVAS GALLERY ==================== -->
+    <div id="gallery-view" class="hidden w-full max-w-7xl mx-auto py-4">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b border-[var(--border-color)]">
+        <div>
+          <h2 class="text-2xl font-barlow font-black text-[var(--text-heading)] tracking-wider uppercase">FIGMA CANVAS GALLERY</h2>
+          <p class="text-sm font-bold text-[var(--pitch-green)] uppercase tracking-wider">Đặc Biệt Bổ Sung E08 (Ví), E09 (HĐĐT), E10 (Thông Báo)</p>
+          <p class="text-xs text-[var(--text-sub)]">Xem đồng thời 20 màn hình giao diện khách hàng Phanta Sports v3</p>
+        </div>
+        <button onclick="setViewMode('simulator')" class="btn-athletic-primary px-4 py-2 text-xs">
+          Quay lại Mô Phỏng Điện Thoại
+        </button>
+      </div>
+
+      <div id="gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+    </div>
+
+  </main>
+
+  <!-- ==================== INTERACTIVE MODALS FOR E08, E09, E10 ==================== -->
+
+  <!-- MODAL 1: NẠP TIỀN VIETQR PAYOS (E08 - BR-21) -->
+  <div id="modal-topup-vietqr" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl p-5 border shadow-2xl space-y-4" style="background: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center font-bold">QR</div>
+          <div>
+            <h3 class="font-barlow font-black text-sm text-[var(--text-heading)] uppercase">NẠP TIỀN VÍ VIETQR PAYOS</h3>
+            <span class="text-[9px] font-mono text-[var(--pitch-green)]">Khớp lệnh tự động 3 giây (BR-21)</span>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-topup-vietqr')" class="text-[var(--text-sub)] hover:text-white p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Amount Presets -->
+      <div class="space-y-1.5">
+        <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Chọn số tiền nạp</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs font-mono">
+          <button onclick="setTopupAmount(100000)" class="py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] font-bold text-[var(--text-heading)] hover:border-[var(--pitch-green)]">100.000đ</button>
+          <button onclick="setTopupAmount(200000)" class="py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] font-bold text-[var(--text-heading)] hover:border-[var(--pitch-green)]">200.000đ</button>
+          <button onclick="setTopupAmount(500000)" class="py-2 rounded-xl bg-[var(--pitch-green)] text-gray-950 font-black">500.000đ</button>
+          <button onclick="setTopupAmount(1000000)" class="py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] font-bold text-[var(--text-heading)] hover:border-[var(--pitch-green)]">1.000.000đ</button>
+          <button onclick="setTopupAmount(2000000)" class="py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] font-bold text-[var(--text-heading)] hover:border-[var(--pitch-green)]">2.000.000đ</button>
+          <button onclick="setTopupAmount(5000000)" class="py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] font-bold text-[var(--text-heading)] hover:border-[var(--pitch-green)]">5.000.000đ</button>
+        </div>
+      </div>
+
+      <!-- Dynamic QR Preview Box -->
+      <div class="p-3.5 rounded-2xl bg-white border flex flex-col items-center justify-center text-gray-950">
+        <div class="w-36 h-36 bg-gray-100 rounded-xl flex items-center justify-center border p-1" id="topup-qr-box">
+          <!-- Fallback vector QR -->
+          <svg class="w-32 h-32" viewBox="0 0 100 100" fill="none">
+            <rect width="100" height="100" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="24" height="24" fill="#0B0E0B"/>
+            <rect x="14" y="14" width="16" height="16" fill="#FFFFFF"/>
+            <rect x="17" y="17" width="10" height="10" fill="#16A34A"/>
+            <rect x="66" y="10" width="24" height="24" fill="#0B0E0B"/>
+            <rect x="70" y="14" width="16" height="16" fill="#FFFFFF"/>
+            <rect x="73" y="17" width="10" height="10" fill="#16A34A"/>
+            <rect x="10" y="66" width="24" height="24" fill="#0B0E0B"/>
+            <rect x="14" y="70" width="16" height="16" fill="#FFFFFF"/>
+            <rect x="17" y="73" width="10" height="10" fill="#16A34A"/>
+            <circle cx="50" cy="50" r="10" fill="#16A34A"/>
+          </svg>
+        </div>
+        <span class="text-[10px] font-mono font-bold mt-1 text-gray-700">MB BANK: 88889999PHANTA</span>
+        <span class="text-xs font-mono font-black text-emerald-700 mt-0.5" id="topup-amount-display">500.000 VND</span>
+        <span class="text-[9px] font-mono text-gray-500">Nội dung: NAP VI PHANTA 0908123456</span>
+      </div>
+
+      <!-- Action Button to simulate bank webhook (BR-21) -->
+      <button onclick="simulateBankWebhookConfirmation()" class="btn-athletic-primary w-full py-3 text-xs font-black shadow-lg">
+        MÔ PHỎNG NGÂN HÀNG BÁO CÓ (3S KHỚP LỆNH)
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 2: RÚT TIỀN OTP ZNS (E08 - BR-24, BR-25) -->
+  <div id="modal-withdraw-otp" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl p-5 border shadow-2xl space-y-4" style="background: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-[var(--burnt-orange)]/20 text-[var(--burnt-orange)] flex items-center justify-center font-bold">OTP</div>
+          <div>
+            <h3 class="font-barlow font-black text-sm text-[var(--text-heading)] uppercase">RÚT TIỀN VÍ PHANTA PAY</h3>
+            <span class="text-[9px] font-mono text-[var(--pitch-green)]">Xác thực OTP qua Zalo ZNS (BR-25)</span>
+          </div>
+        </div>
+        <button onclick="closeModal('modal-withdraw-otp')" class="text-[var(--text-sub)] hover:text-white p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div>
+          <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Số tiền rút (Tối đa 1.250.000đ)</label>
+          <input type="text" id="withdraw-amount-input" value="300.000đ" class="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[var(--text-heading)] font-mono font-bold">
+        </div>
+        <div>
+          <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Tài khoản thụ hưởng chính chủ</label>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-between mt-1">
+            <span class="font-bold text-[var(--text-heading)]">MB Bank • 0908123456</span>
+            <span class="text-[9px] font-mono text-[var(--pitch-green)] font-bold">NGUYEN LE DUY KHANG</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between text-[10px] font-mono">
+            <span class="text-[var(--text-sub)]">NHẬP MÃ OTP 6 SỐ</span>
+            <span class="text-[var(--pitch-green)] font-bold">Gửi qua Zalo ZNS (52s)</span>
+          </div>
+          <div class="grid grid-cols-6 gap-1.5 mt-1">
+            <input type="text" maxlength="1" value="8" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+            <input type="text" maxlength="1" value="8" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+            <input type="text" maxlength="1" value="2" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+            <input type="text" maxlength="1" value="1" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+            <input type="text" maxlength="1" value="9" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+            <input type="text" maxlength="1" value="0" class="h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--pitch-green)] text-center text-sm font-mono font-black text-[var(--pitch-green)]">
+          </div>
+        </div>
+      </div>
+
+      <button onclick="confirmWithdrawExecution()" class="btn-athletic-orange w-full py-3 text-xs font-black shadow-lg">
+        XÁC NHẬN RÚT TIỀN VỀ TÀI KHOẢN
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 3: XEM CHI TIẾT SỔ CÁI BẤT BIẾN APPEND-ONLY (E08 - BR-22) -->
+  <div id="modal-ledger-detail" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[160] hidden items-center justify-center p-4">
+    <div class="w-full max-w-md rounded-3xl p-5 border shadow-2xl space-y-3 max-h-[85vh] overflow-y-auto" style="background: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div>
+          <h3 class="font-barlow font-black text-sm text-[var(--text-heading)] uppercase">SỔ CÁI BẤT BIẾN (IMMUTABLE LEDGER)</h3>
+          <span class="text-[9px] font-mono text-[var(--pitch-green)]">Hash Chain SHA-256 • Append-Only (BR-22)</span>
+        </div>
+        <button onclick="closeModal('modal-ledger-detail')" class="text-[var(--text-sub)] hover:text-white p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[10px] font-mono space-y-1.5">
+        <div class="text-[var(--pitch-green)] font-black text-xs">MÃ GIAO DỊCH: #TXN-9912</div>
+        <div class="flex justify-between text-[var(--text-sub)]">
+          <span>Thời gian ghi sổ:</span>
+          <span class="text-[var(--text-heading)] font-bold">31/10/2026 14:20:18.421</span>
+        </div>
+        <div class="flex justify-between text-[var(--text-sub)]">
+          <span>Hành động sổ cái:</span>
+          <span class="text-[var(--pitch-green)] font-bold">CREDIT (Ghi có ví)</span>
+        </div>
+        <div class="flex justify-between text-[var(--text-sub)]">
+          <span>Số tiền biến động:</span>
+          <span class="text-[var(--pitch-green)] font-black text-xs">+500.000 VND</span>
+        </div>
+        <div class="flex justify-between text-[var(--text-sub)]">
+          <span>Số dư sau giao dịch:</span>
+          <span class="text-[var(--text-heading)] font-bold">1.250.000 VND</span>
+        </div>
+        <div class="pt-1.5 border-t border-[var(--border-subtle)] space-y-1">
+          <div class="text-[var(--text-sub)]">Previous Block Hash:</div>
+          <div class="text-[8px] text-gray-400 break-all bg-black/40 p-1.5 rounded">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</div>
+          <div class="text-[var(--text-sub)]">Current Entry Hash (SHA-256):</div>
+          <div class="text-[8px] text-[var(--pitch-green)] break-all bg-black/40 p-1.5 rounded">8a4f9c12e028bfa178d4923e51cd02b8912efc4091a924b16c802e9fa14890c2</div>
+          <div class="text-[var(--text-sub)]">Trạng thái xác thực:</div>
+          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[9px] inline-block">CHỮ KÝ SỐ HỢP LỆ (VERIFIED)</span>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeModal('modal-ledger-detail')" class="btn-athletic-primary px-4 py-2 text-xs">
+          Đóng Cửa Sổ
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: XEM BẢN THỂ HIỆN HÓA ĐƠN GTGT ĐIỆN TỬ NĐ 123 (E09 - M08) -->
+  <div id="modal-invoice-viewer" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[170] hidden items-center justify-center p-3">
+    <div class="w-full max-w-md rounded-3xl p-5 border shadow-2xl space-y-3 max-h-[90vh] overflow-y-auto" style="background: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div>
+          <h3 class="font-barlow font-black text-sm text-[var(--text-heading)] uppercase">HÓA ĐƠN GIÁ TRỊ GIA TĂNG (HĐĐT)</h3>
+          <span class="text-[9px] font-mono text-[var(--epic-purple)]">Mẫu số: 1C26TPT • Nghị định 123/2020/NĐ-CP</span>
+        </div>
+        <button onclick="closeModal('modal-invoice-viewer')" class="text-[var(--text-sub)] hover:text-white p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Formal E-Invoice Paper Render -->
+      <div class="invoice-vat-container space-y-2.5">
+        <!-- Header -->
+        <div class="flex items-start justify-between border-b pb-2">
+          <div>
+            <span class="font-barlow font-black text-xs text-gray-950 uppercase block">CÔNG TY CỔ PHẦN THỂ THAO PHANTA</span>
+            <span class="text-[10px] text-gray-600 block">Mã số thuế (MST): <strong>0317889922</strong></span>
+            <span class="text-[9px] text-gray-500 block">Địa chỉ: Khu phức hợp thể thao Phanta, Quận 7, TP.HCM</span>
+          </div>
+          <div class="text-right">
+            <span class="invoice-stamp">ĐÃ CẤP MÃ CQT</span>
+            <span class="text-[9px] font-mono text-gray-600 block mt-1">Số: <strong>0000129</strong></span>
+          </div>
+        </div>
+
+        <!-- CQT Code & Metadata -->
+        <div class="p-2 rounded bg-gray-50 border text-[9px] font-mono space-y-0.5">
+          <div class="text-emerald-700 font-bold">Mã của Cơ quan Thuế:</div>
+          <div class="text-gray-800 break-all font-bold">00-26-88F4A19B-C902-8812</div>
+          <div class="text-gray-500">Mã tra cứu bí mật: <strong class="text-gray-900">PT-98421K</strong> (tra cứu tại cqt.gdt.gov.vn)</div>
+        </div>
+
+        <!-- Buyer Info -->
+        <div class="text-[10px] space-y-0.5">
+          <div>Người mua hàng: <strong>Nguyễn Lê Duy Khang (FC Phanta)</strong></div>
+          <div>Mã số thuế: <strong>0314998821</strong> (Công ty TNHH Phanta Tech)</div>
+          <div>Hình thức thanh toán: <strong>Chuyển khoản VietQR / Ví Pay</strong></div>
+        </div>
+
+        <!-- Line Items Table -->
+        <table class="w-full text-left border-collapse text-[10px]">
+          <thead>
+            <tr class="border-b bg-gray-100 font-bold">
+              <th class="py-1 px-1">Dịch vụ</th>
+              <th class="py-1 px-1 text-center">SL</th>
+              <th class="py-1 px-1 text-right">Đơn giá</th>
+              <th class="py-1 px-1 text-right">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 font-mono">
+            <tr>
+              <td class="py-1 px-1 font-sans">Thuê sân bóng F1 (17:00-18:30)</td>
+              <td class="py-1 px-1 text-center">3</td>
+              <td class="py-1 px-1 text-right">150.000</td>
+              <td class="py-1 px-1 text-right">450.000</td>
+            </tr>
+            <tr>
+              <td class="py-1 px-1 font-sans">Thuê 1 bóng FIFA + 14 áo bib</td>
+              <td class="py-1 px-1 text-center">1</td>
+              <td class="py-1 px-1 text-right">140.000</td>
+              <td class="py-1 px-1 text-right">140.000</td>
+            </tr>
+            <tr>
+              <td class="py-1 px-1 font-sans text-emerald-700">Chiết khấu hội viên Gold (-10%)</td>
+              <td class="py-1 px-1 text-center">1</td>
+              <td class="py-1 px-1 text-right">-59.000</td>
+              <td class="py-1 px-1 text-right text-emerald-700">-59.000</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Totals & VAT (8%) -->
+        <div class="border-t pt-1.5 space-y-1 font-mono text-[10px]">
+          <div class="flex justify-between">
+            <span class="text-gray-600">Cộng tiền dịch vụ:</span>
+            <span class="font-bold">531.000 đ</span>
+          </div>
+          <div class="flex justify-between text-emerald-800">
+            <span>Thuế suất GTGT (8% theo NQ hỗ trợ):</span>
+            <span class="font-bold">42.480 đ</span>
+          </div>
+          <div class="flex justify-between text-xs font-black border-t pt-1 text-gray-950">
+            <span>TỔNG TIỀN THANH TOÁN:</span>
+            <span class="text-emerald-700">573.480 đ</span>
+          </div>
+        </div>
+
+        <div class="p-1.5 rounded bg-emerald-50 text-[9px] text-emerald-900 border border-emerald-200">
+          Chữ ký số điện tử: <strong>CÔNG TY CP THỂ THAO PHANTA</strong> (Ký ngày 31/10/2026 bởi Viettel-CA HSM)
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="downloadInvoiceMock('pdf')" class="btn-athletic-primary py-2 text-xs flex items-center justify-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          TẢI BẢN PDF
+        </button>
+        <button onclick="downloadInvoiceMock('xml')" class="btn-athletic-outline py-2 text-xs flex items-center justify-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          TẢI FILE XML GỐC
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: CÀI ĐẶT THÔNG BÁO ĐA KÊNH FCM / ZNS / SMS (E10 - M09) -->
+  <div id="modal-notif-settings" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl p-5 border shadow-2xl space-y-4" style="background: var(--bg-card); border-color: var(--border-color);">
+      <div class="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+        <div>
+          <h3 class="font-barlow font-black text-sm text-[var(--text-heading)] uppercase">CÀI ĐẶT KÊNH THÔNG BÁO (E10)</h3>
+          <span class="text-[9px] font-mono text-[var(--pitch-green)]">Dispatcher Đa Kênh: FCM • ZNS • SMS</span>
+        </div>
+        <button onclick="closeModal('modal-notif-settings')" class="text-[var(--text-sub)] hover:text-white p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-between">
+          <div>
+            <span class="font-bold text-[var(--text-heading)] block">FCM Mobile Push (Tức Thì)</span>
+            <span class="text-[9px] text-[var(--text-sub)]">Thông báo đẩy trên màn hình khóa điện thoại</span>
+          </div>
+          <input type="checkbox" checked class="w-4 h-4 accent-[var(--pitch-green)] cursor-pointer">
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-between">
+          <div>
+            <span class="font-bold text-[var(--text-heading)] block">Zalo Notification (ZNS Official)</span>
+            <span class="text-[9px] text-[var(--text-sub)]">Vé QR, biến động số dư ví, OTP qua OA tích xanh</span>
+          </div>
+          <input type="checkbox" checked class="w-4 h-4 accent-[var(--pitch-green)] cursor-pointer">
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-between">
+          <div>
+            <span class="font-bold text-[var(--text-heading)] block">SMS Brandname Fallback</span>
+            <span class="text-[9px] text-[var(--text-sub)]">Tự động gửi SMS nếu mất mạng Zalo sau 15 giây</span>
+          </div>
+          <input type="checkbox" checked class="w-4 h-4 accent-[var(--pitch-green)] cursor-pointer">
+        </div>
+
+        <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-between">
+          <div>
+            <span class="font-bold text-[var(--text-heading)] block">Email Giao Dịch & Hóa Đơn VAT</span>
+            <span class="text-[9px] text-[var(--text-sub)]">Nhận file PDF & XML hóa đơn điện tử tự động</span>
+          </div>
+          <input type="checkbox" checked class="w-4 h-4 accent-[var(--pitch-green)] cursor-pointer">
+        </div>
+      </div>
+
+      <button onclick="saveNotificationSettings()" class="btn-athletic-primary w-full py-2.5 text-xs font-black">
+        LƯU CẤU HÌNH THÔNG BÁO
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT APP LOGIC ==================== -->
+  <script>
+    // --- 1. GLOBAL STATE FOR E08, E09, E10 ---
+    let currentScreen = 'screen-wallet';
+    let currentMode = 'simulator';
+    let currentTheme = 'dark';
+    let walletAvailableBalance = 1250000;
+    let walletHoldingBalance = 150000;
+    let currentTopupPreset = 500000;
+
+    // Toast notification timeout
+    let toastTimeout = null;
+
+    // SVG Icons Repository
+    const SVG = {
+      close: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`,
+      arrowLeft: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>`,
+      arrowRight: `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>`,
+      check: `<svg class="w-4 h-4 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`,
+      bell: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>`,
+      invoice: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+    };
+
+    // --- 2. SCREENS DEFINITIONS (CORE E08, E09, E10 + EXPANDED SUITE) ---
+    const screens = {
+      // ==================== SCREEN E08: VÍ NỘI BỘ & SỔ CÁI BẤT BIẾN (M07) ====================
+      'screen-wallet': `
+        <div class="animate-fadeIn pb-24">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.arrowLeft}
+              </button>
+              <div class="text-center">
+                <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">VÍ NỘI BỘ PHANTA PAY</h2>
+                <span class="text-[9px] font-mono text-[var(--pitch-green)] font-bold">MODULE M07 • BR-21..26, BR-38</span>
+              </div>
+              <button onclick="openModal('modal-ledger-detail')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--pitch-green)] hover:border-[var(--pitch-green)] shadow-sm" title="Kiểm toán sổ cái">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Balance Hero Card -->
+            <div class="athletic-card p-5 rounded-3xl border-[var(--pitch-green)] text-center relative overflow-hidden shadow-xl bg-gradient-to-b from-[var(--bg-card)] to-[var(--bg-card-inner)]">
+              <div class="flex items-center justify-between text-[10px] font-mono text-[var(--text-sub)]">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[var(--pitch-green)]"></span> VÍ CHÍNH KHẢ DỤNG</span>
+                <span class="font-bold text-[var(--pitch-green)]">ĐÃ KYC CHÍNH CHỦ</span>
+              </div>
+              
+              <div class="my-2">
+                <span class="text-3xl font-black text-[var(--text-heading)] font-mono tracking-tight" id="wallet-balance-display">
+                  1.250.000 <span class="text-sm text-[var(--pitch-green)]">VND</span>
+                </span>
+              </div>
+
+              <!-- Holding Deposit Indicator (BR-26) -->
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-mono">
+                <svg class="w-3.5 h-3.5 inline-block text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="11" rx="2" stroke-width="2"/><path stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                <span>Tạm giữ ký quỹ Cyber VIP:</span>
+                <strong id="wallet-hold-display">150.000 VND</strong>
+                <button onclick="releaseCyberDepositMock()" class="ml-1 text-[9px] underline text-emerald-400 hover:text-emerald-300">Hoàn 3s</button>
+              </div>
+
+              <!-- Quick Action Buttons -->
+              <div class="grid grid-cols-2 gap-2 mt-4">
+                <button onclick="openModal('modal-topup-vietqr')" class="py-2.5 rounded-xl bg-[var(--pitch-green)] text-gray-950 text-xs font-black shadow-md hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  NẠP VIETQR PAYOS
+                </button>
+                <button onclick="openModal('modal-withdraw-otp')" class="py-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--burnt-orange)]/50 text-[var(--burnt-orange)] font-bold text-xs hover:border-[var(--burnt-orange)] transition-all flex items-center justify-center gap-1.5">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                  RÚT TIỀN (OTP ZNS)
+                </button>
+              </div>
+            </div>
+
+            <!-- Spending Scope Notice (BR-23) -->
+            <div class="p-3.5 rounded-2xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[10px] text-[var(--text-sub)] space-y-1.5">
+              <strong class="text-[var(--pitch-green)] block text-xs font-barlow uppercase">Quy định chi tiêu ví Phanta Pay (BR-23):</strong>
+              <div class="flex items-center gap-2 text-[var(--text-heading)]">
+                <svg class="w-3.5 h-3.5 text-[var(--pitch-green)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Hợp lệ: Đặt sân thể thao F1-F8, thuê bóng/áo bib, canteen, giờ chơi Gaming sảnh.</span>
+              </div>
+              <div class="flex items-center gap-2 text-[var(--text-muted)]">
+                <svg class="w-3.5 h-3.5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                <span>Không áp dụng: Thẻ hội viên gym dài hạn hoặc mua đứt vợt thi đấu cao cấp.</span>
+              </div>
+            </div>
+
+            <!-- Append-only Ledger History with Hash Chain (BR-22, BR-38) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">SỔ CÁI BIẾN ĐỘNG (HASH CHAIN SHA-256)</h3>
+                <button onclick="openModal('modal-ledger-detail')" class="text-[10px] font-mono text-[var(--pitch-green)] hover:underline font-bold">
+                  Đối soát hash &rarr;
+                </button>
+              </div>
+
+              <!-- Transaction Item 1 -->
+              <div onclick="openModal('modal-ledger-detail')" class="athletic-card p-3 rounded-2xl flex items-center justify-between text-xs border-[var(--border-color)] cursor-pointer hover:border-[var(--pitch-green)] transition-all">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center font-bold font-mono">↓</span>
+                  <div>
+                    <span class="font-bold text-[var(--text-heading)] block">Nạp Tiền VietQR PayOS (3s)</span>
+                    <span class="text-[10px] text-[var(--text-sub)] block">31/10 14:20 • Mã #TXN-9912</span>
+                    <span class="text-[8px] font-mono text-gray-500 block truncate w-36">Hash: 8a4f9c12e028bfa1...</span>
+                  </div>
+                </div>
+                <span class="font-mono font-black text-[var(--pitch-green)]">+500.000đ</span>
+              </div>
+
+              <!-- Transaction Item 2 -->
+              <div onclick="openModal('modal-ledger-detail')" class="athletic-card p-3 rounded-2xl flex items-center justify-between text-xs border-[var(--border-color)] cursor-pointer hover:border-[var(--pitch-green)] transition-all">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-[var(--burnt-orange)]/20 text-[var(--burnt-orange)] flex items-center justify-center font-bold font-mono">↑</span>
+                  <div>
+                    <span class="font-bold text-[var(--text-heading)] block">Thanh Toán Sân F1 (17:00-18:30)</span>
+                    <span class="text-[10px] text-[var(--text-sub)] block">31/10 11:05 • Mã #TXN-9874</span>
+                    <span class="text-[8px] font-mono text-gray-500 block truncate w-36">Hash: b2719a08e1f5cd9a...</span>
+                  </div>
+                </div>
+                <span class="font-mono font-black text-[var(--burnt-orange)]">-350.000đ</span>
+              </div>
+
+              <!-- Transaction Item 3: Refund Instant 3s -->
+              <div onclick="openModal('modal-ledger-detail')" class="athletic-card p-3 rounded-2xl flex items-center justify-between text-xs border-[var(--border-color)] cursor-pointer hover:border-[var(--pitch-green)] transition-all">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold font-mono">↺</span>
+                  <div>
+                    <span class="font-bold text-[var(--text-heading)] block">Hoàn Cọc Tức Thì 3 Giây (BR-38)</span>
+                    <span class="text-[10px] text-[var(--text-sub)] block">Hôm qua 09:30 • Mã #TXN-9842</span>
+                    <span class="text-[8px] font-mono text-emerald-500 block truncate w-36">Hủy đúng hạn (BR-38 Auto)</span>
+                  </div>
+                </div>
+                <span class="font-mono font-black text-emerald-400">+350.000đ</span>
+              </div>
+
+              <!-- Transaction Item 4: Cyber Hold -->
+              <div onclick="openModal('modal-ledger-detail')" class="athletic-card p-3 rounded-2xl flex items-center justify-between text-xs border-[var(--border-color)] cursor-pointer hover:border-[var(--pitch-green)] transition-all">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold font-mono"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" stroke-width="2"/><path stroke-width="2" d="M8 11V7a4 4 0 018 0v4"/></svg></span>
+                  <div>
+                    <span class="font-bold text-[var(--text-heading)] block">Ký Quỹ Tạm Giữ Cyber VIP-01</span>
+                    <span class="text-[10px] text-[var(--text-sub)] block">Hôm qua 19:00 • Mã #TXN-9810</span>
+                    <span class="text-[8px] font-mono text-amber-400 block truncate w-36">Khóa số dư an toàn</span>
+                  </div>
+                </div>
+                <span class="font-mono font-black text-amber-400">-150.000đ</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN E09: THUẾ & HÓA ĐƠN ĐIỆN TỬ VAT (M08) ====================
+      'screen-invoice': `
+        <div class="animate-fadeIn pb-24">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.arrowLeft}
+              </button>
+              <div class="text-center">
+                <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">HÓA ĐƠN ĐIỆN TỬ & THUẾ VAT</h2>
+                <span class="text-[9px] font-mono text-[var(--epic-purple)] font-bold">MODULE M08 • NĐ 123 / TT 78</span>
+              </div>
+              <button onclick="openModal('modal-invoice-viewer')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--epic-purple)] hover:border-[var(--epic-purple)] shadow-sm">
+                ${SVG.invoice}
+              </button>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Tax & Legal Info Banner -->
+            <div class="p-3.5 rounded-2xl bg-[var(--epic-purple)]/10 border border-[var(--epic-purple)]/30 text-xs space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-barlow font-black text-[var(--epic-purple)] uppercase">HĐĐT KHỞI TẠO TỪ MÁY TÍNH TIỀN CÓ MÃ CQT</span>
+                <span class="px-2 py-0.5 rounded bg-[var(--epic-purple)]/20 text-[var(--epic-purple)] text-[9px] font-mono font-bold">NĐ 123/2020</span>
+              </div>
+              <p class="text-[10px] text-[var(--text-sub)] leading-relaxed">
+                Phanta Sports áp dụng thuế suất GTGT <strong>8%</strong> cho dịch vụ sân bãi theo Nghị quyết Quốc hội, tích hợp ký số HSM Viettel-CA và cấp mã CQT tự động sau khi thanh toán.
+              </p>
+            </div>
+
+            <!-- Invoices Tab Filter -->
+            <div class="grid grid-cols-2 gap-2 text-xs font-barlow font-bold">
+              <button onclick="switchInvoiceTab('issued')" id="tab-inv-issued" class="p-2.5 rounded-xl bg-[var(--pitch-green)] text-gray-950 text-center transition-all shadow-sm">
+                ĐÃ PHÁT HÀNH (3)
+              </button>
+              <button onclick="switchInvoiceTab('create')" id="tab-inv-create" class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] text-[var(--text-sub)] border border-[var(--border-color)] text-center transition-all">
+                + XUẤT HÓA ĐƠN MỚI
+              </button>
+            </div>
+
+            <!-- TAB 1: ISSUED INVOICES LIST -->
+            <div id="invoice-tab-issued-view" class="space-y-3">
+              <!-- Invoice Item 1: Booking Match (Standard 8% VAT) -->
+              <div class="athletic-card p-4 rounded-2xl border-[var(--border-color)] space-y-2.5 hover:border-[var(--epic-purple)] transition-all">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="px-2 py-0.5 rounded bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] text-[9px] font-mono font-bold">ĐÃ CẤP MÃ CQT</span>
+                    <h4 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase mt-1">HĐĐT SÂN BÓNG F1 (#0000129)</h4>
+                    <span class="text-[9px] font-mono text-[var(--text-sub)] block">Ký hiệu: 1C26TPT • Ngày lập: 31/10/2026</span>
+                  </div>
+                  <span class="text-xs font-mono font-black text-[var(--pitch-green)]">573.480đ</span>
+                </div>
+
+                <div class="p-2 rounded-xl bg-[var(--bg-card-inner)] text-[10px] font-mono space-y-1">
+                  <div class="flex justify-between text-[var(--text-sub)]">
+                    <span>Mã tra cứu CQT:</span>
+                    <span class="font-bold text-[var(--text-heading)]">00-26-88F4A19B-C902</span>
+                  </div>
+                  <div class="flex justify-between text-[var(--text-sub)]">
+                    <span>Thuế GTGT (VAT 8%):</span>
+                    <span class="font-bold text-emerald-400">42.480đ</span>
+                  </div>
+                  <div class="flex justify-between text-[var(--text-sub)]">
+                    <span>MST Người mua:</span>
+                    <span class="font-bold text-[var(--text-heading)]">0314998821 (Phanta Tech)</span>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-0.5">
+                  <button onclick="openModal('modal-invoice-viewer')" class="btn-athletic-purple py-2 text-[11px] font-bold">
+                    XEM BẢN THỂ HIỆN
+                  </button>
+                  <button onclick="downloadInvoiceMock('pdf')" class="btn-athletic-outline py-2 text-[11px] font-bold">
+                    TẢI BẢN PDF / XML
+                  </button>
+                </div>
+              </div>
+
+              <!-- Invoice Item 2: Wallet Top-up Voucher Receipt -->
+              <div class="athletic-card p-4 rounded-2xl border-[var(--border-color)] space-y-2.5">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="px-2 py-0.5 rounded bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] text-[9px] font-mono font-bold">ĐÃ CẤP MÃ CQT</span>
+                    <h4 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase mt-1">HĐĐT NẠP VÍ PHANTA (#0000114)</h4>
+                    <span class="text-[9px] font-mono text-[var(--text-sub)] block">Ký hiệu: 1C26TPT • Ngày lập: 30/10/2026</span>
+                  </div>
+                  <span class="text-xs font-mono font-black text-[var(--pitch-green)]">500.000đ</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-0.5">
+                  <button onclick="openModal('modal-invoice-viewer')" class="btn-athletic-outline py-2 text-[11px] font-bold">
+                    XEM CHI TIẾT
+                  </button>
+                  <button onclick="showToast('Email Hóa Đơn', 'Đã gửi lại link tra cứu hóa đơn về khang.nguyen@phantasports.vn!')" class="btn-athletic-outline py-2 text-[11px] font-bold">
+                    GỬI LẠI EMAIL
+                  </button>
+                </div>
+              </div>
+
+              <!-- Invoice Item 3: Adjusted Invoice (Refund BR-38) -->
+              <div class="athletic-card p-4 rounded-2xl border-[var(--border-color)] space-y-2.5">
+                <div class="flex items-start justify-between">
+                  <div>
+                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-mono font-bold">HÓA ĐƠN ĐIỀU CHỈNH GIẢM</span>
+                    <h4 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase mt-1">ĐIỀU CHỈNH HOÀN CỌC SÂN TENNIS</h4>
+                    <span class="text-[9px] font-mono text-[var(--text-sub)] block">Ký hiệu: 1C26TPT-DC • Mã #0000098</span>
+                  </div>
+                  <span class="text-xs font-mono font-black text-amber-400">-350.000đ</span>
+                </div>
+                <p class="text-[10px] text-[var(--text-sub)]">
+                  Căn cứ Biên bản thỏa thuận hoàn tiền cọc do hủy lịch trước 12h theo quy định BR-38. Thuế GTGT giảm tương ứng -28.000đ.
+                </p>
+              </div>
+            </div>
+
+            <!-- TAB 2: CREATE INVOICE FORM (HIDDEN BY DEFAULT) -->
+            <div id="invoice-tab-create-view" class="hidden athletic-card p-4 rounded-2xl space-y-3 border-[var(--epic-purple)]">
+              <h4 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase">NHẬP THÔNG TIN XUẤT HÓA ĐƠN GTGT (VAT)</h4>
+              
+              <div class="space-y-2 text-xs">
+                <div>
+                  <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Mã Số Thuế Doanh Nghiệp (MST)</label>
+                  <div class="flex gap-1.5 mt-1">
+                    <input type="text" id="inv-mst-input" placeholder="Ví dụ: 0314998821" value="0314998821" class="flex-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs text-[var(--text-heading)] font-mono font-bold focus:border-[var(--epic-purple)] outline-none">
+                    <button onclick="lookupMstTaxApi()" class="btn-athletic-purple px-3 py-2 text-xs font-bold shrink-0">
+                      TRA CỨU MST
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Tên Công Ty / Đơn Vị</label>
+                  <input type="text" id="inv-company-input" value="CÔNG TY TNHH PHANTA TECHNOLOGY VIỆT NAM" class="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs text-[var(--text-heading)] font-bold">
+                </div>
+
+                <div>
+                  <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Địa Chỉ Trụ Sở</label>
+                  <input type="text" id="inv-address-input" value="Tòa nhà Phanta Tower, Nguyễn Thị Thập, Quận 7, TP.HCM" class="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs text-[var(--text-heading)]">
+                </div>
+
+                <div>
+                  <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Email Nhận Hóa Đơn Điện Tử</label>
+                  <input type="email" id="inv-email-input" value="ketoan@phantatech.vn" class="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs text-[var(--text-heading)] font-mono">
+                </div>
+
+                <div>
+                  <label class="text-[10px] font-mono font-bold text-[var(--text-sub)] uppercase">Chọn Đơn Cần Xuất</label>
+                  <select class="w-full mt-1 px-3 py-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs text-[var(--text-heading)] font-bold">
+                    <option value="1">Đơn #PHANTA-98421 - Sân F1 (573.480đ, VAT 8%: 42.480đ)</option>
+                    <option value="2">Đơn #TXN-9912 - Nạp Ví Pay (500.000đ)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button onclick="handleIssueInvoiceSubmit()" class="btn-athletic-primary w-full py-3 text-xs font-black shadow-lg">
+                PHÁT HÀNH HÓA ĐƠN ĐIỆN TỬ CÓ MÃ CQT
+              </button>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN E10: THÔNG BÁO ĐA KÊNH FCM / ZNS / SMS (M09) ====================
+      'screen-notifications': `
+        <div class="animate-fadeIn pb-24">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.arrowLeft}
+              </button>
+              <div class="text-center">
+                <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">TRUNG TÂM THÔNG BÁO ĐA KÊNH</h2>
+                <span class="text-[9px] font-mono text-[var(--pitch-green)] font-bold">MODULE M09 • FCM • ZNS • SMS</span>
+              </div>
+              <button onclick="openModal('modal-notif-settings')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--pitch-green)] hover:border-[var(--pitch-green)] shadow-sm" title="Cài đặt thông báo">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Channel Status Bar -->
+            <div class="athletic-card p-3 rounded-2xl flex items-center justify-between border-[var(--border-color)] text-[10px] font-mono">
+              <span class="flex items-center gap-1.5 text-[var(--pitch-green)] font-bold">
+                <span class="w-2 h-2 rounded-full bg-[var(--pitch-green)]"></span> FCM PUSH SẴN SÀNG
+              </span>
+              <span class="flex items-center gap-1.5 text-blue-400 font-bold">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span> ZALO ZNS TÍCH XANH
+              </span>
+              <button onclick="triggerSamplePushNotification()" class="text-[var(--burnt-orange)] hover:underline font-bold">+ Test Bắn Tin</button>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              <button onclick="filterNotifications('all')" id="tab-notif-all" class="sport-chip active">Tất cả (6)</button>
+              <button onclick="filterNotifications('balance')" id="tab-notif-balance" class="sport-chip">Biến động số dư (2)</button>
+              <button onclick="filterNotifications('invoice')" id="tab-notif-invoice" class="sport-chip">HĐĐT VAT (1)</button>
+              <button onclick="filterNotifications('booking')" id="tab-notif-booking" class="sport-chip">Đặt sân (2)</button>
+              <button onclick="filterNotifications('match')" id="tab-notif-match" class="sport-chip">Cáp kèo (1)</button>
+            </div>
+
+            <!-- Notification Items List -->
+            <div class="space-y-2.5" id="notification-list-container">
+              <!-- Item 0: Invoice Issued (E09 + E10) -->
+              <div class="athletic-card p-3.5 rounded-2xl space-y-1.5 border-[var(--epic-purple)]/40 cursor-pointer" onclick="jumpToScreen('screen-invoice')">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-[var(--epic-purple)]/20 text-[var(--epic-purple)] flex items-center justify-center text-xs font-bold">
+                      ${SVG.invoice}
+                    </span>
+                    <span class="text-xs font-barlow font-black text-[var(--text-heading)]">Đã Phát Hành Hóa Đơn GTGT (E09)</span>
+                  </div>
+                  <span class="text-[9px] text-[var(--epic-purple)] font-mono font-bold">ZNS & Email</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-sub)] pl-8 leading-relaxed">
+                  Hóa đơn điện tử VAT #1C26TPT-0000129 (573.480đ, VAT 8%) đã được cấp mã CQT và gửi bản PDF về email ketoan@phantatech.vn.
+                </p>
+              </div>
+
+              <!-- Item 1: Balance topup (E08 + E10) -->
+              <div class="athletic-card p-3.5 rounded-2xl space-y-1.5 border-[var(--pitch-green)]/40 cursor-pointer" onclick="jumpToScreen('screen-wallet')">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center text-xs font-bold">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    </span>
+                    <span class="text-xs font-barlow font-black text-[var(--text-heading)]">Nạp Tiền Thành Công +500.000đ (E08)</span>
+                  </div>
+                  <span class="text-[9px] text-[var(--pitch-green)] font-mono font-bold">Zalo ZNS</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-sub)] pl-8 leading-relaxed">
+                  Giao dịch VietQR PayOS khớp lệnh trong 3 giây (BR-21). Số dư khả dụng hiện tại: 1.250.000đ. Đã ghi sổ cái mã #TXN-9912.
+                </p>
+              </div>
+
+              <!-- Item 2: Instant Refund 3s (E08 + E10) -->
+              <div class="athletic-card p-3.5 rounded-2xl space-y-1.5 border-[var(--border-color)] cursor-pointer" onclick="jumpToScreen('screen-wallet')">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-bold">↺</span>
+                    <span class="text-xs font-barlow font-black text-[var(--text-heading)]">Hoàn Cọc Tức Thì 350.000đ (BR-38)</span>
+                  </div>
+                  <span class="text-[9px] text-[var(--text-muted)] font-mono">1 giờ trước</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-sub)] pl-8 leading-relaxed">
+                  Tiền cọc hủy sân trước 12 giờ đã được hệ thống tự động hoàn vào ví Phanta Pay trong 3 giây theo quy chuẩn BR-38.
+                </p>
+              </div>
+
+              <!-- Item 3: Match reminder (FCM) -->
+              <div class="athletic-card p-3.5 rounded-2xl space-y-1.5 border-[var(--burnt-orange)]/40 cursor-pointer" onclick="jumpToScreen('screen-ticket')">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-[var(--burnt-orange)]/20 text-[var(--burnt-orange)] flex items-center justify-center text-xs font-bold">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <span class="text-xs font-barlow font-black text-[var(--text-heading)]">Nhắc Lịch Thi Đấu Sau 30 Phút</span>
+                  </div>
+                  <span class="text-[9px] text-[var(--pitch-green)] font-mono font-bold">FCM Mobile</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-sub)] pl-8 leading-relaxed">
+                  Trận đấu tại Sân Bóng Đá F1 sẽ bắt đầu lúc 17:00. Vé QR xoay vòng 60s đã sẵn sàng quét mở cổng barrier tự động.
+                </p>
+              </div>
+
+              <!-- Item 4: Matchmaking Accepted -->
+              <div class="athletic-card p-3.5 rounded-2xl space-y-1.5 border-[var(--border-color)] cursor-pointer" onclick="jumpToScreen('screen-matchmaking')">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    </span>
+                    <span class="text-xs font-barlow font-black text-[var(--text-heading)]">Có Đội Nhận Kèo Giao Hữu 50/50</span>
+                  </div>
+                  <span class="text-[9px] text-blue-400 font-mono font-bold">FCM & ZNS</span>
+                </div>
+                <p class="text-[11px] text-[var(--text-sub)] pl-8 leading-relaxed">
+                  FC Phanta Warriors đã chốt kèo giao hữu sân 7A lúc 18:30 hôm nay. Tiền sân đã tự động chia đôi 50/50 qua ví Phanta Pay.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN 1: HOME (LINKED TO E08, E09, E10) ====================
+      'screen-home': `
+        <div class="animate-fadeIn">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div onclick="jumpToScreen('screen-profile')" class="w-10 h-10 rounded-2xl overflow-hidden border-2 border-[var(--pitch-green)] cursor-pointer hover:scale-105 transition-all shadow-md shrink-0">
+                  <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=140&q=80" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <h1 class="text-sm font-barlow font-black text-[var(--text-heading)] tracking-wide">Chào Khang!</h1>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black font-mono bg-amber-500/20 text-amber-400">GOLD</span>
+                  </div>
+                  <div class="text-[11px] font-mono font-bold text-[var(--pitch-green)] tracking-wider">MỞ CỬA: 06:00 - 23:00</div>
+                </div>
+              </div>
+
+              <!-- Quick Wallet & Bell Action -->
+              <div class="flex items-center gap-2 shrink-0">
+                <button onclick="jumpToScreen('screen-wallet')" class="px-2.5 py-1.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-xs font-mono font-bold flex items-center gap-1 hover:border-[var(--pitch-green)] transition-all">
+                  <span class="text-[var(--pitch-green)] font-black">1.250K</span>
+                  <span class="text-[10px] text-[var(--text-sub)]">đ</span>
+                </button>
+                <button onclick="jumpToScreen('screen-notifications')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--pitch-green)] relative transition-all">
+                  ${SVG.bell}
+                  <span class="w-2 h-2 rounded-full bg-[var(--burnt-orange)] absolute top-2 right-2"></span>
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Hero Banner -->
+            <div class="athletic-card relative overflow-hidden rounded-3xl p-5 border-[var(--border-color)] group cursor-pointer" onclick="jumpToScreen('screen-booking')">
+              <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=700&q=80" alt="Matchday Hero" class="absolute inset-0 w-full h-full object-cover brightness-[0.35] group-hover:scale-105 transition-transform duration-500">
+              <div class="relative z-10 space-y-2">
+                <div class="flex items-center gap-2">
+                  <div class="px-3 py-1 rounded-xl bg-[var(--burnt-orange)] text-white flex flex-col text-left">
+                    <span class="text-[11px] font-black font-barlow uppercase tracking-wider">TRẬN ĐẤU HÔM NAY</span>
+                    <span class="text-[9px] font-mono opacity-90">17:00 - 18:30</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-md bg-black/60 text-[#9CFF93] text-[10px] font-mono border border-[#9CFF93]/40 font-bold">
+                    VAT 8% NĐ 123
+                  </span>
+                </div>
+                <h2 class="text-xl font-barlow font-black text-white uppercase leading-tight tracking-wide drop-shadow-md">
+                  SÂN BÓNG MINI F1 (5 NGƯỜI)
+                </h2>
+                <p class="text-xs text-gray-100 font-body drop-shadow">
+                  Cỏ FIFA Pro, dàn đèn LED 500 Lux, khóa giữ chỗ 10 phút, hỗ trợ xuất HĐĐT có mã CQT và hoàn cọc 3s.
+                </p>
+                <div class="pt-2 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] text-gray-300 font-mono block">GIÁ TỪ</span>
+                    <span class="font-mono font-black text-sm text-[#9CFF93]">250.000đ <span class="text-[10px] text-gray-300">/ 60 phút</span></span>
+                  </div>
+                  <button class="btn-athletic-primary px-4 py-2 text-xs flex items-center gap-1 shadow-md">
+                    <span>ĐẶT SÂN NGAY</span>
+                    ${SVG.arrowRight}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3 Highlight Cards for Epics E08, E09, E10 -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">TÍNH NĂNG TRỌNG TÂM E08 • E09 • E10</h3>
+                <span class="text-[9px] font-mono text-[var(--epic-purple)] font-bold">NGỌC (T2 BACKEND)</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center text-[10px]">
+                <div onclick="jumpToScreen('screen-wallet')" class="athletic-card p-2.5 rounded-2xl cursor-pointer hover:border-[var(--pitch-green)] transition-all">
+                  <span class="w-7 h-7 mx-auto rounded-xl bg-[var(--pitch-green)]/20 text-[var(--pitch-green)] flex items-center justify-center font-bold mb-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2"/><path stroke-width="2" d="M2 10h20M6 15h4"/></svg>
+                  </span>
+                  <span class="font-bold text-[var(--text-heading)] block">E08: Ví Pay</span>
+                  <span class="text-[9px] text-[var(--text-sub)]">Nạp 3s & Sổ cái</span>
+                </div>
+
+                <div onclick="jumpToScreen('screen-invoice')" class="athletic-card p-2.5 rounded-2xl cursor-pointer hover:border-[var(--epic-purple)] transition-all border-[var(--epic-purple)]/40">
+                  <span class="w-7 h-7 mx-auto rounded-xl bg-[var(--epic-purple)]/20 text-[var(--epic-purple)] flex items-center justify-center font-bold mb-1">
+                    ${SVG.invoice}
+                  </span>
+                  <span class="font-bold text-[var(--epic-purple)] block">E09: HĐĐT VAT</span>
+                  <span class="text-[9px] text-[var(--text-sub)]">Thuế 8% NĐ 123</span>
+                </div>
+
+                <div onclick="jumpToScreen('screen-notifications')" class="athletic-card p-2.5 rounded-2xl cursor-pointer hover:border-[#FB923C] transition-all">
+                  <span class="w-7 h-7 mx-auto rounded-xl bg-[#FB923C]/20 text-[#FB923C] flex items-center justify-center font-bold mb-1">
+                    ${SVG.bell}
+                  </span>
+                  <span class="font-bold text-[var(--text-heading)] block">E10: Thông Báo</span>
+                  <span class="text-[9px] text-[var(--text-sub)]">FCM / ZNS / SMS</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Sports Cluster -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div onclick="jumpToScreen('screen-gym-pool')" class="athletic-card p-3 cursor-pointer group hover:border-[var(--pitch-green)]">
+                <div class="h-20 rounded-xl overflow-hidden relative mb-2">
+                  <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80" alt="Gym" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                  <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded text-[8px] font-black font-mono bg-black/80 text-[var(--pitch-green)]">VÀO TỰ DO</span>
+                </div>
+                <h4 class="font-barlow font-bold text-xs text-[var(--text-heading)] uppercase">GYM FACE ID AI</h4>
+                <p class="text-[10px] text-[var(--text-sub)]">Cửa xoay tự động mở 0.5s</p>
+              </div>
+
+              <div onclick="jumpToScreen('screen-gaming')" class="athletic-card p-3 cursor-pointer group hover:border-[var(--pitch-green)]">
+                <div class="h-20 rounded-xl overflow-hidden relative mb-2">
+                  <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=400&q=80" alt="Cyber" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                  <span class="absolute top-1.5 left-1.5 px-2 py-0.5 rounded text-[8px] font-black font-mono bg-black/80 text-emerald-400">RTX 4090</span>
+                </div>
+                <h4 class="font-barlow font-bold text-xs text-[var(--text-heading)] uppercase">CYBER 100 PC</h4>
+                <p class="text-[10px] text-[var(--text-sub)]">Ký quỹ phòng VIP qua ví Pay</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN 2: BOOKING (WITH TAX & E-INVOICE E09) ====================
+      'screen-booking': `
+        <div class="animate-fadeIn">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-8 h-8 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.close}
+              </button>
+              <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] tracking-wider uppercase">ĐẶT SÂN & TÍNH THUẾ VAT 8%</h2>
+              <button onclick="showDialog('Quy Tắc Đặt Sân', 'Mỗi slot 30 phút - Khóa giữ chỗ 10 phút. Tự động tính thuế VAT 8% theo NĐ 123 (E09).')" class="text-xs text-[var(--pitch-green)] font-mono font-bold">
+                BR-03
+              </button>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Venue Selection -->
+            <div class="space-y-1.5">
+              <h3 class="text-sm font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">CHỌN SÂN THI ĐẤU</h3>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button class="p-2.5 rounded-xl bg-[var(--pitch-green)] text-gray-950 font-barlow font-bold text-left border border-[var(--pitch-green)]">
+                  <div class="font-black text-xs">SÂN BÓNG F1 (5 NGƯỜI)</div>
+                  <div class="text-xs font-mono font-bold">250.000đ/h</div>
+                  <div class="text-[9px] opacity-80">Cỏ FIFA Pro</div>
+                </button>
+                <button class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] text-[var(--text-main)] font-barlow font-bold text-left border border-[var(--border-color)] hover:border-[var(--pitch-green)]">
+                  <div class="font-black text-xs text-[var(--text-heading)]">SÂN BÓNG F5 (7 NGƯỜI)</div>
+                  <div class="text-xs font-mono font-bold text-[var(--text-heading)]">450.000đ/h</div>
+                  <div class="text-[9px] text-[var(--text-sub)]">Khán đài 500 chỗ</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Price Summary & Checkout Action with E09 Invoice Link -->
+            <div class="athletic-card p-4 rounded-3xl space-y-3">
+              <div class="space-y-1.5 text-xs">
+                <div class="flex justify-between text-[var(--text-sub)]">
+                  <span>Tiền sân (90 phút cao điểm):</span>
+                  <span class="font-mono text-[var(--text-heading)] font-bold">450.000đ</span>
+                </div>
+                <div class="flex justify-between text-[var(--text-sub)]">
+                  <span>Thuê bóng FIFA + 14 áo bib:</span>
+                  <span class="font-mono text-[var(--text-heading)] font-bold">140.000đ</span>
+                </div>
+                <div class="flex justify-between text-[var(--text-sub)]">
+                  <span>Ưu đãi hội viên Gold (-10%):</span>
+                  <span class="font-mono text-[var(--pitch-green)] font-bold">-59.000đ</span>
+                </div>
+                <div class="flex justify-between text-[var(--text-sub)] bg-[var(--epic-purple)]/10 p-1.5 rounded-lg border border-[var(--epic-purple)]/30">
+                  <span class="text-[var(--epic-purple)] font-bold">Thuế GTGT (VAT 8% theo NĐ 123):</span>
+                  <span class="font-mono text-[var(--epic-purple)] font-black">42.480đ</span>
+                </div>
+                <div class="pt-2 border-t border-[var(--border-subtle)] flex justify-between items-center">
+                  <div>
+                    <span class="text-[10px] text-[var(--text-sub)] uppercase font-mono block">TỔNG THANH TOÁN</span>
+                    <span class="text-xl font-barlow font-black text-[var(--pitch-green)]">573.480đ</span>
+                  </div>
+                  <div class="text-right">
+                    <span class="px-2.5 py-1 rounded-lg text-[9px] font-mono font-bold bg-amber-500/20 text-amber-400 block mb-1">
+                      KHÓA GIỮ 10:00
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Checkbox Request E-Invoice (E09) -->
+              <div class="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-between text-xs">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="chk-request-invoice" checked class="accent-[var(--epic-purple)]">
+                  <span class="text-[11px] font-bold text-[var(--text-heading)]">Yêu cầu xuất Hóa đơn điện tử VAT (E09)</span>
+                </label>
+                <button onclick="jumpToScreen('screen-invoice')" class="text-[10px] font-bold text-[var(--epic-purple)] hover:underline">
+                  Điền MST &rarr;
+                </button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="handlePaymentCheckout('payos')" class="btn-athletic-primary py-3 text-xs font-black shadow-md">
+                  VIETQR PAYOS (3S)
+                </button>
+                <button onclick="handlePaymentCheckout('wallet')" class="btn-athletic-orange py-3 text-xs font-black shadow-md">
+                  VÍ PHANTA PAY (E08)
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN 3: TICKET QR (E10 INTEGRATION) ====================
+      'screen-ticket': `
+        <div class="animate-fadeIn">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-8 h-8 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.arrowLeft}
+              </button>
+              <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] tracking-wider uppercase">VÉ ĐIỆN TỬ VÀO SÂN (HMAC 60S)</h2>
+              <span class="text-xs text-[var(--pitch-green)] font-mono font-bold">SEC-02</span>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4 flex flex-col items-center text-center">
+            <div class="athletic-card w-full p-5 rounded-3xl space-y-4 border-[var(--pitch-green)] shadow-xl">
+              <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2">
+                <div class="text-left">
+                  <span class="text-[9px] font-mono text-[var(--pitch-green)] font-bold block">MÃ ĐƠN HÀNG</span>
+                  <span class="text-sm font-barlow font-black text-[var(--text-heading)]">#PHANTA-98421</span>
+                </div>
+                <div class="text-right">
+                  <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-mono font-bold">
+                    ĐÃ THANH TOÁN
+                  </span>
+                </div>
+              </div>
+
+              <!-- Vector QR Box -->
+              <div class="w-36 h-36 bg-white rounded-2xl mx-auto p-2 border flex items-center justify-center">
+                <svg class="w-28 h-28" viewBox="0 0 100 100" fill="none">
+                  <rect width="100" height="100" fill="#FFFFFF"/>
+                  <rect x="10" y="10" width="26" height="26" fill="#0B0E0B"/>
+                  <rect x="15" y="15" width="16" height="16" fill="#FFFFFF"/>
+                  <rect x="18" y="18" width="10" height="10" fill="#16A34A"/>
+                  <rect x="64" y="10" width="26" height="26" fill="#0B0E0B"/>
+                  <rect x="69" y="15" width="16" height="16" fill="#FFFFFF"/>
+                  <rect x="72" y="18" width="10" height="10" fill="#16A34A"/>
+                  <rect x="10" y="64" width="26" height="26" fill="#0B0E0B"/>
+                  <rect x="15" y="69" width="16" height="16" fill="#FFFFFF"/>
+                  <rect x="18" y="72" width="10" height="10" fill="#16A34A"/>
+                </svg>
+              </div>
+              <span class="text-xs font-mono font-bold text-[var(--text-heading)]">Làm mới sau: <span class="text-[var(--pitch-green)] font-black">58s</span></span>
+
+              <div class="p-3 rounded-2xl bg-[var(--bg-card-inner)] text-left text-xs font-mono space-y-1">
+                <div class="flex justify-between">
+                  <span class="text-[var(--text-sub)]">Sân thi đấu:</span>
+                  <span class="font-bold text-[var(--text-heading)]">SÂN BÓNG MINI F1</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[var(--text-sub)]">Thời gian:</span>
+                  <span class="font-bold text-[var(--pitch-green)]">17:00 - 18:30 Hôm nay</span>
+                </div>
+                <div class="flex justify-between border-t border-[var(--border-subtle)] pt-1">
+                  <span class="text-[var(--text-sub)]">Hóa đơn điện tử (E09):</span>
+                  <span onclick="jumpToScreen('screen-invoice')" class="font-bold text-[var(--epic-purple)] cursor-pointer hover:underline">#0000129 (Xem HĐ)</span>
+                </div>
+              </div>
+
+              <button onclick="showDialog('Mở Cổng Barrier', 'Cổng Barrier Sân F1 đã mở! Đã gửi thông báo FCM (E10) tới điện thoại.')" class="btn-athletic-primary w-full py-3 text-xs font-black shadow-lg">
+                QUẸT MÃ MỞ CỔNG BARRIER VÀO SÂN
+              </button>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // ==================== SCREEN 13: PROFILE (WITH DIRECT LINKS TO E08, E09, E10) ====================
+      'screen-profile': `
+        <div class="animate-fadeIn pb-24">
+          <header class="sticky-top-nav">
+            <div class="flex items-center justify-between">
+              <button onclick="jumpToScreen('screen-home')" class="w-9 h-9 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+                ${SVG.arrowLeft}
+              </button>
+              <h2 class="text-xs font-barlow font-black text-[var(--text-heading)] uppercase tracking-wider">HỒ SƠ HỘI VIÊN PHANTA</h2>
+              <div class="w-9"></div>
+            </div>
+          </header>
+
+          <div class="p-4 space-y-4">
+            <!-- Profile Info -->
+            <div class="athletic-card p-5 rounded-3xl text-center space-y-2 border-[var(--pitch-green)]/40 shadow-lg">
+              <div class="w-20 h-20 rounded-3xl overflow-hidden mx-auto border-2 border-[var(--pitch-green)] p-1">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" alt="Avatar" class="w-full h-full object-cover rounded-2xl">
+              </div>
+              <div>
+                <h3 class="text-sm font-barlow font-black text-[var(--text-heading)]">Nguyễn Lê Duy Khang</h3>
+                <p class="text-xs font-mono font-bold text-[var(--text-heading)]">0908 123 456</p>
+                <span class="px-2 py-0.5 rounded text-[9px] font-mono font-black bg-amber-500/20 text-amber-400">HỘI VIÊN GOLD (GIẢM 10%)</span>
+              </div>
+            </div>
+
+            <!-- Profile Menu Items -->
+            <div class="athletic-card p-2 rounded-2xl divide-y divide-[var(--border-subtle)] text-xs border-[var(--border-color)]">
+              <!-- E08 Link -->
+              <button onclick="jumpToScreen('screen-wallet')" class="w-full p-3 flex items-center justify-between text-left text-[var(--text-heading)] hover:text-[var(--pitch-green)]">
+                <span class="flex items-center gap-2.5">
+                  <svg class="w-4 h-4 text-[var(--pitch-green)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" stroke-width="2"/><path stroke-width="2" d="M2 10h20M6 15h4"/></svg>
+                  <strong>Ví Nội Bộ Phanta Pay & Sổ Cái (E08)</strong>
+                </span>
+                <span class="font-mono text-[var(--pitch-green)] font-bold">1.250.000đ &rarr;</span>
+              </button>
+
+              <!-- E09 Link -->
+              <button onclick="jumpToScreen('screen-invoice')" class="w-full p-3 flex items-center justify-between text-left text-[var(--text-heading)] hover:text-[var(--epic-purple)]">
+                <span class="flex items-center gap-2.5">
+                  <span class="text-[var(--epic-purple)]">${SVG.invoice}</span>
+                  <strong>Quản Lý Thuế & Hóa Đơn Điện Tử VAT (E09)</strong>
+                </span>
+                <span class="font-mono text-[var(--epic-purple)] font-bold">NĐ 123 &rarr;</span>
+              </button>
+
+              <!-- E10 Link -->
+              <button onclick="jumpToScreen('screen-notifications')" class="w-full p-3 flex items-center justify-between text-left text-[var(--text-heading)] hover:text-[#FB923C]">
+                <span class="flex items-center gap-2.5">
+                  <span class="text-[#FB923C]">${SVG.bell}</span>
+                  <strong>Trung Tâm Thông Báo Đa Kênh FCM / ZNS (E10)</strong>
+                </span>
+                <span class="font-mono text-[#FB923C] font-bold">6 tin &rarr;</span>
+              </button>
+
+              <button onclick="jumpToScreen('screen-ticket')" class="w-full p-3 flex items-center justify-between text-left text-[var(--text-heading)] hover:text-[var(--pitch-green)]">
+                <span>Vé QR Động Vào Sân</span>
+                <span class="text-[var(--text-muted)]">&rarr;</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `,
+
+      // Additional Standard Screens for Simulator
+      'screen-gym-pool': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">GYM FACE ID & 2 HỒ BƠI</h3><p class="text-xs text-[var(--text-sub)]">Cửa xoay Face ID mở tự động. Hồ bơi Olympic 50m & Bể nước ấm 25m Heat Pump.</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`,
+      'screen-gaming': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">CYBER ESPORTS 100 PC</h3><p class="text-xs text-[var(--text-sub)]">Cấu hình RTX 4090. Ký quỹ tạm giữ phòng VIP qua ví Phanta Pay (E08).</p><button onclick="jumpToScreen('screen-wallet')" class="btn-athletic-primary px-4 py-2 text-xs">XEM VÍ PHANTA PAY (E08)</button></div>`,
+      'screen-process': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">QUY TRÌNH 6 BƯỚC KHÁCH HÀNG</h3><p class="text-xs text-[var(--text-sub)]">Khóa 10p -> Thanh toán VietQR -> Vé QR 60s -> Vào sân -> Nhận bóng -> Hoàn cọc 3s & Xuất HĐĐT VAT.</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`,
+      'screen-tournaments': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">GIẢI ĐẤU & TRANH CÚP</h3><p class="text-xs text-[var(--text-sub)]">Phanta Champions Cup 2026. Lệ phí giải đóng qua ví Phanta Pay (E08) kèm HĐĐT (E09).</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`,
+      'screen-coaches': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">ĐỘI NGŨ HLV & PT 1-1</h3><p class="text-xs text-[var(--text-sub)]">Huấn luyện cá nhân Quần Vợt, Cầu Lông, Bơi lội.</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`,
+      'screen-matchmaking': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">SÀN CÁP KÈO GIAO HỮU</h3><p class="text-xs text-[var(--text-sub)]">Ghép đội 50/50 an toàn qua ví Phanta Pay (E08), bắn thông báo ZNS (E10).</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`,
+      'screen-vouchers': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">KHO VOUCHER & MÃ GIẢM GIÁ</h3><p class="text-xs text-[var(--text-sub)]">Mã PHANTA50K (-50.000đ) kết hợp cùng ưu đãi hội viên Gold.</p><button onclick="jumpToScreen('screen-booking')" class="btn-athletic-primary px-4 py-2 text-xs">ÁP DỤNG ĐẶT SÂN</button></div>`,
+      'screen-offline': `<div class="p-4 text-center space-y-3"><h3 class="font-barlow font-black text-sm text-[var(--text-heading)]">CHẾ ĐỘ NGOẠI TUYẾN</h3><p class="text-xs text-[var(--text-sub)]">Vé QR lưu cục bộ HMAC vẫn mở được cổng barrier khi mất sóng 4G.</p><button onclick="jumpToScreen('screen-home')" class="btn-athletic-primary px-4 py-2 text-xs">VỀ TRANG CHỦ</button></div>`
+    };
+
+    // --- 3. NAVIGATION CONTROLLER ---
+    function jumpToScreen(screenId) {
+      currentScreen = screenId;
+      const container = document.getElementById('phone-screen-container');
+      if (container && screens[screenId]) {
+        container.innerHTML = screens[screenId];
+        container.scrollTop = 0;
+      }
+
+      const sel = document.getElementById('screen-selector');
+      if (sel) sel.value = screenId;
+
+      updateBottomDock(screenId);
+    }
+
+    function updateBottomDock(screenId) {
+      const tabs = ['home', 'booking', 'wallet', 'profile'];
+      let activeTab = null;
+
+      if (screenId === 'screen-home') activeTab = 'home';
+      else if (screenId === 'screen-booking') activeTab = 'booking';
+      else if (screenId === 'screen-wallet') activeTab = 'wallet';
+      else if (screenId === 'screen-profile') activeTab = 'profile';
+
+      tabs.forEach(t => {
+        const btn = document.getElementById('nav-btn-' + t);
+        if (btn) {
+          if (t === activeTab) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+
+      requestAnimationFrame(() => {
+        const pill = document.getElementById('nav-pill-indicator');
+        if (!pill) return;
+        if (activeTab) {
+          const activeBtn = document.getElementById('nav-btn-' + activeTab);
+          if (activeBtn) {
+            const offsetLeft = activeBtn.offsetLeft + 3;
+            const btnWidth = activeBtn.offsetWidth - 6;
+            pill.style.opacity = '1';
+            pill.style.width = btnWidth + 'px';
+            pill.style.transform = `translateX(${offsetLeft}px)`;
+          }
+        } else {
+          pill.style.opacity = '0';
+        }
+      });
+    }
+
+    // --- 4. THEME CONTROLLER ---
+    function toggleTheme() {
+      currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      const text = document.getElementById('theme-text');
+      const sun = document.getElementById('theme-sun-icon');
+      const moon = document.getElementById('theme-moon-icon');
+
+      if (currentTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (text) text.textContent = 'Giao Diện Tối';
+        if (sun) sun.classList.remove('hidden');
+        if (moon) moon.classList.add('hidden');
+      } else {
+        document.body.classList.remove('light-theme');
+        if (text) text.textContent = 'Giao Diện Sáng';
+        if (sun) sun.classList.add('hidden');
+        if (moon) moon.classList.remove('hidden');
+      }
+    }
+
+    // --- 5. SERVICES MENU DRAWER ---
+    function toggleServicesDropup(forceState) {
+      const dropup = document.getElementById('services-dropup-menu');
+      if (!dropup) return;
+      const isOpen = !dropup.classList.contains('hidden');
+      const shouldOpen = forceState !== undefined ? forceState : !isOpen;
+      if (shouldOpen) dropup.classList.remove('hidden');
+      else dropup.classList.add('hidden');
+    }
+
+    function selectServiceScreen(screenId) {
+      toggleServicesDropup(false);
+      jumpToScreen(screenId);
+    }
+
+    // --- 6. MODALS HANDLERS ---
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+      }
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        m.classList.add('hidden');
+        m.classList.remove('flex');
+      }
+    }
+
+    function showDialog(title, msg) {
+      const dTitle = document.getElementById('dialog-title');
+      const dMsg = document.getElementById('dialog-message');
+      const backdrop = document.getElementById('global-dialog-backdrop');
+      if (dTitle && dMsg && backdrop) {
+        dTitle.textContent = title;
+        dMsg.textContent = msg;
+        backdrop.classList.remove('hidden');
+        backdrop.classList.add('flex');
+      }
+    }
+
+    function closeDialog() {
+      const backdrop = document.getElementById('global-dialog-backdrop');
+      if (backdrop) {
+        backdrop.classList.add('hidden');
+        backdrop.classList.remove('flex');
+      }
+    }
+
+    function showToast(title, msg) {
+      showDialog(title, msg);
+    }
+
+    // --- 7. E08 LOGIC: VÍ NỘI BỘ & SỔ CÁI BẤT BIẾN (M07) ---
+    function setTopupAmount(amount) {
+      currentTopupPreset = amount;
+      const display = document.getElementById('topup-amount-display');
+      if (display) display.textContent = amount.toLocaleString('vi-VN') + ' VND';
+    }
+
+    function simulateBankWebhookConfirmation() {
+      closeModal('modal-topup-vietqr');
+      if (window.confetti) {
+        confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+      }
+
+      walletAvailableBalance += currentTopupPreset;
+      const el = document.getElementById('wallet-balance-display');
+      if (el) el.innerHTML = `${walletAvailableBalance.toLocaleString('vi-VN')} <span class="text-sm text-[var(--pitch-green)]">VND</span>`;
+
+      showInAppNotification(
+        'FCM & ZNS (E10)',
+        'Biến Động Số Dư Ví Phanta Pay',
+        `Nạp thành công +${currentTopupPreset.toLocaleString('vi-VN')}đ qua VietQR PayOS trong 3 giây (BR-21). Số dư mới: ${walletAvailableBalance.toLocaleString('vi-VN')}đ. Mã sổ cái #TXN-9915.`,
+        'screen-wallet'
+      );
+    }
+
+    function confirmWithdrawExecution() {
+      closeModal('modal-withdraw-otp');
+      const withdrawAmt = 300000;
+      if (walletAvailableBalance >= withdrawAmt) {
+        walletAvailableBalance -= withdrawAmt;
+        const el = document.getElementById('wallet-balance-display');
+        if (el) el.innerHTML = `${walletAvailableBalance.toLocaleString('vi-VN')} <span class="text-sm text-[var(--pitch-green)]">VND</span>`;
+      }
+
+      showInAppNotification(
+        'ZALO ZNS (E10)',
+        'Rút Tiền Ví Thành Công',
+        `Đã chuyển 300.000đ về MB Bank 0908123456 (NGUYEN LE DUY KHANG) sau khi xác thực OTP ZNS chính chủ (BR-25).`,
+        'screen-wallet'
+      );
+    }
+
+    function releaseCyberDepositMock() {
+      walletAvailableBalance += walletHoldingBalance;
+      walletHoldingBalance = 0;
+      const balEl = document.getElementById('wallet-balance-display');
+      const holdEl = document.getElementById('wallet-hold-display');
+      if (balEl) balEl.innerHTML = `${walletAvailableBalance.toLocaleString('vi-VN')} <span class="text-sm text-[var(--pitch-green)]">VND</span>`;
+      if (holdEl) holdEl.textContent = '0 VND';
+
+      showInAppNotification(
+        'ZNS & SỔ CÁI (E08)',
+        'Hoàn Tiền Ký Quỹ Tức Thì 3s (BR-38)',
+        'Đã giải phóng 150.000đ tiền cọc phiên chơi Cyber VIP về số dư khả dụng trong đúng 3 giây.',
+        'screen-wallet'
+      );
+    }
+
+    // --- 8. E09 LOGIC: THUẾ & HÓA ĐƠN ĐIỆN TỬ VAT (M08) ---
+    function switchInvoiceTab(tab) {
+      const btnIssued = document.getElementById('tab-inv-issued');
+      const btnCreate = document.getElementById('tab-inv-create');
+      const viewIssued = document.getElementById('invoice-tab-issued-view');
+      const viewCreate = document.getElementById('invoice-tab-create-view');
+
+      if (tab === 'issued') {
+        if (btnIssued) btnIssued.className = 'p-2.5 rounded-xl bg-[var(--pitch-green)] text-gray-950 text-center transition-all shadow-sm';
+        if (btnCreate) btnCreate.className = 'p-2.5 rounded-xl bg-[var(--bg-card-inner)] text-[var(--text-sub)] border border-[var(--border-color)] text-center transition-all';
+        if (viewIssued) viewIssued.classList.remove('hidden');
+        if (viewCreate) viewCreate.classList.add('hidden');
+      } else {
+        if (btnCreate) btnCreate.className = 'p-2.5 rounded-xl bg-[var(--pitch-green)] text-gray-950 text-center transition-all shadow-sm';
+        if (btnIssued) btnIssued.className = 'p-2.5 rounded-xl bg-[var(--bg-card-inner)] text-[var(--text-sub)] border border-[var(--border-color)] text-center transition-all';
+        if (viewCreate) viewCreate.classList.remove('hidden');
+        if (viewIssued) viewIssued.classList.add('hidden');
+      }
+    }
+
+    function lookupMstTaxApi() {
+      const mst = document.getElementById('inv-mst-input')?.value || '0314998821';
+      showDialog(
+        'Kết Nối Cổng Thuế CQT (E09)',
+        `Đã tra cứu thành công MST ${mst} qua Cổng Dịch vụ Thuế điện tử! Tên công ty: CÔNG TY TNHH PHANTA TECHNOLOGY VIỆT NAM. Địa chỉ: Quận 7, TP.HCM.`
+      );
+    }
+
+    function handleIssueInvoiceSubmit() {
+      if (window.confetti) {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+      }
+      switchInvoiceTab('issued');
+
+      showInAppNotification(
+        'EMAIL & ZNS (E09)',
+        'Phát Hành HĐĐT VAT Thành Công',
+        'Hóa đơn #1C26TPT-0000130 (573.480đ, VAT 8%: 42.480đ) đã được cấp mã CQT và gửi bản PDF/XML về ketoan@phantatech.vn.',
+        'screen-invoice'
+      );
+    }
+
+    function downloadInvoiceMock(type) {
+      showDialog(
+        `Tải File Hóa Đơn (${type.toUpperCase()})`,
+        `Đã tạo file Hóa đơn điện tử #1C26TPT-0000129.${type} có chữ ký số Viettel-CA HSM và mã CQT 00-26-88F4A19B-C902 hợp lệ theo Nghị định 123/2020/NĐ-CP!`
+      );
+    }
+
+    // --- 9. E10 LOGIC: THÔNG BÁO ĐA KÊNH FCM / ZNS / SMS (M09) ---
+    function showInAppNotification(channelBadge, title, body, targetScreen) {
+      const banner = document.getElementById('inapp-toast-banner');
+      const bBadge = document.getElementById('toast-channel-badge');
+      const bTitle = document.getElementById('toast-title');
+      const bBody = document.getElementById('toast-body');
+
+      if (banner && bBadge && bTitle && bBody) {
+        bBadge.textContent = channelBadge;
+        bTitle.textContent = title;
+        bBody.textContent = body;
+        banner.dataset.targetScreen = targetScreen || 'screen-notifications';
+
+        banner.classList.add('show');
+
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          banner.classList.remove('show');
+        }, 5500);
+      }
+    }
+
+    function handleInAppToastClick() {
+      const banner = document.getElementById('inapp-toast-banner');
+      if (banner) {
+        const target = banner.dataset.targetScreen || 'screen-notifications';
+        banner.classList.remove('show');
+        jumpToScreen(target);
+      }
+    }
+
+    function triggerSamplePushNotification() {
+      const sampleEvents = [
+        {
+          badge: 'FCM PUSH (E10)',
+          title: 'Nhắc Lịch Đặt Sân F1',
+          body: 'Trận đấu của bạn sẽ diễn ra sau 30 phút. Quét mã QR tại cổng barrier để vào sân.',
+          target: 'screen-ticket'
+        },
+        {
+          badge: 'ZALO ZNS (E10)',
+          title: 'Biến Động Số Dư Ví Phanta Pay',
+          body: 'Ví Phanta Pay biến động: +500.000đ từ VietQR PayOS. Số dư mới: 1.250.000đ.',
+          target: 'screen-wallet'
+        },
+        {
+          badge: 'EMAIL & ZNS (E09)',
+          title: 'Hóa Đơn Điện Tử VAT Đã Cấp Mã',
+          body: 'HĐĐT #1C26TPT-0000129 (573.480đ, VAT 8%) đã có mã CQT. Nhấn để xem bản thể hiện PDF.',
+          target: 'screen-invoice'
+        }
+      ];
+
+      const r = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
+      showInAppNotification(r.badge, r.title, r.body, r.target);
+    }
+
+    function filterNotifications(cat) {
+      ['all', 'balance', 'invoice', 'booking', 'match'].forEach(k => {
+        const btn = document.getElementById('tab-notif-' + k);
+        if (btn) {
+          if (k === cat) btn.classList.add('active');
+          else btn.classList.remove('active');
+        }
+      });
+      showToast('Bộ Lọc Thông Báo', `Đang hiển thị danh mục thông báo: ${cat.toUpperCase()}`);
+    }
+
+    function saveNotificationSettings() {
+      closeModal('modal-notif-settings');
+      showToast('Cài Đặt Thông Báo', 'Cấu hình ưu tiên kênh FCM Push, ZNS và SMS Fallback đã được cập nhật thành công trên server!');
+    }
+
+    function triggerDynamicIsland() {
+      showDialog(
+        'Dynamic Island Phanta Sports',
+        `Trạng thái ví: ${walletAvailableBalance.toLocaleString('vi-VN')}đ | Tạm giữ Cyber: ${walletHoldingBalance.toLocaleString('vi-VN')}đ | HĐĐT gần nhất: #0000129`
+      );
+    }
+
+    // --- 10. FIGMA GALLERY MODE CONTROLLER ---
+    function setViewMode(mode) {
+      currentMode = mode;
+      const sim = document.getElementById('simulator-view');
+      const gal = document.getElementById('gallery-view');
+      const btnSim = document.getElementById('btn-mode-simulator');
+      const btnGal = document.getElementById('btn-mode-gallery');
+
+      if (mode === 'simulator') {
+        sim.classList.remove('hidden');
+        gal.classList.add('hidden');
+        btnSim.className = 'px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide bg-[var(--pitch-green)] text-gray-950 transition-all flex items-center gap-1.5 shadow-sm';
+        btnGal.className = 'px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide text-[var(--text-sub)] hover:text-[var(--text-heading)] transition-all flex items-center gap-1.5';
+        jumpToScreen(currentScreen);
+      } else {
+        sim.classList.add('hidden');
+        gal.classList.remove('hidden');
+        btnGal.className = 'px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide bg-[var(--pitch-green)] text-gray-950 transition-all flex items-center gap-1.5 shadow-sm';
+        btnSim.className = 'px-3 py-1.5 rounded-lg text-xs font-barlow font-bold tracking-wide text-[var(--text-sub)] hover:text-[var(--text-heading)] transition-all flex items-center gap-1.5';
+        renderGalleryGrid();
+      }
+    }
+
+    function renderGalleryGrid() {
+      const grid = document.getElementById('gallery-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const titles = {
+        'screen-wallet': '★ E08: Ví Phanta Pay & Sổ Cái (M07)',
+        'screen-invoice': '★ E09: Quản Lý Thuế & HĐĐT VAT (M08)',
+        'screen-notifications': '★ E10: Thông Báo Đa Kênh (M09)',
+        'screen-home': '1. Trang Chủ Phanta Mobile',
+        'screen-booking': '2. Đặt Sân & Thuế VAT 8%',
+        'screen-ticket': '3. Vé QR Động 60s (HMAC)',
+        'screen-profile': '13. Tài Khoản & Hội Viên Gold',
+        'screen-gym-pool': '4. Thẻ Gym Face ID & Hồ Bơi',
+        'screen-gaming': '5. Cyber Gaming 100 PC',
+        'screen-process': '6. Quy Trình 6 Bước Khách Hàng',
+        'screen-tournaments': '7. Giải Đấu & Tranh Cúp',
+        'screen-coaches': '8. Huấn Luyện Viên PT 1-1',
+        'screen-matchmaking': '9. Sàn Cáp Kèo Giao Hữu',
+        'screen-vouchers': 'Kho Voucher & Mã Giảm Giá',
+        'screen-offline': '15. Chế Độ Ngoại Tuyến'
+      };
+
+      Object.keys(screens).forEach((key) => {
+        const card = document.createElement('div');
+        card.className = 'flex flex-col items-center p-3 rounded-3xl athletic-card shadow-lg';
+        card.innerHTML = `
+          <div class="w-full flex items-center justify-between mb-2 px-1">
+            <span class="text-xs font-barlow font-bold text-[var(--text-heading)] uppercase">${titles[key] || key}</span>
+            <button onclick="jumpToScreen('${key}'); setViewMode('simulator');" class="text-[10px] font-mono text-[var(--pitch-green)] hover:underline font-bold">
+              Thử màn hình &rarr;
+            </button>
+          </div>
+          <div class="w-[280px] h-[580px] rounded-[36px] bg-[var(--bg-phone)] border-4 border-[var(--border-color)] overflow-y-auto no-scrollbar relative shadow-md">
+            ${screens[key]}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function handlePaymentCheckout(method) {
+      if (window.confetti) {
+        confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+      }
+      if (method === 'payos') {
+        showDialog('Khởi Tạo VietQR PayOS 3s', 'Mã VietQR động đã được tạo! Hệ thống đang chờ webhook ngân hàng khớp lệnh tự động sau 3 giây.');
+      } else {
+        if (walletAvailableBalance >= 573480) {
+          walletAvailableBalance -= 573480;
+          showDialog('Thanh Toán Ví Phanta Pay Thành Công', 'Đã trừ 573.480đ từ ví nội bộ Phanta Pay. Hóa đơn GTGT điện tử VAT 8% (42.480đ) đã được phát hành có mã CQT!');
+          showInAppNotification(
+            'FCM & ZNS (E10)',
+            'Đặt Sân & Xuất HĐĐT Thành Công',
+            'Thanh toán đơn #PHANTA-98421 thành công qua ví Pay. Vé QR đã tạo và HĐĐT #0000129 đã gửi về email.',
+            'screen-ticket'
+          );
+        } else {
+          showDialog('Số Dư Không Đủ', 'Số dư ví không đủ 573.480đ. Vui lòng nạp thêm qua VietQR PayOS!');
+        }
+      }
+    }
+
+    // --- INIT ---
+    window.addEventListener('DOMContentLoaded', () => {
+      jumpToScreen('screen-wallet');
+      setTimeout(() => {
+        showInAppNotification(
+          'HỆ THỐNG PHANTA (E10)',
+          'Chào Mừng Đến Với Module E08 - E09 - E10',
+          'Ngọc (T2) phụ trách: Ví nội bộ M07, Thuế & HĐĐT VAT M08, Thông báo đa kênh M09.',
+          'screen-wallet'
+        );
+      }, 1000);
+    });
+  </script>
+</body>
+</html>
