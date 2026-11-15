@@ -255,6 +255,71 @@ class ApiClient {
       body: JSON.stringify({ machineCode }),
     });
   }
+
+  // --- E08: VÍ NỘI BỘ PHANTA PAY ---
+  async getMyWallet(): Promise<any> {
+    return this.request<any>('/wallets/me');
+  }
+
+  async getMyWalletTransactions(type?: string, page = 1, limit = 20): Promise<any> {
+    const qs = type ? `&type=${type}` : '';
+    return this.request<any>(`/wallets/me/transactions?page=${page}&limit=${limit}${qs}`);
+  }
+
+  async topupWallet(amount: number, note?: string): Promise<any> {
+    return this.request<any>('/wallets/topup', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        idempotencyKey: `TOPUP-${Date.now()}`,
+        note: note || 'Nạp tiền ví Phanta Pay',
+      }),
+    });
+  }
+
+  async payWithWallet(amount: number, category: string, refType: string, refId: string, note?: string): Promise<any> {
+    return this.request<any>('/wallets/pay', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount,
+        category,
+        refType,
+        refId,
+        idempotencyKey: `PAY-${Date.now()}`,
+        note,
+      }),
+    });
+  }
+
+  // --- E09: THUẾ & HÓA ĐƠN ĐIỆN TỬ VAT ---
+  async getMyInvoices(page = 1, limit = 20): Promise<any> {
+    return this.request<any>(`/invoices/me?page=${page}&limit=${limit}`);
+  }
+
+  async requestInvoice(payload: any): Promise<any> {
+    return this.request<any>('/invoices/request', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- E10: THÔNG BÁO ĐA KÊNH ---
+  async getMyNotifications(unreadOnly = false, type?: string, page = 1, limit = 20): Promise<any> {
+    const typeParam = type ? `&type=${type}` : '';
+    return this.request<any>(`/notifications/me?unreadOnly=${unreadOnly}&page=${page}&limit=${limit}${typeParam}`);
+  }
+
+  async markNotificationRead(id: string): Promise<any> {
+    return this.request<any>(`/notifications/me/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsRead(): Promise<any> {
+    return this.request<any>('/notifications/me/read-all', {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiClient();

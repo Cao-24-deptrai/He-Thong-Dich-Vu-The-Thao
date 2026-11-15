@@ -235,3 +235,71 @@ export enum DeviceEventType {
   DRAWER_OPENED = 'DRAWER_OPENED',
   TAMPER_ALERT = 'TAMPER_ALERT',
 }
+
+// ==================== EPIC E08: VÍ NỘI BỘ & SỔ CÁI BẤT BIẾN (M07) ====================
+export enum WalletTxnType {
+  DEPOSIT = 'DEPOSIT', // Nạp tiền vào ví
+  PAYMENT = 'PAYMENT', // Thanh toán dịch vụ sân/gaming
+  HOLD = 'HOLD', // Tạm giữ đặt cọc (gaming session)
+  RELEASE = 'RELEASE', // Giải tỏa tiền tạm giữ
+  SETTLE = 'SETTLE', // Quyết toán cước dịch vụ từ tiền tạm giữ
+  REFUND = 'REFUND', // Hoàn tiền vào ví
+  ADJUSTMENT = 'ADJUSTMENT', // Điều chỉnh số dư bởi Admin
+  WITHDRAW = 'WITHDRAW', // Rút tiền tại quầy
+}
+
+export enum WalletCategory {
+  COURT = 'COURT',
+  GAME_TIME = 'GAME_TIME',
+  GAME_ROOM = 'GAME_ROOM',
+  CANTEEN = 'CANTEEN',
+  RENTAL = 'RENTAL',
+  TOPUP = 'TOPUP',
+  ADJUSTMENT = 'ADJUSTMENT',
+}
+
+export enum WalletStatus {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+}
+
+// ==================== EPIC E09: THUẾ & HÓA ĐƠN ĐIỆN TỬ VAT (M08) ====================
+export enum InvoiceStatus {
+  DRAFT = 'DRAFT',
+  PENDING_CQT = 'PENDING_CQT',
+  ISSUED = 'ISSUED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum TaxRate {
+  TAX_0 = 0,
+  TAX_5 = 5,
+  TAX_8 = 8, // Áp dụng dịch vụ thể dục thể thao theo NQ Quốc hội
+  TAX_10 = 10,
+}
+
+// ==================== EPIC E10: TRUNG TÂM THÔNG BÁO ĐA KÊNH (M09) ====================
+export enum NotificationChannel {
+  IN_APP = 'IN_APP',
+  FCM = 'FCM',
+  ZNS = 'ZNS',
+  SMS = 'SMS',
+  EMAIL = 'EMAIL',
+}
+
+export enum NotificationType {
+  WALLET_BALANCE = 'WALLET_BALANCE',
+  BOOKING_UPDATE = 'BOOKING_UPDATE',
+  INVOICE_VAT = 'INVOICE_VAT',
+  MATCHMAKING = 'MATCHMAKING',
+  PROMOTION = 'PROMOTION',
+  SYSTEM = 'SYSTEM',
+}
+
+export enum NotificationStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+  READ = 'READ',
+}

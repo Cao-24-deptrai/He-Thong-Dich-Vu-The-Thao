@@ -221,3 +221,72 @@ export interface GamingSession {
   actualUsageAmount: number;
   status: 'STARTING' | 'ACTIVE' | 'OFFLINE_GRACE' | 'LOCKED' | 'ENDING' | 'SETTLED';
 }
+
+// ==================== E08: VÍ NỘI BỘ & SỔ CÁI BẤT BIẾN ====================
+export interface Wallet {
+  id: string;
+  userId: string;
+  balance: number;
+  held: number;
+  total: number;
+  status: 'ACTIVE' | 'LOCKED';
+  version: number;
+  updatedAt: string;
+}
+
+export interface WalletTransaction {
+  _id: string;
+  type: 'DEPOSIT' | 'PAYMENT' | 'HOLD' | 'RELEASE' | 'SETTLE' | 'REFUND' | 'ADJUSTMENT' | 'WITHDRAW';
+  amount: number;
+  balanceAfter: number;
+  heldAfter: number;
+  category?: string;
+  refType: string;
+  refId: string;
+  idempotencyKey: string;
+  note?: string;
+  createdAt: string;
+}
+
+// ==================== E09: THUẾ & HÓA ĐƠN ĐIỆN TỬ VAT ====================
+export interface InvoiceItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+  taxRate: number;
+  taxAmount: number;
+}
+
+export interface Invoice {
+  _id: string;
+  invoiceNumber: string;
+  customerName: string;
+  customerTaxCode?: string;
+  companyName?: string;
+  companyAddress?: string;
+  customerEmail?: string;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  totalAmount: number;
+  status: 'DRAFT' | 'PENDING_CQT' | 'ISSUED' | 'FAILED' | 'CANCELLED';
+  cqtCode?: string;
+  pdfUrl?: string;
+  refType: string;
+  refId: string;
+  issuedAt?: string;
+  createdAt: string;
+}
+
+// ==================== E10: THÔNG BÁO ĐA KÊNH ====================
+export interface NotificationItem {
+  _id: string;
+  title: string;
+  body: string;
+  type: 'WALLET_BALANCE' | 'BOOKING_UPDATE' | 'INVOICE_VAT' | 'MATCHMAKING' | 'PROMOTION' | 'SYSTEM';
+  channel: 'IN_APP' | 'FCM' | 'ZNS' | 'SMS' | 'EMAIL';
+  isRead: boolean;
+  data?: Record<string, any>;
+  createdAt: string;
+}

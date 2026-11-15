@@ -19,6 +19,9 @@ import { PtClassesModule } from './pt-classes/pt-classes.module';
 import { TournamentsModule } from './tournaments/tournaments.module';
 import { GamingModule } from './gaming/gaming.module';
 import { BridgeModule } from './bridge/bridge.module';
+import { WalletModule } from './wallet/wallet.module';
+import { InvoiceModule } from './invoice/invoice.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -52,6 +55,9 @@ import { BridgeModule } from './bridge/bridge.module';
     TournamentsModule,
     GamingModule,
     BridgeModule,
+    WalletModule,
+    InvoiceModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

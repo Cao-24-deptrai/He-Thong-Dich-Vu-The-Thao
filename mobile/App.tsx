@@ -24,6 +24,9 @@ import { TrainersScreen } from './src/screens/TrainersScreen';
 import { ClassesScreen } from './src/screens/ClassesScreen';
 import { TournamentsScreen } from './src/screens/TournamentsScreen';
 import { GamingBookingScreen } from './src/screens/GamingBookingScreen';
+import { WalletScreen } from './src/screens/WalletScreen';
+import { InvoiceScreen } from './src/screens/InvoiceScreen';
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
 
 type TabType =
   | 'EXPLORE'
@@ -36,7 +39,10 @@ type TabType =
   | 'CLASSES'
   | 'TOURNAMENT'
   | 'GAMING'
-  | 'MATCH';
+  | 'MATCH'
+  | 'WALLET'
+  | 'INVOICE'
+  | 'NOTIFICATIONS';
 
 export default function App() {
   const { user, token, logout } = useAuthStore();
@@ -133,6 +139,12 @@ export default function App() {
         {activeTab === 'GAMING' && <GamingBookingScreen />}
 
         {activeTab === 'MATCH' && <MatchmakingScreen />}
+
+        {activeTab === 'WALLET' && <WalletScreen />}
+
+        {activeTab === 'INVOICE' && <InvoiceScreen />}
+
+        {activeTab === 'NOTIFICATIONS' && <NotificationsScreen />}
       </View>
 
       {/* Bottom Scrollable Navigation Bar */}
@@ -219,6 +231,30 @@ export default function App() {
           >
             <Text style={[styles.navIcon, activeTab === 'HISTORY' && styles.activeNavText]}>📜</Text>
             <Text style={[styles.navLabel, activeTab === 'HISTORY' && styles.activeNavText]}>Lịch Sử</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('WALLET')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'WALLET' && styles.activeNavText]}>💳</Text>
+            <Text style={[styles.navLabel, activeTab === 'WALLET' && styles.activeNavText]}>Ví Phanta</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('INVOICE')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'INVOICE' && styles.activeNavText]}>🧾</Text>
+            <Text style={[styles.navLabel, activeTab === 'INVOICE' && styles.activeNavText]}>HĐĐT VAT</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.navItem}
+            onPress={() => setActiveTab('NOTIFICATIONS')}
+          >
+            <Text style={[styles.navIcon, activeTab === 'NOTIFICATIONS' && styles.activeNavText]}>🔔</Text>
+            <Text style={[styles.navLabel, activeTab === 'NOTIFICATIONS' && styles.activeNavText]}>Thông Báo</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

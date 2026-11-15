@@ -19,7 +19,10 @@ import {
   Award,
   Trophy,
   Gamepad2,
-  Cpu
+  Cpu,
+  Wallet,
+  FileText,
+  Bell,
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -118,6 +121,24 @@ export default function RootLayout({
       label: 'Cáp Kèo Thể Thao',
       icon: Users,
       description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+    },
+    {
+      href: '/finance',
+      label: 'Tài Chính & Ví (E08)',
+      icon: Wallet,
+      description: 'Ví Phanta Pay & Sổ cái đối soát (M07)',
+    },
+    {
+      href: '/invoices',
+      label: 'Hóa Đơn & Thuế (E09)',
+      icon: FileText,
+      description: 'Xuất hóa đơn VAT 8% & Mã CQT (M08)',
+    },
+    {
+      href: '/notifications',
+      label: 'Thông Báo Đa Kênh (E10)',
+      icon: Bell,
+      description: 'Trung tâm bắn FCM, SMS, ZNS (M09)',
     },
   ];
 
