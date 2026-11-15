@@ -19,7 +19,7 @@ export class GamingSession {
   sessionCode: string;
 
   @ApiProperty({ description: 'Gaming Machine ID' })
-  @Prop({ type: Types.ObjectId, ref: 'GamingMachine', required: true, index: true })
+  @Prop({ type: Types.ObjectId, ref: 'GamingMachine', required: true })
   machineId: Types.ObjectId;
 
   @ApiProperty({ description: 'Machine Code', example: 'PC-01' })
