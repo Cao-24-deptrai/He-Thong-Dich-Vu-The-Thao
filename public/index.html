@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tổ Hợp Thể Thao Sao Vàng - Phân Hệ E04, E06, E16</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-dark">
+
+  <!-- ========================================== -->
+  <!-- TOP HEADER                                 -->
+  <!-- ========================================== -->
+  <header class="site-header">
+    <div class="brand-wrapper">
+      <div class="brand-logo">🏆</div>
+      <div class="brand-info">
+        <h1>
+          GOLDEN STAR SPORTS HUB
+          <span class="scope-badge">EPICS: E04 • E06 • E16</span>
+        </h1>
+        <div class="tagline">
+          <span>Tổ Hợp Thể Thao & Đặt Lịch Thông Minh</span>
+          <span>•</span>
+          <span style="color:var(--accent-lime)">Bóng Đá • Pickleball • Cầu Lông • Tennis • Quầy POS</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="shift-status-pill">
+        <div class="status-dot-pulse"></div>
+        <span><strong>Ca Sáng (06:00 - 12:00):</strong> Cáp Nguyễn Thanh Huyền</span>
+        <span style="color:var(--text-muted)">|</span>
+        <span style="color:#fdba74; font-weight:600">Thứ Ba, 27/10/2026</span>
+        <span style="color:var(--text-muted)">|</span>
+        <span style="color:var(--accent-lime); font-weight:700">VietQR Sẵn Sàng</span>
+      </div>
+
+      <div class="time-clock" id="liveClock">--:--:--</div>
+
+      <button class="btn-icon" id="toggleSoundBtn" title="Bật/Tắt âm thanh hiệu ứng">🔊</button>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- PRIMARY EPIC NAVIGATION TABS (E04, E06, E16) -->
+  <!-- ========================================== -->
+  <nav class="epic-navigation-bar">
+    <button class="nav-tab-btn active" data-epic="E04" onclick="switchEpic('E04')">
+      <span>⚡</span>
+      <span>E04: Thanh Toán VietQR, Cứu Đơn & Hoàn Tiền</span>
+      <span class="tab-badge">M06 • T2/T4</span>
+    </button>
+    <button class="nav-tab-btn" data-epic="E06" onclick="switchEpic('E06')">
+      <span>🛒</span>
+      <span>E06: Quầy POS, Kho & Ca Thu Ngân</span>
+      <span class="tab-badge">M12 • T3/T5/T6</span>
+    </button>
+    <button class="nav-tab-btn" data-epic="E16" onclick="switchEpic('E16')">
+      <span>📊</span>
+      <span>E16: Báo Cáo Doanh Thu, Lấp Đầy & Kiểm Toán</span>
+      <span class="tab-badge">M17 • Dashboard</span>
+    </button>
+  </nav>
+
+  <!-- ========================================== -->
+  <!-- MAIN VIEWPORT CONTAINER                    -->
+  <!-- ========================================== -->
+  <main class="main-viewport">
+
+    <!-- ================================================================= -->
+    <!-- VIEWPORT EPIC E04: THANH TOÁN VIETQR, CỨU ĐƠN & HOÀN TIỀN        -->
+    <!-- ================================================================= -->
+    <div class="epic-viewport" id="epic-e04">
+      <div class="subnav-container">
+        <div class="subnav-pills">
+          <button class="subnav-pill active" data-subview="e04-vietqr" onclick="switchSubView('e04-vietqr')">
+            ⚡ Cổng Thanh Toán VietQR Tự Động
+          </button>
+          <button class="subnav-pill" data-subview="e04-rescue" onclick="switchSubView('e04-rescue')">
+            🔍 Trung Tâm Cứu Đơn Bất Thường
+          </button>
+          <button class="subnav-pill" data-subview="e04-refunds" onclick="switchSubView('e04-refunds')">
+            💳 Quản Lý Hoàn Tiền & Khiếu Nại
+          </button>
+        </div>
+
+        <button class="btn btn-primary" onclick="openNewBookingModal()">
+          + Tạo Đơn Đặt Sân & Sinh Mã VietQR Mới
+        </button>
+      </div>
+
+      <!-- Subview: Cổng Thanh Toán VietQR -->
+      <section class="subview-section active" id="section-e04-vietqr">
+        <div class="grid-2">
+          <!-- Active QR Card -->
+          <div class="vietqr-card">
+            <div class="bank-header-badge">
+              <span class="qr-bank-logo">MB BANK</span>
+              <span>NGÂN HÀNG QUÂN ĐỘI • CỔNG VIETQR PRO</span>
+            </div>
+
+            <div class="countdown-box" style="margin-bottom: 1rem;">
+              <span>⏱</span>
+              <span>Thời gian giữ chỗ:</span>
+              <span id="qrCountdownText" style="color:#fff; font-family:monospace;">15:00</span>
+            </div>
+
+            <!-- Dynamic QR Code Frame -->
+            <div class="qr-code-frame">
+              <canvas id="qrCanvas" width="220" height="220"></canvas>
+            </div>
+
+            <div class="qr-amount-display" id="qrAmount">550.000 đ</div>
+            <div id="qrStatusBadge" style="margin-bottom: 0.8rem;">
+              <span class="badge badge-pending">⏱ CHỜ KHÁCH CHUYỂN KHOẢN (POLLING)</span>
+            </div>
+
+            <table class="qr-meta-table">
+              <tr>
+                <td class="label">Mã đơn đặt sân:</td>
+                <td class="val"><span id="qrOrderId">SPORT-BK-8924</span> <span class="copy-badge" onclick="copyToClipboard(document.getElementById('qrOrderId').textContent)">Copy</span></td>
+              </tr>
+              <tr>
+                <td class="label">Sân & Thời gian:</td>
+                <td class="val" style="color:var(--accent-lime)"><span id="qrCourtName">Sân Bóng Đá Số 3</span> (<span id="qrTimeSlot">18:00 - 19:30</span>)</td>
+              </tr>
+              <tr>
+                <td class="label">Số tài khoản nhận:</td>
+                <td class="val"><span id="qrAccountNum">098812345688</span> <span class="copy-badge" onclick="copyToClipboard('098812345688')">Copy</span></td>
+              </tr>
+              <tr>
+                <td class="label">Chủ tài khoản:</td>
+                <td class="val" id="qrAccountName">TO HOP THE THAO SAO VANG</td>
+              </tr>
+              <tr>
+                <td class="label">Ngân hàng:</td>
+                <td class="val" id="qrBankName">MB Bank (Hội sở)</td>
+              </tr>
+              <tr>
+                <td class="label">Nội dung bắt buộc:</td>
+                <td class="val" style="color:#f59e0b"><span id="qrMemo">SPORT BK 8924</span> <span class="copy-badge" onclick="copyToClipboard(document.getElementById('qrMemo').textContent)">Copy</span></td>
+              </tr>
+            </table>
+
+            <div class="polling-indicator">
+              <div class="status-dot-pulse"></div>
+              <span id="pollingStatusText">Đang lắng nghe tín hiệu chuyển khoản ngân hàng... (chu kỳ 2s)</span>
+            </div>
+
+            <!-- Simulation Action Buttons for Testing -->
+            <div style="display:flex; gap:0.5rem; margin-top:1.25rem; width:100%;">
+              <button class="btn btn-primary" id="qrSimulateSuccessBtn" style="flex:1" onclick="simulateWebhookTransfer(false)">
+                🟢 Mô Phỏng: Khách Chuyển Khoản Thành Công
+              </button>
+              <button class="btn btn-danger" style="flex:1" onclick="simulateWebhookTransfer(true)">
+                🔴 Mô Phỏng: Quá Hạn / Huỷ Đơn
+              </button>
+            </div>
+          </div>
+
+          <!-- VietQR Bookings List Panel -->
+          <div class="app-card">
+            <div class="card-title-row">
+              <div class="card-title">
+                <span class="icon">📋</span>
+                <span>Danh Sách Đơn Đặt Sân Chờ & Đã Thanh Toán</span>
+              </div>
+              <span class="badge badge-info">Thời gian thực</span>
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Mã Đơn</th>
+                    <th>Khách Hàng</th>
+                    <th>Sân Thể Thao</th>
+                    <th>Khung Giờ</th>
+                    <th>Số Tiền</th>
+                    <th>Trạng Thái</th>
+                    <th>Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="vietqrOrdersTableBody">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Trung Tâm Cứu Đơn (Rescue Engine) -->
+      <section class="subview-section" id="section-e04-rescue">
+        <div class="app-card" style="border-left: 4px solid var(--accent-orange);">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon" style="color:var(--accent-orange)">🛡️</span>
+              <span>Cơ Chế Cứu Đơn & Khớp Giao Dịch Bất Thường (US-013)</span>
+            </div>
+            <span class="badge badge-pending">Đối Soát Thông Minh</span>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+            Tự động phát hiện các khoản tiền khách đã chuyển vào tài khoản ngân hàng nhưng <strong>sai cú pháp</strong>, <strong>thiếu mã đơn</strong> hoặc hệ thống Webhook ngân hàng bị nghẽn mạng. Giúp nhân viên đối soát và kích hoạt sân ngay lập tức mà không làm gián đoạn buổi tập của khách hàng.
+          </p>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã Giao Dịch NH</th>
+                  <th>Ngân Hàng & Giờ</th>
+                  <th>Số Tiền Nhận</th>
+                  <th>Nội Dung Chuyển Khoản Gốc (SMS/App)</th>
+                  <th>Trạng Thái & Gợi Ý</th>
+                  <th>Hành Động</th>
+                </tr>
+              </thead>
+              <tbody id="unmatchedTxTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Quản Lý Hoàn Tiền & Khiếu Nại -->
+      <section class="subview-section" id="section-e04-refunds">
+        <div class="app-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">💳</span>
+              <span>Sổ Cái Hoàn Tiền & Khiếu Nại (Refund Management M06)</span>
+            </div>
+            <span class="badge badge-purple">Quy Chuẩn Hoàn Tiền</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã Hoàn Tiền</th>
+                  <th>Mã Đơn / Khách Hàng</th>
+                  <th>Lý Do Hoàn</th>
+                  <th>Số Tiền Hoàn</th>
+                  <th>Hình Thức Hoàn</th>
+                  <th>Trạng Thái</th>
+                  <th>Xử Lý</th>
+                </tr>
+              </thead>
+              <tbody id="refundsTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- VIEWPORT EPIC E06: QUẦY POS, KHO & CA THU NGÂN                     -->
+    <!-- ================================================================= -->
+    <div class="epic-viewport" id="epic-e06" style="display:none;">
+      <div class="subnav-container">
+        <div class="subnav-pills">
+          <button class="subnav-pill active" data-subview="e06-pos" onclick="switchSubView('e06-pos')">
+            🛒 Bán Lẻ POS & Thuê Đồ
+          </button>
+          <button class="subnav-pill" data-subview="e06-inventory" onclick="switchSubView('e06-inventory')">
+            📦 Quản Lý Kho & Kiểm Kê (M12)
+          </button>
+          <button class="subnav-pill" data-subview="e06-shift" onclick="switchSubView('e06-shift')">
+            💼 Quản Lý Ca Thu Ngân & Két Tiền
+          </button>
+        </div>
+      </div>
+
+      <!-- Subview: Quầy POS Bán Lẻ -->
+      <section class="subview-section active" id="section-e06-pos">
+        <div class="pos-layout">
+          <!-- Left: Product Browser -->
+          <div>
+            <!-- Categories & Search -->
+            <div style="display:flex; justify-content:space-between; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+              <div class="category-tabs">
+                <button class="cat-btn active" onclick="filterPosCategory('ALL', this)">Tất cả</button>
+                <button class="cat-btn" onclick="filterPosCategory('BEVERAGE', this)">🥤 Nước Uống</button>
+                <button class="cat-btn" onclick="filterPosCategory('RENTAL', this)">🎾 Thuê Vợt</button>
+                <button class="cat-btn" onclick="filterPosCategory('EQUIPMENT', this)">🏸 Phụ Kiện</button>
+                <button class="cat-btn" onclick="filterPosCategory('SNACK', this)">🍫 Đồ Ăn</button>
+                <button class="cat-btn" onclick="filterPosCategory('COMBO', this)">⚡ Combo</button>
+              </div>
+
+              <div style="flex:1; max-width:320px; min-width:200px;">
+                <input type="text" id="posSearchInput" class="form-control" placeholder="🔍 Tìm tên SP hoặc quét Barcode..." oninput="renderPosProductGrid()">
+              </div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="pos-product-grid" id="posProductGrid">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Right: Cart & Checkout -->
+          <div class="pos-cart-panel">
+            <div class="cart-header">
+              <div style="font-weight:700; color:#fff; display:flex; align-items:center; gap:0.5rem">
+                <span>🛒</span>
+                <span>Giỏ Hàng Quầy (<span id="cartItemCount">0</span>)</span>
+              </div>
+              <button class="btn btn-secondary" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="clearCart()">
+                Xoá tất cả
+              </button>
+            </div>
+
+            <div class="cart-items-list" id="cartItemsList">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div class="cart-footer">
+              <div class="cart-total-row">
+                <span style="font-size:0.85rem; color:var(--text-secondary);">Tổng cộng thanh toán:</span>
+                <span class="cart-total-amount" id="cartTotalDisplay">0 đ</span>
+              </div>
+
+              <!-- Payment Method Selector -->
+              <div class="payment-method-selector">
+                <button class="pm-btn active" onclick="setPaymentMethod('CASH', this)">
+                  💵 Tiền Mặt
+                </button>
+                <button class="pm-btn" onclick="setPaymentMethod('VIETQR', this)">
+                  ⚡ VietQR Quầy
+                </button>
+                <button class="pm-btn" onclick="setPaymentMethod('CARD_POS', this)">
+                  💳 Thẻ POS (Bridge)
+                </button>
+                <button class="pm-btn" onclick="setPaymentMethod('MEMBER_WALLET', this)">
+                  🎫 Ví Hội Viên
+                </button>
+              </div>
+
+              <!-- Cash Change Assistant -->
+              <div id="cashHelperBox" style="background:var(--bg-card-inner); padding:0.6rem; border-radius:6px; margin-bottom:0.75rem; border:1px solid var(--border-subtle);">
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:0.3rem;">
+                  <span>Tiền khách đưa:</span>
+                  <input type="number" id="customerCashGiven" class="form-control" style="width:110px; padding:0.2rem 0.4rem; height:26px; text-align:right" placeholder="0" oninput="calcCashChange()">
+                </div>
+                <div style="display:flex; gap:0.3rem; margin-bottom:0.4rem;">
+                  <button class="btn btn-secondary" style="padding:0.15rem 0.4rem; font-size:0.7rem;" onclick="quickCash(50000)">50k</button>
+                  <button class="btn btn-secondary" style="padding:0.15rem 0.4rem; font-size:0.7rem;" onclick="quickCash(100000)">100k</button>
+                  <button class="btn btn-secondary" style="padding:0.15rem 0.4rem; font-size:0.7rem;" onclick="quickCash(200000)">200k</button>
+                  <button class="btn btn-secondary" style="padding:0.15rem 0.4rem; font-size:0.7rem;" onclick="quickCash(500000)">500k</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:0.78rem;">
+                  <span style="color:var(--text-muted)">Tiền thối lại:</span>
+                  <strong id="cashChangeReturn" style="color:var(--accent-lime)">0 đ</strong>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" style="width:100%; padding:0.75rem;" onclick="handleCheckout()">
+                ⚡ THANH TOÁN & IN HOÁ ĐƠN
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Quản Lý Kho & Kiểm Kê (M12) -->
+      <section class="subview-section" id="section-e06-inventory">
+        <div class="grid-3" style="margin-bottom:1.25rem;">
+          <div class="kpi-card">
+            <div class="kpi-title">Tổng Mặt Hàng Quản Lý</div>
+            <div class="kpi-value" id="invTotalCount">10 SP</div>
+            <div class="kpi-trend trend-up">Kho F&B, Vợt & Phụ kiện</div>
+          </div>
+          <div class="kpi-card" style="border-color: rgba(239, 68, 68, 0.4);">
+            <div class="kpi-title">Mặt Hàng Cảnh Báo Sắp Hết</div>
+            <div class="kpi-value" id="lowStockCountBadge" style="color:#ef4444">2 mặt hàng</div>
+            <div class="kpi-trend trend-down">Dưới ngưỡng an toàn</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Tổng Giá Trị Tồn Kho</div>
+            <div class="kpi-value">12.450.000 đ</div>
+            <div class="kpi-trend trend-up">Theo giá vốn nhập kho</div>
+          </div>
+        </div>
+
+        <div class="app-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">📦</span>
+              <span>Bảng Quản Lý Tồn Kho & Ngưỡng Báo Động</span>
+            </div>
+            <span class="badge badge-info">Phân hệ M12</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Barcode</th>
+                  <th>Tên Sản Phẩm / Dịch Vụ</th>
+                  <th>Danh Mục</th>
+                  <th>Giá Vốn</th>
+                  <th>Giá Bán Lẻ</th>
+                  <th>Tồn Kho</th>
+                  <th>Ngưỡng Tối Thiểu</th>
+                  <th>Trạng Thái</th>
+                  <th>Thao Tác</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Ca Thu Ngân & Két Tiền -->
+      <section class="subview-section" id="section-e06-shift">
+        <!-- BẢNG PHÂN CA LÀM VIỆC TỔ HỢP THỂ THAO -->
+        <div class="app-card" style="margin-bottom:1.25rem;">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">🕒</span>
+              <span>Lịch Phân Ca Làm Việc Tổ Hợp (3 Ca Chính & Ca Gãy Cuối Tuần)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <span class="badge badge-info" id="liveDayOfWeekBadge">Thứ Ba, 27/10/2026</span>
+              <span class="badge badge-success">Mở cửa 06:00 - 23:00 (Sau 23h đóng cửa)</span>
+            </div>
+          </div>
+
+          <div class="grid-4" id="shiftSchedulesContainer" style="grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0.75rem;">
+            <!-- Ca Sáng -->
+            <div class="roster-card" style="border-left: 4px solid var(--accent-lime); background: var(--bg-card-hover);">
+              <div class="roster-title">
+                <span>☀️ Ca Sáng (Chính)</span>
+                <span class="badge badge-success" style="font-size:0.65rem;">ĐANG TRỰC BAN</span>
+              </div>
+              <div class="roster-time" style="color:var(--accent-lime); font-weight:800;">06:00 - 12:00 (6 tiếng)</div>
+              <div class="roster-cashier">👤 Cáp Nguyễn Thanh Huyền</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Mở cửa tổ hợp 06h, nhận quỹ đầu ca, đón khách tập sáng & quầy POS</small>
+            </div>
+
+            <!-- Ca Chiều -->
+            <div class="roster-card" style="border-left: 4px solid #38bdf8;">
+              <div class="roster-title">
+                <span>🌤️ Ca Chiều (Chính)</span>
+                <span class="badge badge-pending" style="font-size:0.65rem;">CHỜ NHẬN CA</span>
+              </div>
+              <div class="roster-time" style="color:#38bdf8; font-weight:800;">12:00 - 18:00 (6 tiếng)</div>
+              <div class="roster-cashier">👤 Đặng Minh Quân</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Nhận bàn giao lúc 12h từ Cáp Nguyễn Thanh Huyền, phục vụ khách chiều</small>
+            </div>
+
+            <!-- Ca Tối (Ca Cuối Trong Ngày) -->
+            <div class="roster-card" style="border-left: 4px solid #f59e0b;">
+              <div class="roster-title">
+                <span>🌙 Ca Tối (Ca Cuối Ngày)</span>
+                <span class="badge badge-purple" style="font-size:0.65rem; background:rgba(245,158,11,0.2); color:#fbbf24;">CA CUỐI NGÀY</span>
+              </div>
+              <div class="roster-time" style="color:#fbbf24; font-weight:800;">18:00 - 23:00 (5 tiếng)</div>
+              <div class="roster-cashier">👤 Phạm Hoàng Long</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Đón giải đấu thể thao đêm, kết sổ 23h & bàn giao chốt ngày cho Chủ</small>
+            </div>
+
+            <!-- Sau 23:00: Đóng cửa tổ hợp -->
+            <div class="roster-card" style="border-left: 4px solid #ef4444; background: rgba(239,68,68,0.05);">
+              <div class="roster-title">
+                <span>🛑 Sau 23:00 - Đóng Cửa</span>
+                <span class="badge badge-danger" style="font-size:0.65rem;">KẾT THÚC NGÀY</span>
+              </div>
+              <div class="roster-time" style="color:#f87171; font-weight:800;">23:00 - 06:00 Hôm Sau</div>
+              <div class="roster-cashier">🔒 Tổ Hợp Nghỉ Đêm</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Không làm đêm sau 23h. Niêm phong két tiền. 06h sáng hôm sau mở ca mới</small>
+            </div>
+
+            <!-- Ca Gãy Cuối Tuần 1: Chiều Tối -->
+            <div class="roster-card split-shift" style="border-left: 4px solid var(--accent-orange);">
+              <div class="roster-title">
+                <span>⚡ Ca Gãy Cuối Tuần (Chiều)</span>
+                <span class="badge badge-pending" style="font-size:0.65rem; background:rgba(234,88,12,0.2); color:#fdba74;">T7 & CN ĐÔNG</span>
+              </div>
+              <div class="roster-time" style="color:var(--accent-orange); font-weight:800;">16:00 - 20:00 (4 tiếng)</div>
+              <div class="roster-cashier">👤 Lê Thu Trang</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Chỉ mở cuối tuần khi khách đông: Tăng cường quầy F&B & nước giải khát</small>
+            </div>
+
+            <!-- Ca Gãy Cuối Tuần 2: Sáng Trưa -->
+            <div class="roster-card split-shift" style="border-left: 4px solid #10b981;">
+              <div class="roster-title">
+                <span>⚡ Ca Gãy Cuối Tuần (Sáng)</span>
+                <span class="badge badge-info" style="font-size:0.65rem; background:rgba(16,185,129,0.2); color:#6ee7b7;">T7 & CN ĐÔNG</span>
+              </div>
+              <div class="roster-time" style="color:#10b981; font-weight:800;">08:30 - 12:30 (4 tiếng)</div>
+              <div class="roster-cashier">👤 Vũ Tuấn Kiệt</div>
+              <small style="color:var(--text-muted); font-size:0.72rem;">Chỉ mở cuối tuần khi khách đông: Tăng cường hỗ trợ các giải giao hữu</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- THÔNG TIN CA ĐANG LÀM VIỆC: CÁP NGUYỄN THANH HUYỀN -->
+        <div class="app-card" style="border-left:4px solid var(--accent-lime); margin-bottom:1.25rem;">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">💼</span>
+              <span>Thông Tin Ca Hiện Tại: <strong id="shiftNameDisplay" style="color:var(--accent-lime)">Ca Sáng (06:00 - 12:00)</strong> - Mã Ca: <span id="shiftIdDisplay">CA-20261027-01</span></span>
+            </div>
+            <button class="btn btn-accent" onclick="openCloseShiftModal()">
+              🔒 Bàn Giao Ca Sáng (06h-12h) Cho Ca Tiếp Theo
+            </button>
+          </div>
+
+          <div class="grid-4" style="margin-top:1rem;">
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Thu Ngân Trực Ca</div>
+              <div style="font-weight:700; color:#fff; font-size:1.05rem;" id="shiftCashierDisplay">Cáp Nguyễn Thanh Huyền</div>
+              <div style="font-size:0.8rem; color:var(--accent-lime);" id="shiftStaffIdDisplay">Mã NV: NV-HUYEN-06</div>
+              <small style="color:var(--text-muted)">Bắt đầu lúc: <span id="shiftOpenedAtDisplay">06:00</span></small>
+            </div>
+
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Quỹ Đầu Ca (Tiền mặt nhận)</div>
+              <div style="font-weight:800; color:#fff; font-size:1.3rem;" id="shiftInitialCashDisplay">1.500.000 đ</div>
+              <small style="color:var(--text-muted)">Tiền lẻ thối sẵn trong két (gồm cả 5k, 2k, 1k)</small>
+            </div>
+
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Doanh Thu Thu Được Trong Ca</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary)">Tiền mặt: <strong id="shiftCashSalesDisplay" style="color:#fff">1.680.000 đ</strong></div>
+              <div style="font-size:0.8rem; color:var(--text-secondary)">VietQR: <strong id="shiftVietqrSalesDisplay" style="color:var(--accent-lime)">3.450.000 đ</strong></div>
+              <div style="font-size:0.8rem; color:var(--text-secondary)">Thẻ POS: <strong id="shiftCardSalesDisplay" style="color:#38bdf8">1.120.000 đ</strong></div>
+            </div>
+
+            <div class="app-card-inner" style="border-color:var(--border-color);">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Tiền Mặt Lý Thuyết Phải Bàn Giao</div>
+              <div style="font-weight:800; color:var(--accent-lime); font-size:1.4rem;" id="shiftExpectedCashDisplay">2.980.000 đ</div>
+              <small style="color:var(--text-muted)">= Quỹ 1.5Tr + Tiền mặt bán hàng - Chi mua đá quầy</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- 👑 CỔNG KIỂM TRA DÀNH CHO CHỦ TỔ HỢP (OWNER AUDIT CONSOLE) -->
+        <div class="owner-audit-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="owner-badge">👑 CHỦ TỔ HỢP KIỂM TRA</span>
+              <span>Cổng Đối Soát Bàn Giao Ca (Owner Shift Audit Portal)</span>
+            </div>
+            <span class="badge badge-success" id="ownerPortalStatusBadge">Hệ Thống Trực Tuyến</span>
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:1rem;">
+            Chủ tổ hợp (Hoàng Đình Dũng) theo dõi và xác nhận tính toàn vẹn của két tiền sau khi <strong>Cáp Nguyễn Thanh Huyền</strong> hoàn tất ca sáng (06:00 - 12:00) và bàn giao cho <strong>Đặng Minh Quân (Ca Chiều 12:00 - 18:00)</strong> hoặc các ca tiếp theo. Sau 23:00 tổ hợp đóng cửa, Chủ kiểm tra kết sổ an toàn cuối ngày.
+          </p>
+
+          <div id="ownerInspectionBox" class="app-card-inner" style="background:var(--bg-surface); border:1px solid var(--border-color); padding:1rem;">
+            <!-- Rendered via JS based on current handover status -->
+          </div>
+        </div>
+
+        <!-- LỊCH SỬ KẾT CA & BIÊN BẢN BÀN GIAO -->
+        <div class="app-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">📜</span>
+              <span>Biên Bản Bàn Giao Két Tiền & Lịch Sử Đã Được Chủ Kiểm Tra</span>
+            </div>
+            <span class="badge badge-info">Kiểm toán đối soát</span>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã Ca</th>
+                  <th>Tên Ca & Khung Giờ</th>
+                  <th>Thu Ngân Giao Ca</th>
+                  <th>Nhân Viên Nhận Bàn Giao</th>
+                  <th>Tiền Mặt Thực Kiểm</th>
+                  <th>Chênh Lệch</th>
+                  <th>Trạng Thái Chủ Duyệt</th>
+                  <th>Thao Tác Của Chủ</th>
+                </tr>
+              </thead>
+              <tbody id="shiftHistoryTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- VIEWPORT EPIC E16: BÁO CÁO & KIỂM TOÁN (M17)                      -->
+    <!-- ================================================================= -->
+    <div class="epic-viewport" id="epic-e16" style="display:none;">
+      <div class="subnav-container">
+        <div class="subnav-pills">
+          <button class="subnav-pill active" data-subview="e16-dashboard" onclick="switchSubView('e16-dashboard')">
+            📈 Dashboard Tổng Quan M17
+          </button>
+          <button class="subnav-pill" data-subview="e16-occupancy" onclick="switchSubView('e16-occupancy')">
+            🗺️ Heatmap Tỷ Lệ Lấp Đầy Sân
+          </button>
+          <button class="subnav-pill" data-subview="e16-audit" onclick="switchSubView('e16-audit')">
+            📜 Nhật Ký Kiểm Toán Hệ Thống (Audit Trail)
+          </button>
+        </div>
+
+        <button class="btn btn-secondary" onclick="exportAuditCsv()">
+          📥 Xuất Báo Cáo Đối Soát (CSV)
+        </button>
+      </div>
+
+      <!-- Subview: Dashboard M17 -->
+      <section class="subview-section active" id="section-e16-dashboard">
+        <!-- KPI Row -->
+        <div class="grid-4" style="margin-bottom:1.25rem;">
+          <div class="kpi-card">
+            <div class="kpi-title">Doanh Thu Tổng Hôm Nay</div>
+            <div class="kpi-value" id="kpiTodayRevenue" style="color:var(--accent-lime)">18.450.000 đ</div>
+            <div class="kpi-trend trend-up">↑ +14.2% so với hôm qua</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Lượt Đặt Sân Hoàn Tất</div>
+            <div class="kpi-value" id="kpiTodayBookings">42</div>
+            <div class="kpi-trend trend-up">16 sân hoạt động</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Tỷ Lệ Lấp Đầy Sân Bình Quân</div>
+            <div class="kpi-value" id="kpiOccupancyRate">78.4%</div>
+            <div class="kpi-trend trend-up">Giờ vàng đạt 95%</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">Cảnh Báo Tồn Kho Kho</div>
+            <div class="kpi-value" id="kpiLowStock" style="color:#ef4444">2</div>
+            <div class="kpi-trend trend-down">Mặt hàng dưới ngưỡng</div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid-2">
+          <!-- 7-day trend chart -->
+          <div class="app-card">
+            <div class="card-title-row">
+              <div class="card-title">
+                <span class="icon">📊</span>
+                <span>Xu Hướng Doanh Thu 7 Ngày Gần Nhất</span>
+              </div>
+              <span class="badge badge-success">Tăng trưởng ổn định</span>
+            </div>
+            <div id="trendChartContainer">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Multi-channel Revenue Breakdown -->
+          <div class="app-card">
+            <div class="card-title-row">
+              <div class="card-title">
+                <span class="icon">🏆</span>
+                <span>Cơ Cấu Doanh Thu Đa Kênh</span>
+              </div>
+              <span class="badge badge-info">Phân tích chuyên sâu</span>
+            </div>
+            <div id="channelBreakdownContainer">
+              <!-- Rendered via JS -->
+            </div>
+
+            <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border-subtle);">
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-secondary); margin-bottom:0.75rem;">
+                Phân Bổ Phương Thức Thanh Toán:
+              </div>
+              <div id="paymentMethodsContainer">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Heatmap Lấp Đầy Sân -->
+      <section class="subview-section" id="section-e16-occupancy">
+        <!-- Peak Hour Analysis Banner -->
+        <div class="app-card" style="border-left:4px solid var(--accent-lime); margin-bottom:1.25rem;">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">⚡</span>
+              <span>Phân Tích Khung Giờ Vàng & Đề Xuất Giá Động (Dynamic Pricing)</span>
+            </div>
+            <span class="badge badge-success">Tối Ưu Hoá Doanh Thu</span>
+          </div>
+
+          <div class="grid-3" style="margin-top:0.75rem;">
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Khung Giờ Cao Điểm (Peak Hour)</div>
+              <div style="font-weight:700; color:var(--accent-lime);" id="peakHourDisplay">18:00 - 21:00 (Lấp đầy 95% - 98%)</div>
+            </div>
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Khung Giờ Thấp Điểm (Off-Peak)</div>
+              <div style="font-weight:700; color:#38bdf8;" id="offPeakHourDisplay">09:00 - 14:00 (Lấp đầy 28% - 35%)</div>
+            </div>
+            <div class="app-card-inner">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Gợi Ý Tối Ưu Giá Động</div>
+              <div style="font-size:0.8rem; color:#fff;" id="pricingStrategyDisplay">Giảm 25% giờ thấp điểm để kích cầu, tăng 10% giờ vàng.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="app-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">🗺️</span>
+              <span>Heatmap Tỷ Lệ Lấp Đầy 16 Sân Thể Thao (Theo Ngày & Khung Giờ)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.5rem; font-size:0.75rem; color:var(--text-muted);">
+              <span>Thấp (0%)</span>
+              <div style="width:50px; height:8px; background:linear-gradient(90deg, #142817, #22c55e); border-radius:4px;"></div>
+              <span>Cao (100%)</span>
+            </div>
+          </div>
+
+          <div class="heatmap-container">
+            <table class="heatmap-table" id="heatmapTable">
+              <!-- Rendered via JS -->
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Subview: Nhật Ký Kiểm Toán (Audit Trail) -->
+      <section class="subview-section" id="section-e16-audit">
+        <div class="app-card">
+          <div class="card-title-row">
+            <div class="card-title">
+              <span class="icon">📜</span>
+              <span>Nhật Ký Kiểm Toán Hệ Thống (Audit Trail & Activity Logs)</span>
+            </div>
+            <span class="badge badge-info">Bất Biến & Minh Bạch</span>
+          </div>
+
+          <!-- Filters -->
+          <div style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap;">
+            <div style="width:160px;">
+              <select id="auditFilterEpic" class="form-control" onchange="loadAuditLogs()">
+                <option value="ALL">Tất cả Phân hệ</option>
+                <option value="E04">E04 - VietQR & Hoàn tiền</option>
+                <option value="E06">E06 - POS & Ca kho</option>
+                <option value="E16">E16 - Báo cáo & Kiểm toán</option>
+              </select>
+            </div>
+            <div style="width:160px;">
+              <select id="auditFilterSeverity" class="form-control" onchange="loadAuditLogs()">
+                <option value="ALL">Mọi Mức Độ</option>
+                <option value="INFO">INFO (Thông tin)</option>
+                <option value="SUCCESS">SUCCESS (Thành công)</option>
+                <option value="WARNING">WARNING (Cảnh báo/Cứu đơn)</option>
+                <option value="CRITICAL">CRITICAL (Nghiêm trọng)</option>
+              </select>
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <input type="text" id="auditSearchInput" class="form-control" placeholder="🔍 Tìm theo hành động, nhân viên hoặc nội dung log..." oninput="loadAuditLogs()">
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mã Log</th>
+                  <th>Thời Gian</th>
+                  <th>Phân Hệ</th>
+                  <th>Hành Động</th>
+                  <th>Người Thực Hiện</th>
+                  <th>Chi Tiết Sự Kiện</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogsTableBody">
+                <!-- Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS                                     -->
+  <!-- ========================================== -->
+
+  <!-- Modal: Tạo Đơn Đặt Sân Mới & Sinh VietQR -->
+  <div class="modal-overlay" id="newBookingModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight:700; color:#fff; font-size:1.05rem;">+ Tạo Đơn Đặt Sân & Sinh VietQR Động</div>
+        <button class="btn-icon" onclick="closeNewBookingModal()">✕</button>
+      </div>
+      <form id="newBookingForm" onsubmit="handleCreateBookingSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Họ và tên khách hàng:</label>
+            <input type="text" name="custName" class="form-control" required placeholder="Nguyễn Văn A">
+          </div>
+          <div class="form-group">
+            <label>Số điện thoại:</label>
+            <input type="text" name="custPhone" class="form-control" required placeholder="0988xxxxxx">
+          </div>
+          <div class="form-group">
+            <label>Chọn sân thể thao:</label>
+            <select name="courtSelect" class="form-control">
+              <option value="Sân Bóng Đá Số 3 (7 người)">Sân Bóng Đá Số 3 (7 người)</option>
+              <option value="Sân Pickleball Pro Court 1">Sân Pickleball Pro Court 1</option>
+              <option value="Sân Pickleball VIP 2">Sân Pickleball VIP 2</option>
+              <option value="Sân Cầu Lông Số 4">Sân Cầu Lông Số 4</option>
+              <option value="Sân Tennis Mặt Cứng Số 1">Sân Tennis Mặt Cứng Số 1</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Khung giờ thi đấu:</label>
+            <input type="text" name="timeSlotInput" class="form-control" value="19:00 - 20:30 (Hôm nay)">
+          </div>
+          <div class="form-group">
+            <label>Tiền sân (VND):</label>
+            <input type="number" name="courtAmount" class="form-control" value="450000" step="10000" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeNewBookingModal()">Huỷ</button>
+          <button type="submit" class="btn btn-primary">⚡ Sinh Mã VietQR Ngay</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Cứu Đơn Bất Thường (Rescue Modal) -->
+  <div class="modal-overlay" id="rescueOrderModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight:700; color:#fff; font-size:1.05rem;">⚡ Cứu Đơn & Khớp Giao Dịch Chuyển Khoản</div>
+        <button class="btn-icon" onclick="closeRescueModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="app-card-inner" style="margin-bottom:1rem; border-color:var(--border-accent);">
+          <div style="font-size:0.75rem; color:var(--text-muted)">Giao Dịch Ngân Hàng Cần Cứu:</div>
+          <div style="font-weight:700; font-size:1rem; color:#fff;" id="rescueTxIdDisplay">MBB-TX-99214</div>
+          <div style="font-weight:800; font-size:1.2rem; color:var(--accent-lime);" id="rescueAmountDisplay">480.000 đ</div>
+          <div style="font-size:0.8rem; color:#f59e0b; font-family:monospace; margin-top:0.3rem;" id="rescueRawContentDisplay">"..."</div>
+        </div>
+
+        <div class="form-group">
+          <label>Mã Đơn Đặt Sân Cần Khớp (Booking ID):</label>
+          <input type="text" id="rescueBookingIdInput" class="form-control" placeholder="SPORT-BK-8919">
+        </div>
+        <div class="form-group">
+          <label>Lý Do Đối Soát Cứu Đơn (Ghi vào Kiểm Toán):</label>
+          <input type="text" id="rescueReasonInput" class="form-control" placeholder="Khách ghi sai cú pháp">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeRescueModal()">Đóng</button>
+        <button type="button" class="btn btn-accent" onclick="handleConfirmRescue()">Xác Nhận Cứu Đơn & Duyệt Sân</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: In Hoá Đơn Bán Lẻ Quầy POS -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <div style="font-weight:700; color:#fff; font-size:0.95rem;">🧾 Hoá Đơn Bán Lẻ Quầy POS</div>
+        <button class="btn-icon" onclick="closeReceiptModal()">✕</button>
+      </div>
+      <div class="modal-body" id="receiptContent">
+        <!-- Rendered via JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeReceiptModal()">Đóng</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ In Hoá Đơn</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Bàn Giao & Kết Ca Thu Ngân -->
+  <div class="modal-overlay" id="closeShiftModal">
+    <div class="modal-box" style="max-width:650px;">
+      <div class="modal-header">
+        <div style="font-weight:700; color:#fff; font-size:1.05rem;">💼 Bàn Giao Ca Sáng (06:00 - 12:00) & Kiểm Kê Két Tiền</div>
+        <button class="btn-icon" onclick="closeCloseShiftModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="app-card-inner" style="margin-bottom:1rem; border-color:var(--border-color);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-size:0.75rem; color:var(--text-muted)">Thu ngân bàn giao:</div>
+              <strong style="color:var(--accent-lime); font-size:0.95rem;">Cáp Nguyễn Thanh Huyền</strong> (Mã NV: NV-HUYEN-06)
+            </div>
+            <span class="badge badge-success">Ca Sáng 06h - 12h</span>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="color:var(--accent-lime); font-weight:700;">Chọn Nhân Viên & Ca Tiếp Nhận Bàn Giao:</label>
+          <select id="handoverTargetSelect" class="form-control" style="font-weight:600; border-color:var(--accent-lime);">
+            <option value="CA_CHIEU" data-name="Đặng Minh Quân (Ca Chiều 12:00 - 18:00)">☀️ Đặng Minh Quân - Ca Chiều (12:00 - 18:00) [Chính - Kế tiếp]</option>
+            <option value="CA_TOI" data-name="Phạm Hoàng Long (Ca Tối 18:00 - 23:00 - Ca Cuối)">🌙 Phạm Hoàng Long - Ca Tối (18:00 - 23:00) [Ca cuối ngày - Chốt 23h]</option>
+            <option value="CA_GAY_CUOI_TUAN_CHIEU" data-name="Lê Thu Trang (Ca Gãy Cuối Tuần 16:00 - 20:00)">⚡ Lê Thu Trang - Ca Gãy Cuối Tuần (16:00 - 20:00) [T7 & CN đông]</option>
+            <option value="CA_GAY_CUOI_TUAN_SANG" data-name="Vũ Tuấn Kiệt (Ca Gãy Cuối Tuần 08:30 - 12:30)">⚡ Vũ Tuấn Kiệt - Ca Gãy Cuối Tuần (08:30 - 12:30) [T7 & CN đông]</option>
+            <option value="CHU_TO_HOP" data-name="Hoàng Đình Dũng (Chủ Tổ Hợp - Kết ca đóng cửa 23h)">👑 Hoàng Đình Dũng - Chủ Tổ Hợp (Kết ca đóng cửa 23:00)</option>
+          </select>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:1rem;">
+          <div class="app-card-inner">
+            <div style="font-size:0.75rem; color:var(--text-muted)">Tiền Mặt Lý Thuyết Trên Phần Mềm</div>
+            <div style="font-size:1.3rem; font-weight:800; color:var(--accent-lime);" id="modalExpectedCash">2.980.000 đ</div>
+          </div>
+          <div class="app-card-inner">
+            <div style="font-size:0.75rem; color:var(--text-muted)">Tổng Tiền Mặt Thực Đếm Trong Két</div>
+            <div style="font-size:1.3rem; font-weight:800; color:#fff;" id="modalCountedCash">0 đ</div>
+            <small id="modalDiffCash" style="font-weight:700">Chưa đếm</small>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <span style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">
+            Bảng Đếm Tiền Mặt Đầy Đủ Mệnh Giá (Từ 500k Đến 1k):
+          </span>
+          <button type="button" class="btn btn-secondary" style="padding:0.2rem 0.6rem; font-size:0.72rem; color:var(--accent-lime); border-color:var(--accent-lime);" onclick="quickFillMatchedDenominations()">
+            ⚡ Điền mẫu khớp 100% két (Có đủ 5k, 2k, 1k)
+          </button>
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:0.5rem; margin-bottom:1rem;">
+          <!-- 500k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">500.000 đ</div>
+            <input type="number" id="denom_500000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_500000">0 đ</div>
+          </div>
+          <!-- 200k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">200.000 đ</div>
+            <input type="number" id="denom_200000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_200000">0 đ</div>
+          </div>
+          <!-- 100k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">100.000 đ</div>
+            <input type="number" id="denom_100000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_100000">0 đ</div>
+          </div>
+          <!-- 50k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">50.000 đ</div>
+            <input type="number" id="denom_50000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_50000">0 đ</div>
+          </div>
+          <!-- 20k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">20.000 đ</div>
+            <input type="number" id="denom_20000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_20000">0 đ</div>
+          </div>
+          <!-- 10k -->
+          <div class="app-card-inner" style="padding:0.5rem;">
+            <div style="font-size:0.75rem; font-weight:700; color:#fff">10.000 đ</div>
+            <input type="number" id="denom_10000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_10000">0 đ</div>
+          </div>
+          <!-- 5k -->
+          <div class="app-card-inner" style="padding:0.5rem; border-color: rgba(156,255,147,0.3);">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent-lime)">5.000 đ</div>
+            <input type="number" id="denom_5000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_5000">0 đ</div>
+          </div>
+          <!-- 2k -->
+          <div class="app-card-inner" style="padding:0.5rem; border-color: rgba(156,255,147,0.3);">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent-lime)">2.000 đ</div>
+            <input type="number" id="denom_2000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_2000">0 đ</div>
+          </div>
+          <!-- 1k -->
+          <div class="app-card-inner" style="padding:0.5rem; border-color: rgba(156,255,147,0.3);">
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent-lime)">1.000 đ</div>
+            <input type="number" id="denom_1000" class="form-control" style="padding:0.2rem 0.4rem; height:28px;" placeholder="Số tờ" oninput="calcDenominations()">
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-top:2px" id="denom_total_1000">0 đ</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Ghi chú bàn giao ca:</label>
+          <input type="text" id="closeShiftNote" class="form-control" value="Cáp Nguyễn Thanh Huyền đã kiểm đếm đầy đủ két tiền, bàn giao nguyên vẹn cho ca tiếp theo.">
+        </div>
+
+        <div style="background:rgba(234,88,12,0.1); border:1px solid var(--border-accent); border-radius:6px; padding:0.6rem; font-size:0.75rem; color:#fdba74;">
+          ℹ️ Sau khi bấm ký bàn giao, biên bản sẽ chuyển ngay sang trạng thái <strong>CHỜ CHỦ DUYỆT</strong> để Chủ tổ hợp (Hoàng Đình Dũng) kiểm tra đối soát trên hệ thống.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeCloseShiftModal()">Huỷ</button>
+        <button type="button" class="btn btn-accent" onclick="handleConfirmCloseShift()">Xác Nhận Bàn Giao & Gửi Chủ Kiểm Tra</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Điều Chỉnh Tồn Kho & Nhập Hàng (M12) -->
+  <div class="modal-overlay" id="stockAdjustModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div style="font-weight:700; color:#fff; font-size:1.05rem;">📦 Điều Chỉnh Tồn Kho / Nhập Kho M12</div>
+        <button class="btn-icon" onclick="closeStockAdjustModal()">✕</button>
+      </div>
+      <form onsubmit="handleStockAdjustSubmit(event)">
+        <div class="modal-body">
+          <div class="app-card-inner" style="margin-bottom:1rem;">
+            <div style="font-size:0.75rem; color:var(--text-muted)">Sản phẩm điều chỉnh:</div>
+            <div style="font-weight:700; font-size:1rem; color:#fff;" id="adjustPrdName">--</div>
+            <div style="font-size:0.85rem; color:var(--accent-lime)">Tồn kho hiện tại: <span id="adjustPrdCurrentStock">0</span></div>
+          </div>
+
+          <div class="form-group">
+            <label>Hình thức điều chỉnh:</label>
+            <select id="adjustTypeSelect" class="form-control">
+              <option value="IMPORT">Nhập hàng bổ sung (+ số lượng)</option>
+              <option value="ADJUST_AUDIT">Kiểm kê thực tế (= số lượng đếm)</option>
+              <option value="SCRAP">Xuất huỷ hàng hỏng/rách (- số lượng)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Số lượng:</label>
+            <input type="number" id="adjustQtyInput" class="form-control" value="10" min="1" required>
+          </div>
+          <div class="form-group">
+            <label>Lý do (Ghi nhận vào Audit Trail):</label>
+            <input type="text" id="adjustReasonInput" class="form-control" value="Nhập bổ sung từ nhà phân phối">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeStockAdjustModal()">Huỷ</button>
+          <button type="submit" class="btn btn-primary">Xác Nhận Điều Chỉnh</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
