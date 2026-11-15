@@ -183,8 +183,8 @@ describe('Epic E12 - Gaming Module & Concurrency Race Invariant (e2e)', () => {
       activeSessionId = res.body.session._id;
 
       // Verify customer wallet had hold deducted
-      const updatedUser = await userModel.findById(customerUser.id);
-      expect(updatedUser.walletBalance).toBeLessThan(150000);
+      const updatedUser: any = await userModel.findById(customerUser.id);
+      expect(updatedUser?.walletBalance).toBeLessThan(150000);
     });
 
     it('RACE CONDITION INVARIANT: should REJECT concurrent start on PC-VIP-02 for same account with 409 Conflict', async () => {
