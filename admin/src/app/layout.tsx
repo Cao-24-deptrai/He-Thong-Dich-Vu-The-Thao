@@ -16,7 +16,18 @@ import {
   Menu,
   X,
   Dumbbell,
-  Users
+  Users,
+  Award,
+  Trophy,
+  Gamepad2,
+  Cpu,
+  Receipt,
+  Bell,
+  Coffee,
+  BarChart3,
+  PackageCheck,
+  Star,
+  Ticket
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -85,6 +96,72 @@ export default function RootLayout({
       label: 'Hội Viên Gym',
       icon: Dumbbell,
       description: 'Quản lý gói tập & soát vé (Mục 6.1)',
+    },
+    {
+      href: '/pt-classes',
+      label: 'PT & Lớp Học',
+      icon: Award,
+      description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
+    },
+    {
+      href: '/tournaments',
+      label: 'Giải Đấu Thể Thao',
+      icon: Trophy,
+      description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
+    },
+    {
+      href: '/gaming',
+      label: 'Khu Gaming 100 Máy',
+      icon: Gamepad2,
+      description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
+    },
+    {
+      href: '/bridge',
+      label: 'Bridge Agent & IoT',
+      icon: Cpu,
+      description: 'Thiết bị quầy & Cửa xoay (M22)',
+    },
+    {
+      href: '/canteen',
+      label: 'POS Canteen',
+      icon: Coffee,
+      description: 'Bán lẻ & ca thu ngân (M12)',
+    },
+    {
+      href: '/rentals',
+      label: 'Cho Thuê Dụng Cụ',
+      icon: PackageCheck,
+      description: 'Thuê dụng cụ theo slot (M13)',
+    },
+    {
+      href: '/invoices',
+      label: 'Hóa Đơn Điện Tử',
+      icon: Receipt,
+      description: 'Hóa đơn VAT & tra cứu (M08)',
+    },
+    {
+      href: '/notifications',
+      label: 'Thông Báo',
+      icon: Bell,
+      description: 'Push FCM & Zalo ZNS (M09)',
+    },
+    {
+      href: '/vouchers',
+      label: 'Mã Giảm Giá & Combo',
+      icon: Ticket,
+      description: 'Vouchers & gói ưu đãi (M15)',
+    },
+    {
+      href: '/reviews',
+      label: 'Đánh Giá Dịch Vụ',
+      icon: Star,
+      description: 'Phản hồi khách hàng (FR-16)',
+    },
+    {
+      href: '/analytics',
+      label: 'Báo Cáo & Thống Kê',
+      icon: BarChart3,
+      description: 'Doanh thu & tỷ lệ lấp đầy (M17)',
     },
     {
       href: '/matchmaking',

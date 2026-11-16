@@ -23,6 +23,10 @@ import { CanteenModule } from './canteen/canteen.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { RentalsModule } from './rentals/rentals.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { PtClassesModule } from './pt-classes/pt-classes.module';
+import { TournamentsModule } from './tournaments/tournaments.module';
+import { GamingModule } from './gaming/gaming.module';
+import { BridgeModule } from './bridge/bridge.module';
 
 @Module({
   imports: [
@@ -60,6 +64,10 @@ import { ReviewsModule } from './reviews/reviews.module';
     AnalyticsModule,
     RentalsModule,
     ReviewsModule,
+    PtClassesModule,
+    TournamentsModule,
+    GamingModule,
+    BridgeModule,
   ],
 })
 export class AppModule {}
