@@ -16,6 +16,9 @@ import { CheckinModule } from './checkin/checkin.module';
 import { AdminModule } from './admin/admin.module';
 import { MembershipPassModule } from './membership-pass/membership-pass.module';
 import { MatchRequestsModule } from './match-requests/match-requests.module';
+import { WalletModule } from './wallet/wallet.module';
+import { InvoiceModule } from './invoice/invoice.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -46,6 +49,9 @@ import { MatchRequestsModule } from './match-requests/match-requests.module';
     AdminModule,
     MembershipPassModule,
     MatchRequestsModule,
+    WalletModule,
+    InvoiceModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}
