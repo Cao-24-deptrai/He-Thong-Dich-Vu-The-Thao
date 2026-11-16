@@ -115,7 +115,8 @@ export const TicketScreen: React.FC<Props> = ({ bookingId, onBack }) => {
           </TouchableOpacity>
           <View style={styles.topBarInfo}>
             <Text style={styles.topBarTitle}>Thẻ Vé Vào Sân Điện Tử</Text>
-            <Text style={styles.topBarSubtitle}>Apple Wallet Style • Dynamic 60s QR Token</Text>
+            <Text style={styles.topBarSubtitle}>Vé điện tử Apple Wallet</Text>
+            <Text style={[styles.topBarSubtitle, { fontSize: 11, color: colors.primary, marginTop: 1 }]}>Mã QR bảo mật làm mới mỗi 60s</Text>
           </View>
         </View>
 
@@ -451,7 +452,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '900',
     color: '#00f2fe',
-    fontFamily: 'monospace',
+    
   },
   routeContainer: {
     flexDirection: 'row',
@@ -723,7 +724,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     color: '#00f2fe',
-    fontFamily: 'monospace',
+    
   },
   progressTrack: {
     height: 6,
@@ -774,7 +775,7 @@ const styles = StyleSheet.create({
   },
   detailPrice: {
     color: '#10b981',
-    fontFamily: 'monospace',
+    
   },
   manualRefreshBtn: {
     marginTop: 20,

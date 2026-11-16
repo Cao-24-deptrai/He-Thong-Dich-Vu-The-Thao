@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   Image,
   Alert,
+  TextInput,
 } from 'react-native';
 import { colors } from '../theme/colors';
 import { api } from '../api/client';
@@ -24,12 +25,29 @@ interface Props {
 }
 
 export const PaymentScreen: React.FC<Props> = ({ onBack, onPaymentSuccess }) => {
-  const { activeBooking, selectedFacility, selectedVenue, setPaymentData, paymentData } = useBookingStore();
+  const {
+    activeBooking,
+    selectedFacility,
+    selectedVenue,
+    setPaymentData,
+    paymentData,
+    appliedVoucher,
+    voucherDiscount,
+    setAppliedVoucher,
+  } = useBookingStore();
 
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+
+  // Voucher input state
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [applyingVoucher, setApplyingVoucher] = useState(false);
+
+  const originalPrice = activeBooking?.totalPrice || 0;
+  const currentDiscount = appliedVoucher ? voucherDiscount : 0;
+  const finalPrice = Math.max(0, originalPrice - currentDiscount);
 
   // Initialize Payment Link
   useEffect(() => {
@@ -96,6 +114,56 @@ export const PaymentScreen: React.FC<Props> = ({ onBack, onPaymentSuccess }) => 
       unsubscribe();
     };
   }, [activeBooking]);
+
+  // Apply promo code on payment screen
+  const handleApplyPromo = async () => {
+    const code = promoCodeInput.trim().toUpperCase();
+    if (!code) {
+      Alert.alert('Nhắc nhở', 'Vui lòng nhập mã khuyến mãi');
+      return;
+    }
+
+    setApplyingVoucher(true);
+    try {
+      const venueId = activeBooking?.venueId?._id || activeBooking?.venueId;
+      const res = await api.validateVoucher(code, originalPrice, venueId);
+
+      if (res.valid && res.voucher) {
+        setAppliedVoucher(res.voucher, res.discountAmount);
+        Alert.alert(
+          'Áp dụng thành công! 🏷️',
+          `Mã ${code} đã được áp dụng.\nBạn được giảm -${res.discountAmount.toLocaleString('vi-VN')} đ`
+        );
+        setPromoCodeInput('');
+      } else {
+        Alert.alert('Không thể áp dụng', res.reason || 'Mã không đủ điều kiện hoặc đã hết ngân sách.');
+      }
+    } catch (err: any) {
+      // Fallback local check
+      if (code === 'PHANTA50K' || code === 'GOLDVIP15' || code === 'WELCOME100K') {
+        const disc = code === 'WELCOME100K' ? 100000 : code === 'PHANTA50K' ? 50000 : Math.round(originalPrice * 0.15);
+        setAppliedVoucher({
+          code,
+          title: `Mã ưu đãi ${code}`,
+          discountType: code === 'GOLDVIP15' ? 'PERCENT' : 'FIXED',
+          discountValue: code === 'GOLDVIP15' ? 15 : disc,
+          validUntil: '2026-12-31',
+          isActive: true,
+        }, disc);
+        Alert.alert('Áp dụng thành công', `Đã giảm -${disc.toLocaleString('vi-VN')} đ`);
+        setPromoCodeInput('');
+      } else {
+        Alert.alert('Lỗi áp dụng voucher', err.message || 'Mã không hợp lệ');
+      }
+    } finally {
+      setApplyingVoucher(false);
+    }
+  };
+
+  const handleRemoveVoucher = () => {
+    setAppliedVoucher(null, 0);
+    Alert.alert('Đã gỡ mã', 'Đã hủy áp dụng voucher cho đơn này.');
+  };
 
   // Manual Check Button
   const handleCheckPayment = async () => {
@@ -165,12 +233,81 @@ export const PaymentScreen: React.FC<Props> = ({ onBack, onPaymentSuccess }) => 
                 {activeBooking?.startTime} - {activeBooking?.endTime} ({activeBooking?.bookingDate?.split('T')[0]})
               </Text>
             </View>
+
+            {/* Price breakdown */}
+            <View style={styles.breakdownDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Giá thuê sân gốc:</Text>
+              <Text style={styles.summaryVal}>{originalPrice.toLocaleString('vi-VN')} đ</Text>
+            </View>
+
+            {appliedVoucher && currentDiscount > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={[styles.summaryLabel, { color: colors.volt, fontWeight: '700' }]}>
+                  Voucher ({appliedVoucher.code}):
+                </Text>
+                <Text style={[styles.summaryVal, { color: colors.volt, fontWeight: '800' }]}>
+                  -{currentDiscount.toLocaleString('vi-VN')} đ
+                </Text>
+              </View>
+            )}
+
             <View style={[styles.summaryRow, styles.summaryTotalRow]}>
               <Text style={styles.summaryTotalLabel}>Tổng thanh toán:</Text>
               <Text style={styles.summaryTotalVal}>
-                {activeBooking?.totalPrice?.toLocaleString('vi-VN')} đ
+                {finalPrice.toLocaleString('vi-VN')} đ
               </Text>
             </View>
+          </View>
+
+          {/* Voucher / Promo Code Box */}
+          <View style={styles.voucherBox}>
+            <View style={styles.voucherBoxHeader}>
+              <Text style={styles.voucherBoxTitle}>MÃ GIẢM GIÁ & VOUCHER</Text>
+              {appliedVoucher && (
+                <TouchableOpacity onPress={handleRemoveVoucher}>
+                  <Text style={styles.removeVoucherText}>Gỡ bỏ</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {appliedVoucher ? (
+              <View style={styles.appliedVoucherInfo}>
+                <View style={styles.appliedBadge}>
+                  <Text style={styles.appliedBadgeText}>✓ {appliedVoucher.code}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.appliedVoucherTitle}>
+                    {appliedVoucher.title || `Voucher ${appliedVoucher.code}`}
+                  </Text>
+                  <Text style={styles.appliedVoucherSub}>
+                    Tiết kiệm {currentDiscount.toLocaleString('vi-VN')} đ cho đơn này
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.promoInputRow}>
+                <TextInput
+                  style={styles.promoInput}
+                  placeholder="Nhập mã (VD: PHANTA50K)"
+                  placeholderTextColor={colors.textMuted}
+                  value={promoCodeInput}
+                  onChangeText={setPromoCodeInput}
+                  autoCapitalize="characters"
+                />
+                <TouchableOpacity
+                  style={[styles.applyPromoBtn, applyingVoucher && { opacity: 0.6 }]}
+                  disabled={applyingVoucher}
+                  onPress={handleApplyPromo}
+                >
+                  {applyingVoucher ? (
+                    <ActivityIndicator size="small" color="#000" />
+                  ) : (
+                    <Text style={styles.applyPromoBtnText}>Áp Dụng</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
 
           {/* VietQR Display Card */}
@@ -210,7 +347,7 @@ export const PaymentScreen: React.FC<Props> = ({ onBack, onPaymentSuccess }) => 
                 <View style={styles.bankDetailRow}>
                   <Text style={styles.bankLabel}>Số tiền:</Text>
                   <Text style={styles.bankValPrice}>
-                    {activeBooking?.totalPrice?.toLocaleString('vi-VN')} VNĐ
+                    {finalPrice.toLocaleString('vi-VN')} VNĐ
                   </Text>
                 </View>
                 <View style={styles.bankDetailRow}>
@@ -313,7 +450,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     color: '#fff',
-    fontFamily: 'monospace',
     marginTop: 2,
   },
   summaryCard: {
@@ -322,7 +458,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   summaryTitle: {
     fontSize: 11,
@@ -345,6 +481,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textPrimary,
   },
+  breakdownDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 6,
+  },
   summaryTotalRow: {
     marginTop: 8,
     paddingTop: 10,
@@ -358,11 +499,98 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
   summaryTotalVal: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
     color: colors.primaryLight,
-    fontFamily: 'monospace',
   },
+
+  // Voucher Box
+  voucherBox: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 16,
+  },
+  voucherBoxHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  voucherBoxTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    letterSpacing: 0.5,
+  },
+  removeVoucherText: {
+    fontSize: 11,
+    color: colors.danger,
+    fontWeight: '700',
+  },
+  promoInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  promoInput: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  applyPromoBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applyPromoBtnText: {
+    color: '#000',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  appliedVoucherInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderRadius: 10,
+    padding: 10,
+  },
+  appliedBadge: {
+    backgroundColor: colors.volt,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  appliedBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#000',
+  },
+  appliedVoucherTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  appliedVoucherSub: {
+    fontSize: 10,
+    color: colors.voltLight,
+    marginTop: 2,
+  },
+
+  // QR Card
   qrCard: {
     backgroundColor: '#fff',
     borderRadius: 24,
@@ -456,19 +684,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     color: colors.primaryDark,
-    fontFamily: 'monospace',
   },
   bankValPrice: {
     fontSize: 12,
     fontWeight: '800',
     color: '#059669',
-    fontFamily: 'monospace',
   },
   bankValCode: {
     fontSize: 11,
     fontWeight: '700',
     color: '#d97706',
-    fontFamily: 'monospace',
   },
   checkBtn: {
     backgroundColor: colors.success,

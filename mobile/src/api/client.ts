@@ -6,7 +6,10 @@ import {
   VenueAvailability, 
   Booking, 
   PaymentLinkResponse, 
-  QrTokenResponse 
+  QrTokenResponse,
+  Voucher,
+  VoucherValidationResult,
+  CustomerTierInfo
 } from '../types';
 
 const API_BASE_URL = 
@@ -152,6 +155,87 @@ class ApiClient {
     });
   }
 
+  // --- GYM MEMBERSHIP & QR ACCESS (Epic E11: BR-26, BR-27, BR-28, BR-29, BR-30, AC-70) ---
+  async getGymPlans(): Promise<any[]> {
+    return this.request<any[]>('/gym/plans');
+  }
+
+  async getMyGymQr(): Promise<{
+    hasCredential: boolean;
+    qrCode?: string;
+    status?: 'ACTIVE' | 'EXPIRED';
+    planType?: string;
+    planName?: string;
+    startDate?: string;
+    endDate?: string;
+    daysRemaining?: number;
+    message?: string;
+  }> {
+    return this.request<any>('/gym/my-qr');
+  }
+
+  async purchaseOrRenewGymPlan(payload: {
+    planType: 'DAY_1' | 'MONTH_1' | 'MONTH_3' | 'MONTH_6';
+    paymentMethod?: string;
+  }): Promise<any> {
+    return this.request<any>('/gym/purchase', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async calculateGymUpgrade(newPlanType: 'DAY_1' | 'MONTH_1' | 'MONTH_3' | 'MONTH_6'): Promise<{
+    canUpgrade: boolean;
+    currentPlanPrice: number;
+    newPlanPrice: number;
+    daysRemaining: number;
+    totalDays: number;
+    creditAmount: number;
+    finalAmount: number;
+    reason?: string;
+  }> {
+    return this.request<any>('/gym/calculate-upgrade', {
+      method: 'POST',
+      body: JSON.stringify({ newPlanType }),
+    });
+  }
+
+  async getGymCapacity(): Promise<{
+    insideCount: number;
+    maxCapacity: number;
+    isFull: boolean;
+    occupancyPercentage: number;
+    availableSpots: number;
+  }> {
+    return this.request<any>('/gym/capacity');
+  }
+
+  // --- POOL TICKETS (Epic E11: BR-31, AC-87) ---
+  async getPoolStatus(): Promise<any> {
+    return this.request<any>('/pool/status');
+  }
+
+  async purchasePoolTickets(payload: {
+    adultCount: number;
+    childCount: number;
+    customerPhone?: string;
+    customerName?: string;
+  }): Promise<{
+    success: boolean;
+    totalAmount: number;
+    tickets: any[];
+    message: string;
+  }> {
+    return this.request<any>('/pool/tickets/purchase', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getMyPoolTickets(): Promise<any[]> {
+    return this.request<any[]>('/pool/tickets/my');
+  }
+
   // --- MATCHMAKING (Mục 6.3) ---
   async getMatchRequests(sportType?: string): Promise<any[]> {
     const query = sportType ? `?sportType=${sportType}` : '';
@@ -173,6 +257,60 @@ class ApiClient {
   async joinMatch(matchId: string): Promise<any> {
     return this.request<any>(`/match-requests/${matchId}/join`, {
       method: 'POST',
+    });
+  }
+  // --- VOUCHERS & CUSTOMER TIERS (M15) ---
+  async getVouchers(onlyActive: boolean = true): Promise<Voucher[]> {
+    const query = onlyActive ? '?onlyActive=true' : '';
+    return this.request<Voucher[]>(`/vouchers${query}`);
+  }
+
+  async getVoucherByCode(code: string): Promise<Voucher> {
+    return this.request<Voucher>(`/vouchers/${code.toUpperCase()}`);
+  }
+
+  async validateVoucher(
+    code: string,
+    orderAmount: number,
+    venueId?: string,
+    sportType?: string
+  ): Promise<VoucherValidationResult> {
+    return this.request<VoucherValidationResult>('/vouchers/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code: code.toUpperCase(), orderAmount, venueId, sportType }),
+    });
+  }
+
+  async applyVoucher(payload: {
+    code: string;
+    bookingId: string;
+    orderAmount: number;
+    venueId?: string;
+    sportType?: string;
+  }): Promise<any> {
+    return this.request<any>('/vouchers/apply', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...payload,
+        code: payload.code.toUpperCase(),
+      }),
+    });
+  }
+
+  async getUserTierInfo(): Promise<CustomerTierInfo> {
+    return this.request<CustomerTierInfo>('/users/tier-info');
+  }
+
+  async recalculateUserTier(): Promise<CustomerTierInfo> {
+    return this.request<CustomerTierInfo>('/users/recalculate-tier', {
+      method: 'POST',
+    });
+  }
+
+  async redeemLoyaltyPoints(points: number, bookingId?: string): Promise<any> {
+    return this.request<any>('/users/redeem-points', {
+      method: 'POST',
+      body: JSON.stringify({ points, bookingId }),
     });
   }
 }

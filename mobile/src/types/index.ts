@@ -22,6 +22,11 @@ export interface Facility {
   description?: string;
   openHour?: string;
   closeHour?: string;
+  phone?: string;
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
+  };
 }
 
 export interface PricingRule {
@@ -34,11 +39,21 @@ export interface Venue {
   _id: string;
   facilityId: string;
   name: string;
-  type: string;
+  type?: string;
+  venueType?: string;
+  courtCode?: string;
+  isComposite?: boolean;
+  baseUnitCodes?: string[];
   basePricePerHour: number;
+  defaultPrice?: number;
   pricingRules?: {
     peakHours?: PricingRule[];
     [key: string]: any;
+  };
+  pricingConfig?: PricingRule[];
+  operatingHours?: {
+    openTime: string;
+    closeTime: string;
   };
 }
 
@@ -101,4 +116,51 @@ export interface QrTokenResponse {
     endTime: string;
     totalPrice: number;
   };
+}
+
+export interface Voucher {
+  _id?: string;
+  code: string;
+  title?: string;
+  description?: string;
+  discountType: 'PERCENT' | 'FIXED';
+  discountValue: number;
+  maxDiscountAmount?: number;
+  minOrderValue?: number;
+  totalBudget?: number;
+  usedBudget?: number;
+  usageLimit?: number;
+  usedCount?: number;
+  perUserLimit?: number;
+  applicableSports?: string[];
+  applicableVenues?: string[];
+  applicableCustomerTiers?: string[];
+  validFrom?: string;
+  validUntil: string;
+  isActive: boolean;
+}
+
+export interface VoucherValidationResult {
+  valid: boolean;
+  discountAmount: number;
+  finalPrice: number;
+  voucher?: Voucher;
+  reason?: string;
+}
+
+export interface CustomerTierInfo {
+  currentTier: 'MEMBER' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  tierName: string;
+  rolling12MonthSpend: number;
+  totalLifetimeSpend: number;
+  loyaltyPoints: number;
+  discountRate: number;
+  pointMultiplier: number;
+  nextTier: {
+    tier: string;
+    name: string;
+    minSpend: number;
+    remainingSpend: number;
+  } | null;
+  tierExpiresAt?: string;
 }
