@@ -19,6 +19,8 @@ import { MatchRequestsModule } from './match-requests/match-requests.module';
 import { WalletModule } from './wallet/wallet.module';
 import { InvoiceModule } from './invoice/invoice.module';
 import { NotificationModule } from './notification/notification.module';
+import { CanteenModule } from './canteen/canteen.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -52,6 +54,8 @@ import { NotificationModule } from './notification/notification.module';
     WalletModule,
     InvoiceModule,
     NotificationModule,
+    CanteenModule,
+    AnalyticsModule,
   ],
 })
 export class AppModule {}
