@@ -6,13 +6,16 @@ import {
   Param,
   Query,
   UseGuards,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GamingMachineService } from './gaming-machine.service';
+import { GamingPricingService } from './gaming-pricing.service';
 import { GamingSessionService } from './gaming-session.service';
 import { GamingGateway } from './gaming.gateway';
 import {
   CreateGamingMachineDto,
+  CreateGamingPriceRuleDto,
   StartGamingSessionDto,
   GamingHeartbeatDto,
   EndGamingSessionDto,
@@ -30,6 +33,7 @@ import { UserRole } from '../common/enums';
 export class GamingController {
   constructor(
     private readonly machineService: GamingMachineService,
+    private readonly pricingService: GamingPricingService,
     private readonly sessionService: GamingSessionService,
     private readonly gamingGateway: GamingGateway,
   ) {}
@@ -50,6 +54,15 @@ export class GamingController {
     return { success: true, totalMachines: total };
   }
 
+  @Post('price-rules')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tạo quy tắc giá cho khu vực gaming' })
+  async createPriceRule(@Body() dto: CreateGamingPriceRuleDto) {
+    return this.pricingService.createPriceRule(dto);
+  }
+
   @Post('machines')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.OWNER)
@@ -64,7 +77,16 @@ export class GamingController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Bắt đầu phiên chơi tại máy gaming (F14.3)' })
   async startSession(@CurrentUser() user: any, @Body() dto: StartGamingSessionDto) {
-    return this.sessionService.startSession(user._id || user.id || user.sub, dto);
+    const session: any = await this.sessionService.startSession(user._id || user.id || user.sub, dto);
+    const sessionObj = session.toObject ? session.toObject() : session;
+    return {
+      session: {
+        ...sessionObj,
+        heldAmount: sessionObj.totalHoldAmount,
+      },
+      heldAmount: sessionObj.totalHoldAmount,
+      ...sessionObj,
+    };
   }
 
   @Post('sessions/heartbeat')
@@ -81,6 +103,27 @@ export class GamingController {
     return this.sessionService.endSession(dto.sessionCode, dto.reason);
   }
 
+  @Post('sessions/:id/end')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kết thúc phiên chơi theo ID và quyết toán' })
+  async endSessionById(@Param('id') id: string, @Body() dto?: EndGamingSessionDto) {
+    const session: any = await this.sessionService.endSessionById(id, dto?.reason);
+    const sessionObj = session.toObject ? session.toObject() : session;
+    return {
+      session: {
+        ...sessionObj,
+        status: 'COMPLETED',
+      },
+      settlement: {
+        chargedAmount: sessionObj.actualUsageAmount,
+        refundAmount: sessionObj.refundHoldAmount,
+        totalHoldAmount: sessionObj.totalHoldAmount,
+      },
+      ...sessionObj,
+    };
+  }
+
   @Post('sessions/switch-machine')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -90,11 +133,17 @@ export class GamingController {
   }
 
   @Get('sessions/active')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Danh sách các phiên chơi đang hoạt động' })
-  async getActiveSessions() {
+  @ApiOperation({ summary: 'Danh sách các phiên chơi đang hoạt động hoặc phiên của khách' })
+  async getActiveSessions(@CurrentUser() user: any) {
+    if (user.role === UserRole.CUSTOMER) {
+      const active = await this.sessionService.getActiveSessionForUser(user._id || user.id || user.sub);
+      if (!active) {
+        throw new NotFoundException('Không có phiên chơi nào đang hoạt động');
+      }
+      return active;
+    }
     return this.sessionService.getActiveSessions();
   }
 

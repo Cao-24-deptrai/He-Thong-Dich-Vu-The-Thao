@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsEnum,
+  IsBoolean,
   Min,
 } from 'class-validator';
 import {
@@ -35,11 +36,43 @@ export class CreateGamingMachineDto {
   roomName?: string;
 }
 
-export class StartGamingSessionDto {
-  @ApiProperty({ description: 'Machine Code', example: 'PC-01' })
+export class CreateGamingPriceRuleDto {
+  @ApiProperty({ enum: GamingMachineZone })
   @IsNotEmpty()
+  @IsEnum(GamingMachineZone)
+  zone: GamingMachineZone;
+
+  @ApiProperty({ description: 'Hourly rate' })
+  @IsNotEmpty()
+  @IsNumber()
+  hourlyRate: number;
+
+  @ApiPropertyOptional({ default: 15 })
+  @IsOptional()
+  @IsNumber()
+  minBlockMinutes?: number;
+
+  @ApiPropertyOptional({ default: 15 })
+  @IsOptional()
+  @IsNumber()
+  roundingBlockMinutes?: number;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+}
+
+export class StartGamingSessionDto {
+  @ApiPropertyOptional({ description: 'Machine Code', example: 'PC-01' })
+  @IsOptional()
   @IsString()
-  machineCode: string;
+  machineCode?: string;
+
+  @ApiPropertyOptional({ description: 'Machine ID' })
+  @IsOptional()
+  @IsString()
+  machineId?: string;
 
   @ApiPropertyOptional({ description: 'Prebooked Booking ID (optional)' })
   @IsOptional()

@@ -163,6 +163,7 @@ export enum GamingMachineZone {
 export enum GamingMachineStatus {
   OFFLINE = 'OFFLINE',
   IDLE = 'IDLE',
+  AVAILABLE = 'AVAILABLE',
   IN_USE = 'IN_USE',
   LOCKED = 'LOCKED',
   MAINTENANCE = 'MAINTENANCE',

@@ -1,8 +1,33 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { GamingMachineZone } from '../common/enums';
+import { GamingPriceRule, GamingPriceRuleDocument } from './schemas/gaming-price-rule.schema';
+import { CreateGamingPriceRuleDto } from './dto/gaming.dto';
 
 @Injectable()
 export class GamingPricingService {
+  constructor(
+    @InjectModel(GamingPriceRule.name)
+    private readonly priceRuleModel: Model<GamingPriceRuleDocument>,
+  ) {}
+
+  async createPriceRule(dto: CreateGamingPriceRuleDto): Promise<GamingPriceRule> {
+    const rule = new this.priceRuleModel({
+      zone: dto.zone,
+      hourlyRate: dto.hourlyRate,
+      offpeakPricePerHour: dto.hourlyRate,
+      peakPricePerHour: dto.hourlyRate,
+      minBlockMinutes: dto.minBlockMinutes ?? 15,
+      roundingBlockMinutes: dto.roundingBlockMinutes ?? 15,
+      active: dto.active ?? true,
+    });
+    return rule.save();
+  }
+
+  async getPriceRules(): Promise<GamingPriceRule[]> {
+    return this.priceRuleModel.find().lean();
+  }
   private readonly defaultRates: Record<GamingMachineZone, { offpeak: number; peak: number }> = {
     [GamingMachineZone.STANDARD]: { offpeak: 10000, peak: 15000 },
     [GamingMachineZone.VIP]: { offpeak: 15000, peak: 20000 },

@@ -34,6 +34,10 @@ export class User {
   @Prop({ type: String, required: true })
   passwordHash: string;
 
+  @ApiProperty({ description: 'Internal wallet balance in VND', default: 0, required: false })
+  @Prop({ type: Number, default: 0 })
+  walletBalance: number;
+
   @ApiProperty({ description: 'Creation date' })
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;

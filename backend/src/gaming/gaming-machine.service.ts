@@ -50,6 +50,14 @@ export class GamingMachineService {
     return machine;
   }
 
+  async getMachineById(id: string): Promise<GamingMachineDocument> {
+    const machine = await this.machineModel.findById(id);
+    if (!machine) {
+      throw new NotFoundException(`Không tìm thấy máy có ID ${id}`);
+    }
+    return machine;
+  }
+
   async updateMachineStatus(
     machineCode: string,
     status: GamingMachineStatus,

@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GamingMachineZone } from '../../common/enums';
 
 export type GamingPriceRuleDocument = GamingPriceRule & Document;
@@ -19,6 +19,22 @@ export class GamingPriceRule {
   @ApiProperty({ description: 'Off-peak hourly rate (VND)', example: 10000 })
   @Prop({ type: Number, required: true, default: 10000 })
   offpeakPricePerHour: number;
+
+  @ApiPropertyOptional({ description: 'Hourly rate (VND)', example: 20000 })
+  @Prop({ type: Number })
+  hourlyRate?: number;
+
+  @ApiPropertyOptional({ default: 15 })
+  @Prop({ type: Number, default: 15 })
+  minBlockMinutes?: number;
+
+  @ApiPropertyOptional({ default: 15 })
+  @Prop({ type: Number, default: 15 })
+  roundingBlockMinutes?: number;
+
+  @ApiPropertyOptional({ default: true })
+  @Prop({ type: Boolean, default: true })
+  active?: boolean;
 
   @ApiProperty({ description: 'Peak hourly rate (VND)', example: 15000 })
   @Prop({ type: Number, required: true, default: 15000 })

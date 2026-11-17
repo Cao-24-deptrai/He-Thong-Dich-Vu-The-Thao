@@ -45,9 +45,22 @@ export class GamingSessionService {
       throw new NotFoundException('Người dùng không tồn tại');
     }
 
-    const machine = await this.machineService.getMachineByCode(dto.machineCode);
-    if (machine.status !== GamingMachineStatus.IDLE) {
-      throw new ConflictException(`Máy ${dto.machineCode} hiện không ở trạng thái sẵn sàng (Trạng thái: ${machine.status})`);
+    let machine: GamingMachineDocument;
+    if (dto.machineCode) {
+      machine = await this.machineService.getMachineByCode(dto.machineCode);
+    } else if (dto.machineId) {
+      machine = await this.machineService.getMachineById(dto.machineId);
+    } else {
+      throw new BadRequestException('Vui lòng cung cấp mã máy (machineCode) hoặc ID máy (machineId)');
+    }
+
+    if (
+      machine.status !== GamingMachineStatus.IDLE &&
+      machine.status !== GamingMachineStatus.AVAILABLE
+    ) {
+      throw new ConflictException(
+        `Máy ${machine.machineCode} hiện không ở trạng thái sẵn sàng (Trạng thái: ${machine.status})`,
+      );
     }
 
     // 1. SPEC Rule 1: Chống chơi đồng thời
@@ -71,6 +84,9 @@ export class GamingSessionService {
 
     // 2. SPEC Rule 3: Tạm giữ ví cuốn chiếu block 15 phút
     const holdAmount = this.pricingService.getHoldAmountForBlock(machine.zone, 15);
+    user.walletBalance = Math.max(0, (user.walletBalance || 0) - holdAmount);
+    await user.save();
+
     const sessionCode = `GS-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
     const idempotencyKey = dto.idempotencyKey || `INIT-${sessionCode}`;
 
@@ -173,12 +189,45 @@ export class GamingSessionService {
 
     const saved = await session.save();
 
-    // Trả máy về IDLE
+    // Hoàn trả vào ví người dùng
+    if (session.refundHoldAmount > 0) {
+      const cust = await this.userModel.findById(session.customerId);
+      if (cust) {
+        cust.walletBalance = (cust.walletBalance || 0) + session.refundHoldAmount;
+        await cust.save();
+      }
+    }
+
+    // Trả máy về AVAILABLE
     if (machine) {
-      await this.machineService.updateMachineStatus(machine.machineCode, GamingMachineStatus.IDLE);
+      await this.machineService.updateMachineStatus(machine.machineCode, GamingMachineStatus.AVAILABLE);
     }
 
     return saved;
+  }
+
+  async endSessionById(sessionId: string, reason?: string): Promise<GamingSession> {
+    const session = await this.sessionModel.findById(sessionId);
+    if (!session) {
+      throw new NotFoundException(`Không tìm thấy phiên chơi ${sessionId}`);
+    }
+    return this.endSession(session.sessionCode, reason);
+  }
+
+  async getActiveSessionForUser(userId: string): Promise<GamingSession | null> {
+    return this.sessionModel
+      .findOne({
+        customerId: new Types.ObjectId(userId),
+        status: {
+          $in: [
+            GamingSessionStatus.STARTING,
+            GamingSessionStatus.ACTIVE,
+            GamingSessionStatus.OFFLINE_GRACE,
+            GamingSessionStatus.LOCKED,
+          ],
+        },
+      })
+      .lean();
   }
 
   /**

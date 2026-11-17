@@ -251,6 +251,26 @@ export class TournamentsService {
         match.team2Id = orderedTeams[team2Index]._id as Types.ObjectId;
         match.team2Name = orderedTeams[team2Index].teamName;
       }
+
+      // Xử lý suất đặc cách (BYE: chỉ có 1 đội do số đội lẻ / không đủ 2^n)
+      if (match.team1Id && !match.team2Id && match.nextMatchId) {
+        match.winnerId = match.team1Id;
+        match.status = TournamentMatchStatus.COMPLETED;
+        match.score1 = 1;
+        match.score2 = 0;
+        const nextMatch = roundMatches[2]?.[Math.ceil(m / 2)];
+        if (nextMatch) {
+          if (m % 2 !== 0) {
+            nextMatch.team1Id = match.team1Id;
+            nextMatch.team1Name = match.team1Name;
+          } else {
+            nextMatch.team2Id = match.team1Id;
+            nextMatch.team2Name = match.team1Name;
+          }
+          await nextMatch.save();
+        }
+      }
+
       await match.save();
     }
 
@@ -278,19 +298,28 @@ export class TournamentsService {
       throw new NotFoundException('Không tìm thấy trận đấu');
     }
 
+    if (!match.team1Id && !match.team2Id) {
+      throw new BadRequestException('Trận đấu chưa có đội nào tham gia');
+    }
+
+    let winnerId: Types.ObjectId | undefined;
+    let winnerName: string | undefined;
+
+    // Xử lý trận đấu có suất đặc cách (Bye) do thiếu đội đối đầu
     if (!match.team1Id || !match.team2Id) {
-      throw new BadRequestException('Trận đấu chưa đủ 2 đội tham gia');
+      winnerId = match.team1Id || match.team2Id;
+      winnerName = match.team1Name || match.team2Name;
+      match.score1 = match.team1Id ? 1 : 0;
+      match.score2 = match.team2Id ? 1 : 0;
+    } else {
+      if (dto.score1 === dto.score2 && !dto.isForfeit) {
+        throw new BadRequestException('Trận đấu loại trực tiếp không được có tỷ số hòa');
+      }
+      match.score1 = dto.score1;
+      match.score2 = dto.score2;
+      winnerId = dto.score1 > dto.score2 ? match.team1Id : match.team2Id;
+      winnerName = dto.score1 > dto.score2 ? match.team1Name : match.team2Name;
     }
-
-    if (dto.score1 === dto.score2 && !dto.isForfeit) {
-      throw new BadRequestException('Trận đấu loại trực tiếp không được có tỷ số hòa');
-    }
-
-    match.score1 = dto.score1;
-    match.score2 = dto.score2;
-
-    const winnerId = dto.score1 > dto.score2 ? match.team1Id : match.team2Id;
-    const winnerName = dto.score1 > dto.score2 ? match.team1Name : match.team2Name;
 
     match.winnerId = winnerId;
     match.status = dto.isForfeit ? TournamentMatchStatus.FORFEIT : TournamentMatchStatus.COMPLETED;
