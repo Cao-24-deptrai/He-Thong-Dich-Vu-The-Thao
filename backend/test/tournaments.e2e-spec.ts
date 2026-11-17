@@ -8,6 +8,7 @@ import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { TournamentsModule } from '../src/tournaments/tournaments.module';
+import { UserRole } from '../src/common/enums';
 
 describe('Epic E14 - Tournaments Module (e2e)', () => {
   let app: INestApplication;

@@ -63,7 +63,7 @@ export class TournamentsController {
     @CurrentUser() user: any,
     @Body() dto: RegisterTournamentTeamDto,
   ) {
-    return this.tournamentsService.registerTeam(id, user._id || user.id || user.sub, dto);
+    return this.tournamentsService.registerTeam(id, user?.userId || user?._id || user?.id || user?.sub, dto);
   }
 
   @Post(':id/generate-bracket')

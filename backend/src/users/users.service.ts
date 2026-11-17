@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
@@ -6,8 +6,36 @@ import { User, UserDocument } from './schemas/user.schema';
 import { UserRole } from '../common/enums';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
+  async onModuleInit() {
+    const adminPhone = process.env.ADMIN_PHONE || '0999999999';
+    const admin = await this.userModel.findOne({ phone: adminPhone });
+    if (!admin) {
+      const passwordHash = await bcrypt.hash('Admin@123456', 10);
+      await this.userModel.create({
+        phone: adminPhone,
+        passwordHash,
+        fullName: 'Phanta System Administrator',
+        email: 'admin@sportsbooking.vn',
+        role: UserRole.ADMIN,
+      });
+    }
+
+    const staffPhone = '0988888888';
+    const staff = await this.userModel.findOne({ phone: staffPhone });
+    if (!staff) {
+      const passwordHash = await bcrypt.hash('Staff@123456', 10);
+      await this.userModel.create({
+        phone: staffPhone,
+        passwordHash,
+        fullName: 'Phanta Frontdesk Staff',
+        email: 'staff@sportsbooking.vn',
+        role: UserRole.STAFF,
+      });
+    }
+  }
 
   async create(userData: {
     phone: string;

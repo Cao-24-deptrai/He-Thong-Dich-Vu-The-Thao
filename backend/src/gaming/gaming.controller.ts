@@ -7,6 +7,8 @@ import {
   Query,
   UseGuards,
   NotFoundException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GamingMachineService } from './gaming-machine.service';
@@ -77,7 +79,7 @@ export class GamingController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Bắt đầu phiên chơi tại máy gaming (F14.3)' })
   async startSession(@CurrentUser() user: any, @Body() dto: StartGamingSessionDto) {
-    const session: any = await this.sessionService.startSession(user._id || user.id || user.sub, dto);
+    const session: any = await this.sessionService.startSession(user?.userId || user?._id || user?.id || user?.sub, dto);
     const sessionObj = session.toObject ? session.toObject() : session;
     return {
       session: {
@@ -103,6 +105,7 @@ export class GamingController {
     return this.sessionService.endSession(dto.sessionCode, dto.reason);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('sessions/:id/end')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -138,7 +141,7 @@ export class GamingController {
   @ApiOperation({ summary: 'Danh sách các phiên chơi đang hoạt động hoặc phiên của khách' })
   async getActiveSessions(@CurrentUser() user: any) {
     if (user.role === UserRole.CUSTOMER) {
-      const active = await this.sessionService.getActiveSessionForUser(user._id || user.id || user.sub);
+      const active = await this.sessionService.getActiveSessionForUser(user?.userId || user?._id || user?.id || user?.sub);
       if (!active) {
         throw new NotFoundException('Không có phiên chơi nào đang hoạt động');
       }

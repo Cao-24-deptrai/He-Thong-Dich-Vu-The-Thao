@@ -6,6 +6,8 @@ import {
   Body,
   Param,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BridgeAgentService } from './bridge-agent.service';
@@ -69,6 +71,7 @@ export class BridgeController {
     return this.agentService.handshake(dto);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post(['agent/heartbeat', 'agents/heartbeat'])
   @ApiOperation({ summary: 'Bridge Agent gửi nhịp tim định kỳ 30s & báo cáo sức khỏe thiết bị' })
   async heartbeat(@Body() dto: AgentHeartbeatDto) {
@@ -103,6 +106,7 @@ export class BridgeController {
     return this.commandService.getPendingCommands(agentId);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Post('commands/:commandId/ack')
   @ApiOperation({ summary: 'Báo cáo lệnh đã hoàn thành (ACK)' })
   async ackCommand(

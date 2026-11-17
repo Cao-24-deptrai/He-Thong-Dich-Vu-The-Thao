@@ -207,7 +207,9 @@ export class GamingSessionService {
   }
 
   async endSessionById(sessionId: string, reason?: string): Promise<GamingSession> {
-    const session = await this.sessionModel.findById(sessionId);
+    const session = Types.ObjectId.isValid(sessionId)
+      ? await this.sessionModel.findById(sessionId)
+      : await this.sessionModel.findOne({ sessionCode: sessionId });
     if (!session) {
       throw new NotFoundException(`Không tìm thấy phiên chơi ${sessionId}`);
     }

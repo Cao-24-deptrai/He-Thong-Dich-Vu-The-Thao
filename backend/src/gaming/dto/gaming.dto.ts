@@ -127,10 +127,10 @@ export class GamingHeartbeatDto {
 }
 
 export class EndGamingSessionDto {
-  @ApiProperty({ description: 'Session code to terminate', example: 'GS-20261102-001' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Session code to terminate', example: 'GS-20261102-001' })
+  @IsOptional()
   @IsString()
-  sessionCode: string;
+  sessionCode?: string;
 
   @ApiPropertyOptional({ description: 'Reason for closing session' })
   @IsOptional()
