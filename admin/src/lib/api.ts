@@ -3,6 +3,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export interface User {
   _id: string;
+  id?: string;
   phone: string;
   fullName: string;
   role: 'CUSTOMER' | 'STAFF' | 'OWNER' | 'ADMIN';
@@ -84,7 +85,7 @@ export interface Booking {
 }
 
 class ApiService {
-  private getToken(): string | null {
+  getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('access_token');
     }
