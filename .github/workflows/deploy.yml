@@ -16,6 +16,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
+            git config --global --add safe.directory /var/www/He-Thong-Dich-Vu-The-Thao
             cd /var/www/He-Thong-Dich-Vu-The-Thao
             git pull origin main
             docker compose up -d --build
