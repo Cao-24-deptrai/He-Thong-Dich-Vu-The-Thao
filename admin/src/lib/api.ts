@@ -179,7 +179,7 @@ export interface Booking {
 }
 
 class ApiService {
-  private getToken(): string | null {
+  public getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('access_token');
     }

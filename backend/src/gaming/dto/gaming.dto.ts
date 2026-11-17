@@ -34,6 +34,30 @@ export class CreateGamingMachineDto {
   @IsOptional()
   @IsString()
   roomName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  row?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  column?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  specs?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  ipAddress?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  macAddress?: string;
 }
 
 export class CreateGamingPriceRuleDto {

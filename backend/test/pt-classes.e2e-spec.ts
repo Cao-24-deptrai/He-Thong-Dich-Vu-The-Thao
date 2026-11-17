@@ -56,6 +56,7 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
         phone: '0999999999',
         password: 'AdminPassword123',
         fullName: 'Admin Quản Trị',
+        role: UserRole.ADMIN,
       });
     adminToken = adminRes.body.accessToken;
 

@@ -47,7 +47,7 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     // 1. Register Admin
     const adminRes = await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ phone: '0999999999', password: 'AdminPassword123', fullName: 'Admin' });
+      .send({ phone: '0999999999', password: 'AdminPassword123', fullName: 'Admin', role: UserRole.ADMIN });
     adminToken = adminRes.body.accessToken;
 
     // 2. Register Captain 1
