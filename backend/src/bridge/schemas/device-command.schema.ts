@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { DeviceCommandType, DeviceCommandStatus } from '../../common/enums';
 
@@ -11,9 +11,9 @@ export class DeviceCommand {
   @Prop({ required: true, unique: true, trim: true, index: true })
   commandCode: string;
 
-  @ApiProperty({ description: 'Target Bridge Agent ID' })
-  @Prop({ type: Types.ObjectId, ref: 'BridgeAgent', required: true, index: true })
-  agentId: Types.ObjectId;
+  @ApiProperty({ description: 'Target Bridge Agent ID or Code' })
+  @Prop({ type: SchemaTypes.Mixed, required: true, index: true })
+  agentId: any;
 
   @ApiProperty({ enum: DeviceCommandType, example: DeviceCommandType.PRINT_RECEIPT })
   @Prop({

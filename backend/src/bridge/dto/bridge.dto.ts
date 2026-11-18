@@ -14,34 +14,70 @@ import {
 } from '../../common/enums';
 
 export class CreateBridgeAgentDto {
-  @ApiProperty({ description: 'Agent code', example: 'AGENT-POS-01' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Agent code', example: 'AGENT-POS-01' })
+  @IsOptional()
   @IsString()
-  agentCode: string;
+  agentCode?: string;
 
-  @ApiProperty({ description: 'Agent friendly name', example: 'Quầy Thu Ngân 1' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Agent ID alias' })
+  @IsOptional()
   @IsString()
-  name: string;
+  agentId?: string;
 
-  @ApiProperty({ description: 'Secret key for token generation' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Agent friendly name', example: 'Quầy Thu Ngân 1' })
+  @IsOptional()
   @IsString()
-  secretKey: string;
+  name?: string;
 
-  @ApiProperty({ description: 'Physical Location', example: 'Quầy 1 sảnh chính' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Secret key for token generation' })
+  @IsOptional()
   @IsString()
-  location: string;
+  secretKey?: string;
 
-  @ApiProperty({ enum: DeviceType, isArray: true })
+  @ApiPropertyOptional({ description: 'Physical Location', example: 'Quầy 1 sảnh chính' })
+  @IsOptional()
+  @IsString()
+  location?: string;
+
+  @ApiPropertyOptional({ enum: DeviceType, isArray: true })
+  @IsOptional()
   @IsArray()
-  supportedDevices: DeviceType[];
+  supportedDevices?: DeviceType[];
 
   @ApiPropertyOptional({ description: 'Hardware config' })
   @IsOptional()
   @IsObject()
   config?: Record<string, any>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  hostname?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  localIp?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  macAddress?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  agentVersion?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  devices?: any[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  deviceStatuses?: any[];
 }
 
 export class AgentHandshakeDto {
@@ -62,22 +98,55 @@ export class AgentHandshakeDto {
 }
 
 export class AgentHeartbeatDto {
-  @ApiProperty({ description: 'Agent code', example: 'AGENT-POS-01' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Agent code', example: 'AGENT-POS-01' })
+  @IsOptional()
   @IsString()
-  agentCode: string;
+  agentCode?: string;
+
+  @ApiPropertyOptional({ description: 'Agent ID alias' })
+  @IsOptional()
+  @IsString()
+  agentId?: string;
 
   @ApiPropertyOptional({ description: 'Device diagnostics map' })
   @IsOptional()
   @IsObject()
   diagnostics?: Record<string, any>;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  status?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  offlineQueueSize?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  devices?: any[];
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  deviceStatuses?: any[];
 }
 
 export class SubmitDeviceEventDto {
-  @ApiProperty({ description: 'Agent code', example: 'AGENT-POS-01' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Agent code', example: 'AGENT-POS-01' })
+  @IsOptional()
   @IsString()
-  agentCode: string;
+  agentCode?: string;
+
+  @ApiPropertyOptional({ description: 'Agent ID alias' })
+  @IsOptional()
+  @IsString()
+  agentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
 
   @ApiProperty({ enum: DeviceEventType, example: DeviceEventType.QR_SCANNED })
   @IsNotEmpty()
@@ -105,6 +174,11 @@ export class CreateDeviceCommandDto {
   @IsString()
   agentId: string;
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
+
   @ApiProperty({ enum: DeviceCommandType, example: DeviceCommandType.TRIGGER_TURNSTILE })
   @IsNotEmpty()
   @IsEnum(DeviceCommandType)
@@ -114,6 +188,11 @@ export class CreateDeviceCommandDto {
   @IsOptional()
   @IsObject()
   payload?: Record<string, any>;
+
+  @ApiPropertyOptional({ description: 'Command Params' })
+  @IsOptional()
+  @IsObject()
+  params?: Record<string, any>;
 
   @ApiPropertyOptional({ description: 'Priority' })
   @IsOptional()

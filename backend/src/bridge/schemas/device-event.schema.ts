@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, SchemaTypes } from 'mongoose';
 import { ApiProperty } from '@nestjs/swagger';
 import { DeviceEventType } from '../../common/enums';
 
@@ -8,12 +8,12 @@ export type DeviceEventDocument = DeviceEvent & Document;
 @Schema({ timestamps: true, collection: 'device_events' })
 export class DeviceEvent {
   @ApiProperty({ description: 'Event unique code', example: 'EVT-20261102-001' })
-  @Prop({ required: true, unique: true, trim: true, index: true })
-  eventCode: string;
+  @Prop({ required: false, trim: true, index: true })
+  eventCode?: string;
 
   @ApiProperty({ description: 'Origin Bridge Agent ID' })
-  @Prop({ type: Types.ObjectId, ref: 'BridgeAgent', required: true, index: true })
-  agentId: Types.ObjectId;
+  @Prop({ type: SchemaTypes.Mixed, ref: 'BridgeAgent', required: false, index: true })
+  agentId?: any;
 
   @ApiProperty({ enum: DeviceEventType, example: DeviceEventType.QR_SCANNED })
   @Prop({

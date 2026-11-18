@@ -26,24 +26,29 @@ export class OfflineSyncService {
    * Xử lý sự kiện đẩy từ Edge Device lên Cloud có khử trùng lặp (Idempotency)
    * T06, T13: Khi offline, Edge replay sự kiện lên
    */
-  async processDeviceEvent(dto: SubmitDeviceEventDto): Promise<{ success: boolean; action?: string; eventId: string }> {
-    const agent = await this.agentModel.findOne({ agentCode: dto.agentCode.toUpperCase() });
-    if (!agent) {
-      throw new NotFoundException(`Agent ${dto.agentCode} không tồn tại`);
-    }
+  async processDeviceEvent(dto: SubmitDeviceEventDto): Promise<{ success: boolean; action?: string; eventId: string; idempotencyKey: string }> {
+    const code = (dto.agentId || dto.agentCode || '').toUpperCase();
+    const agent = code
+      ? await this.agentModel.findOne({ $or: [{ agentId: code }, { agentCode: code }] })
+      : null;
 
     // 1. Kiểm tra khử trùng lặp sự kiện qua idempotencyKey
     const existing = await this.eventModel.findOne({ idempotencyKey: dto.idempotencyKey });
     if (existing) {
       this.logger.warn(`Bỏ qua sự kiện trùng lặp idempotencyKey: ${dto.idempotencyKey}`);
-      return { success: true, action: 'IGNORED_DUPLICATE', eventId: existing._id.toString() };
+      return {
+        success: true,
+        action: 'IGNORED_DUPLICATE',
+        eventId: existing._id.toString(),
+        idempotencyKey: existing.idempotencyKey,
+      };
     }
 
     const eventCode = `EVT-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     const event = new this.eventModel({
       eventCode,
-      agentId: agent._id,
+      agentId: agent ? agent._id : (dto.agentId || dto.agentCode || 'EDGE-AGENT'),
       eventType: dto.eventType,
       payload: dto.payload,
       idempotencyKey: dto.idempotencyKey,
@@ -58,7 +63,12 @@ export class OfflineSyncService {
       action = 'TRIGGER_TURNSTILE_OPEN';
     }
 
-    return { success: true, action, eventId: saved._id.toString() };
+    return {
+      success: true,
+      action,
+      eventId: saved._id.toString(),
+      idempotencyKey: saved.idempotencyKey,
+    };
   }
 
   /**
