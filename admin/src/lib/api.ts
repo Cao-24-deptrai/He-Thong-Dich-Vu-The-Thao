@@ -144,6 +144,108 @@ export interface WalkInRecurringDto extends CheckRecurringDto {
   note?: string;
 }
 
+// --- RENTALS ---
+export interface Equipment {
+  _id: string;
+  code: string;
+  name: string;
+  sportType: string;
+  pricingType: 'PER_TURN' | 'HOURLY' | string;
+  price: number;
+  depositAmount: number;
+  damageFee: number;
+  lostFee: number;
+  totalQuantity: number;
+  rentedQuantity?: number;
+  damagedQuantity?: number;
+  availableQuantity: number;
+  isActive?: boolean;
+  [key: string]: any;
+}
+
+export interface RentalTicketItem {
+  equipmentId: string;
+  name?: string;
+  quantity: number;
+  unitPrice?: number;
+  depositAmount?: number;
+  condition?: string;
+  penaltyFee?: number;
+  [key: string]: any;
+}
+
+export interface RentalTicket {
+  _id: string;
+  ticketCode: string;
+  customerPhone: string;
+  customerName?: string;
+  bookingId?: string;
+  rentalHours: number;
+  paymentMethod: string;
+  status: 'RENTING' | 'RETURNED' | 'CANCELLED' | string;
+  items: RentalTicketItem[];
+  totalRentalPrice: number;
+  totalDepositAmount: number;
+  refundDepositAmount?: number;
+  totalPenaltyFee?: number;
+  notes?: string;
+  createdAt?: string;
+  returnedAt?: string;
+  [key: string]: any;
+}
+
+// --- REVIEWS ---
+export interface ReviewSummary {
+  avgOverall: number;
+  avgFacility: number;
+  avgService?: number;
+  avgCleanliness?: number;
+  avgPricing?: number;
+  totalReviews: number;
+  needsAttentionCount: number;
+  [key: string]: any;
+}
+
+export interface Review {
+  _id: string;
+  customerName?: string;
+  customerPhone?: string;
+  overallRating: number;
+  comment?: string;
+  needsAttention?: boolean;
+  staffResponse?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
+// --- VOUCHERS ---
+export interface CreateVoucherPayload {
+  code: string;
+  title: string;
+  description?: string;
+  discountType: 'FIXED' | 'PERCENT' | string;
+  discountValue: number;
+  minOrderValue?: number;
+  maxDiscountAmount?: number;
+  totalBudget?: number;
+  usageLimit?: number;
+  perUserLimit?: number;
+  startDate: string;
+  endDate: string;
+  applicableSports?: string[];
+  applicableCustomerTiers?: string[];
+  [key: string]: any;
+}
+
+export interface Voucher extends CreateVoucherPayload {
+  _id: string;
+  usedCount?: number;
+  spentBudget?: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+
 // Bản đồ phân rã Sân Ghép về đơn vị cơ sở (Leaf Units) tương thích với Backend
 export const PITCH_LEAF_MAP: Record<string, string[]> = {
   'F1': ['F1'],
