@@ -1,5 +1,8 @@
 name: CI Pipeline — Test & Verify
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
@@ -59,6 +62,9 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             tail -n 120 test-output.txt >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "FAIL|●|Expected|Received|Error:" test-output.txt | head -n 40 | while IFS= read -r line; do
+              echo "::error title=E2E Failure::$line"
+            done
             exit 1
           }
           echo "## ✅ All E2E Tests Passed" >> $GITHUB_STEP_SUMMARY
@@ -67,6 +73,16 @@ jobs:
           MONGODB_URI: mongodb://localhost:27017/sports_booking
           REDIS_HOST: localhost
           REDIS_PORT: 6379
+
+      - name: Push Test Log to Branch
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -B ci/e2e-log
+          git add backend/test-output.txt
+          git commit -m "ci: e2e test log for run $GITHUB_RUN_NUMBER" || true
+          git push origin ci/e2e-log --force || true
 
       - name: Upload Test Output Artifact
         if: always()
