@@ -8,7 +8,6 @@ export interface JwtPayload {
   sub: string;
   phone: string;
   role: string;
-  permissions?: string[];
 }
 
 @Injectable()
@@ -25,16 +24,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.usersService.findById(payload.sub);
+    let user;
+    try {
+      user = await this.usersService.findById(payload.sub);
+    } catch {
+      throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
+    }
     if (!user) {
       throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
     }
     return {
+      _id: user._id.toString(),
       id: user._id.toString(),
       userId: user._id.toString(),
       phone: user.phone,
       role: user.role,
-      permissions: user.permissions || [],
       fullName: user.fullName,
       email: user.email,
     };

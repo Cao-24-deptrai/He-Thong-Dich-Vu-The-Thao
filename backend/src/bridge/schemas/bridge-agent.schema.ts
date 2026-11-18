@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BridgeAgentStatus, DeviceType, DeviceHealthStatus } from '../../common/enums';
 
 export type BridgeAgentDocument = BridgeAgent & Document;
@@ -27,17 +27,25 @@ export class BridgeAgent {
   @Prop({ required: true, unique: true, uppercase: true, trim: true, index: true })
   agentCode: string;
 
+  @ApiPropertyOptional({ description: 'Agent ID alias' })
+  @Prop({ type: String, index: true })
+  agentId?: string;
+
   @ApiProperty({ description: 'Agent friendly name', example: 'Quầy Thu Ngân 1' })
-  @Prop({ required: true, trim: true })
+  @Prop({ default: 'Edge Bridge Agent', trim: true })
   name: string;
 
   @ApiProperty({ description: 'Token hash for handshake authentication' })
-  @Prop({ required: true })
+  @Prop({ default: '' })
   tokenHash: string;
 
   @ApiProperty({ description: 'Physical Location', example: 'Cửa xoay Gym tầng 1' })
-  @Prop({ required: true, trim: true })
+  @Prop({ default: 'Gate', trim: true })
   location: string;
+
+  @ApiPropertyOptional({ description: 'Devices attached to agent' })
+  @Prop({ type: Array, default: [] })
+  devices: any[];
 
   @ApiProperty({ enum: BridgeAgentStatus, default: BridgeAgentStatus.OFFLINE })
   @Prop({

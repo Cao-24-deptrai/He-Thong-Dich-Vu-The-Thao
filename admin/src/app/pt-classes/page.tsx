@@ -70,7 +70,7 @@ export default function PtClassesAdminPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: api.getUser()?.id || '65f1a2b3c4d5e6f7a8b9c0d1',
+          userId: (api.getUser() as any)?.id || api.getUser()?._id || '65f1a2b3c4d5e6f7a8b9c0d1',
           fullName,
           phone,
           specialties: specialties.split(',').map((s) => s.trim()),

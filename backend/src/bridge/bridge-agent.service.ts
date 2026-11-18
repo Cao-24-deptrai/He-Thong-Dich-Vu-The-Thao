@@ -21,22 +21,32 @@ export class BridgeAgentService {
     private readonly agentModel: Model<BridgeAgentDocument>,
   ) {}
 
-  private hashSecret(secret: string): string {
+  private hashSecret(secret?: string): string {
+    if (!secret) return '';
     return crypto.createHash('sha256').update(secret).digest('hex');
   }
 
   async createAgent(dto: CreateBridgeAgentDto): Promise<BridgeAgent> {
-    const existing = await this.agentModel.findOne({ agentCode: dto.agentCode.toUpperCase() });
+    const code = (dto.agentId || dto.agentCode || '').toUpperCase();
+    const existing = await this.agentModel.findOne({
+      $or: [{ agentId: code }, { agentCode: code }],
+    });
     if (existing) {
-      throw new ConflictException(`Agent code ${dto.agentCode} đã tồn tại`);
+      Object.assign(existing, dto);
+      if (dto.agentId) existing.agentId = dto.agentId;
+      if (code) existing.agentCode = code;
+      existing.status = BridgeAgentStatus.ONLINE;
+      return existing.save();
     }
 
     const tokenHash = this.hashSecret(dto.secretKey);
     const agent = new this.agentModel({
       ...dto,
-      agentCode: dto.agentCode.toUpperCase(),
+      agentId: dto.agentId || code,
+      agentCode: code || `AGENT-${Date.now()}`,
+      name: dto.name || dto.agentId || code,
       tokenHash,
-      status: BridgeAgentStatus.OFFLINE,
+      status: BridgeAgentStatus.ONLINE,
     });
     return agent.save();
   }
@@ -65,12 +75,23 @@ export class BridgeAgentService {
   }
 
   async heartbeat(dto: AgentHeartbeatDto): Promise<BridgeAgent> {
-    const agent = await this.agentModel.findOne({ agentCode: dto.agentCode.toUpperCase() });
+    const code = (dto.agentId || dto.agentCode || '').toUpperCase();
+    const agent = await this.agentModel.findOne({
+      $or: [{ agentId: code }, { agentCode: code }],
+    });
     if (!agent) {
-      throw new NotFoundException(`Không tìm thấy Agent ${dto.agentCode}`);
+      // If agent not yet in DB, create on heartbeat to be tolerant
+      const newAgent = new this.agentModel({
+        agentId: dto.agentId || code,
+        agentCode: code,
+        name: dto.agentId || code,
+        status: (dto.status as BridgeAgentStatus) || BridgeAgentStatus.ONLINE,
+        lastHeartbeatAt: new Date(),
+      });
+      return newAgent.save();
     }
 
-    agent.status = BridgeAgentStatus.ONLINE;
+    agent.status = (dto.status as BridgeAgentStatus) || BridgeAgentStatus.ONLINE;
     agent.lastHeartbeatAt = new Date();
     if (dto.diagnostics) {
       agent.diagnostics = new Map(Object.entries(dto.diagnostics));
@@ -79,7 +100,8 @@ export class BridgeAgentService {
   }
 
   async getAgents(): Promise<BridgeAgent[]> {
-    return this.agentModel.find().lean() as any;
+    //return this.agentModel.find().lean();
+    return this.agentModel.find().lean() as unknown as BridgeAgent[];
   }
 
   async seedDefaultAgents(): Promise<number> {

@@ -6,6 +6,8 @@ import {
   Body,
   Param,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { BridgeAgentService } from './bridge-agent.service';
@@ -38,11 +40,17 @@ export class BridgeController {
     return this.agentService.getAgents();
   }
 
+  @Post('agents/register')
+  @ApiOperation({ summary: 'Bridge Agent tự đăng ký định kỳ hoặc lần đầu' })
+  async registerAgent(@Body() dto: CreateBridgeAgentDto) {
+    return this.agentService.createAgent(dto);
+  }
+
   @Post('agents')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.OWNER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Đăng ký Bridge Agent mới' })
+  @ApiOperation({ summary: 'Đăng ký Bridge Agent mới qua Admin' })
   async createAgent(@Body() dto: CreateBridgeAgentDto) {
     return this.agentService.createAgent(dto);
   }
@@ -63,13 +71,15 @@ export class BridgeController {
     return this.agentService.handshake(dto);
   }
 
-  @Post('agent/heartbeat')
+  @HttpCode(HttpStatus.OK)
+  @Post(['agent/heartbeat', 'agents/heartbeat'])
   @ApiOperation({ summary: 'Bridge Agent gửi nhịp tim định kỳ 30s & báo cáo sức khỏe thiết bị' })
   async heartbeat(@Body() dto: AgentHeartbeatDto) {
-    return this.agentService.heartbeat(dto);
+    await this.agentService.heartbeat(dto);
+    return { success: true, acknowledged: true };
   }
 
-  @Post('agent/events')
+  @Post(['agent/events', 'events'])
   @ApiOperation({ summary: 'Đẩy sự kiện quét QR/thẻ từ thiết bị lên Cloud (Khử trùng lặp)' })
   async submitEvent(@Body() dto: SubmitDeviceEventDto) {
     return this.offlineSyncService.processDeviceEvent(dto);
@@ -81,7 +91,7 @@ export class BridgeController {
     return this.offlineSyncService.getOfflineSnapshot();
   }
 
-  @Post('commands')
+  @Post(['commands', 'commands/dispatch'])
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
   @ApiBearerAuth()
@@ -90,10 +100,20 @@ export class BridgeController {
     return this.commandService.createCommand(dto);
   }
 
-  @Get('agent/:agentId/commands/pending')
+  @Get(['agent/:agentId/commands/pending', 'agents/:agentId/commands/pending'])
   @ApiOperation({ summary: 'Bridge Agent lấy danh sách lệnh đang chờ thực thi' })
   async getPendingCommands(@Param('agentId') agentId: string) {
     return this.commandService.getPendingCommands(agentId);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Post('commands/:commandId/ack')
+  @ApiOperation({ summary: 'Báo cáo lệnh đã hoàn thành (ACK)' })
+  async ackCommand(
+    @Param('commandId') commandId: string,
+    @Body() body: any,
+  ) {
+    return this.commandService.ackCommand(commandId, body);
   }
 
   @Patch('commands/:commandId/executed')
