@@ -271,7 +271,7 @@ export class PtClassesService {
 
     const sessionDate = new Date(dto.sessionDate);
     const lockKey = `lock:pt:${dto.trainerId}:${dto.sessionDate}:${dto.startTime}`;
-    const acquired = await this.redisService.setLock(lockKey, userId, 3000);
+    const acquired = await this.redisService.acquireLock(lockKey, userId, 3000);
 
     if (!acquired) {
       throw new ConflictException('TRAINER_TIME_SLOT_CONFLICT: Khung giờ của HLV đang được người khác giữ chỗ');
@@ -329,7 +329,7 @@ export class PtClassesService {
 
       return await ptSession.save();
     } finally {
-      await this.redisService.releaseLock(lockKey);
+      await this.redisService.releaseLock(lockKey, userId);
     }
   }
 
