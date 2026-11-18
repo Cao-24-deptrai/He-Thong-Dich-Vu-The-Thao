@@ -18,7 +18,7 @@ import {
   EndGamingSessionDto,
   SwitchMachineDto,
 } from './dto/gaming.dto';
-import { GamingMachineStatus, GamingSessionStatus } from '../../common/enums';
+import { GamingMachineStatus, GamingSessionStatus } from '../common/enums';
 
 @Injectable()
 export class GamingSessionService {
