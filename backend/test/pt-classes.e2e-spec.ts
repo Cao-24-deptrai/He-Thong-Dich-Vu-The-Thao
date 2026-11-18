@@ -53,31 +53,34 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
     const adminRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0999999999',
+        phone: '0991000001',
         password: 'AdminPassword123',
         fullName: 'Admin Quản Trị',
         role: UserRole.ADMIN,
-      });
+      })
+      .expect(201);
     adminToken = adminRes.body.accessToken;
 
     // 2. Register Customer
     const custRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0911223344',
+        phone: '0991000002',
         password: 'UserPassword123',
         fullName: 'Khách Hàng Tập Gym',
-      });
+      })
+      .expect(201);
     customerToken = custRes.body.accessToken;
 
     // 3. Register Trainer User
     const trainerUserRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0988776655',
+        phone: '0991000003',
         password: 'TrainerPassword123',
         fullName: 'HLV Huấn Luyện',
-      });
+      })
+      .expect(201);
     trainerUserId = trainerUserRes.body.user.id || trainerUserRes.body.user._id;
   });
 
@@ -93,7 +96,7 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
       .send({
         userId: trainerUserId,
         fullName: 'HLV Huấn Luyện',
-        phone: '0988776655',
+        phone: '0991000003',
         specialties: ['Gym', 'Yoga', 'Boxing'],
         hourlyRate: 250000,
         certifications: ['NASM-CPT'],

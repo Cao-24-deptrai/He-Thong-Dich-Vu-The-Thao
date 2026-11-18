@@ -61,26 +61,29 @@ describe('Epic E12 - Gaming Module & Concurrency Race Invariant (e2e)', () => {
     const adminRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0988888888',
+        phone: '0993000001',
         password: 'AdminPassword123',
         fullName: 'Admin Gaming Net',
-      });
+        role: UserRole.ADMIN,
+      })
+      .expect(201);
     adminToken = adminRes.body.accessToken;
-    await userModel.updateOne({ phone: '0988888888' }, { role: UserRole.ADMIN });
+    await userModel.updateOne({ phone: '0993000001' }, { role: UserRole.ADMIN });
 
     // 2. Setup Customer with 150,000 VND wallet balance
     const custRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0977777777',
+        phone: '0993000002',
         password: 'CustomerPass123',
         fullName: 'Gamer Hoàng Nam',
-      });
+      })
+      .expect(201);
     customerToken = custRes.body.accessToken;
     customerUser = custRes.body.user;
 
     await userModel.updateOne(
-      { phone: '0977777777' },
+      { phone: '0993000002' },
       { walletBalance: 150000 },
     );
   });

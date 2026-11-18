@@ -49,17 +49,19 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     const adminRes = await request(app.getHttpServer())
       .post('/auth/register')
       .send({
-        phone: '0999999999',
+        phone: '0992000001',
         password: 'AdminPassword123',
         fullName: 'Admin',
         role: UserRole.ADMIN,
-      });
+      })
+      .expect(201);
     adminToken = adminRes.body.accessToken;
 
     // 2. Register Captain 1
     const cap1Res = await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ phone: '0911111111', password: 'Password123', fullName: 'Đội Trưởng 1' });
+      .send({ phone: '0992000011', password: 'Password123', fullName: 'Đội Trưởng 1' })
+      .expect(201);
     captain1Token = cap1Res.body.accessToken;
   });
 
@@ -100,7 +102,7 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
       .set('Authorization', `Bearer ${captain1Token}`)
       .send({
         teamName: 'Chiến Binh Rồng',
-        members: [{ fullName: 'Đội Trưởng 1', phone: '0911111111', isCaptain: true }],
+        members: [{ fullName: 'Đội Trưởng 1', phone: '0992000011', isCaptain: true }],
       })
       .expect(201);
 
@@ -114,7 +116,7 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
       .send({
         teamName: 'Đội Ví Nội Bộ',
         paymentMethod: 'INTERNAL_WALLET',
-        members: [{ fullName: 'Captain', phone: '0911111111' }],
+        members: [{ fullName: 'Captain', phone: '0992000011' }],
       })
       .expect(400);
 
@@ -126,14 +128,15 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     for (let i = 2; i <= 4; i++) {
       const capRes = await request(app.getHttpServer())
         .post('/auth/register')
-        .send({ phone: `092222222${i}`, password: 'Password123', fullName: `Đội Trưởng ${i}` });
+        .send({ phone: `099200001${i}`, password: 'Password123', fullName: `Đội Trưởng ${i}` })
+        .expect(201);
 
       await request(app.getHttpServer())
         .post(`/tournaments/${tournamentId}/register-team`)
         .set('Authorization', `Bearer ${capRes.body.accessToken}`)
         .send({
           teamName: `Đội Bóng ${i}`,
-          members: [{ fullName: `Captain ${i}`, phone: `092222222${i}` }],
+          members: [{ fullName: `Captain ${i}`, phone: `099200001${i}` }],
         })
         .expect(201);
     }
