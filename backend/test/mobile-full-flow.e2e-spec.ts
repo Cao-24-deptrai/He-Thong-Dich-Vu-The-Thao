@@ -9,8 +9,9 @@ import { Facility } from '../src/facilities/schemas/facility.schema';
 import { Venue } from '../src/venues/schemas/venue.schema';
 import { Booking } from '../src/bookings/schemas/booking.schema';
 import { Payment } from '../src/payments/schemas/payment.schema';
-import { VenueType, BookingStatus, PaymentStatus } from '../src/common/enums';
+import { VenueType, BookingStatus, PaymentStatus, UserRole } from '../src/common/enums';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 describe('Milestone 5: Mobile App Full Flow (e2e)', () => {
   let app: INestApplication;
@@ -43,6 +44,20 @@ describe('Milestone 5: Mobile App Full Flow (e2e)', () => {
     bookingModel = moduleFixture.get<Model<Booking>>(getModelToken(Booking.name));
     paymentModel = moduleFixture.get<Model<Payment>>(getModelToken(Payment.name));
     jwtService = moduleFixture.get<JwtService>(JwtService);
+
+    const staffPassHash = await bcrypt.hash('Staff@123456', 10);
+    await userModel.updateOne(
+      { phone: '0988888888' },
+      {
+        $set: {
+          phone: '0988888888',
+          passwordHash: staffPassHash,
+          fullName: 'Phanta Frontdesk Staff',
+          role: UserRole.STAFF,
+        },
+      },
+      { upsert: true },
+    );
 
     // Login Staff (for check-in scanning on Web Admin)
     const staffLoginRes = await request(app.getHttpServer())

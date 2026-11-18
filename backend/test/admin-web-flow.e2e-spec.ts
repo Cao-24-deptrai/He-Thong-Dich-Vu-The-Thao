@@ -9,6 +9,8 @@ import { Facility } from '../src/facilities/schemas/facility.schema';
 import { Venue } from '../src/venues/schemas/venue.schema';
 import { Booking } from '../src/bookings/schemas/booking.schema';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
+import { UserRole } from '../src/common/enums';
 
 describe('Milestone 4: Web Admin Operational Flow (e2e)', () => {
   let app: INestApplication;
@@ -38,6 +40,35 @@ describe('Milestone 4: Web Admin Operational Flow (e2e)', () => {
     venueModel = moduleFixture.get<Model<Venue>>(getModelToken(Venue.name));
     bookingModel = moduleFixture.get<Model<Booking>>(getModelToken(Booking.name));
     jwtService = moduleFixture.get<JwtService>(JwtService);
+
+    // Ensure Admin & Staff exist for admin web flow tests
+    const adminPassHash = await bcrypt.hash('Admin@123456', 10);
+    await userModel.updateOne(
+      { phone: '0999999999' },
+      {
+        $set: {
+          phone: '0999999999',
+          passwordHash: adminPassHash,
+          fullName: 'Phanta System Administrator',
+          role: UserRole.ADMIN,
+        },
+      },
+      { upsert: true },
+    );
+
+    const staffPassHash = await bcrypt.hash('Staff@123456', 10);
+    await userModel.updateOne(
+      { phone: '0988888888' },
+      {
+        $set: {
+          phone: '0988888888',
+          passwordHash: staffPassHash,
+          fullName: 'Phanta Frontdesk Staff',
+          role: UserRole.STAFF,
+        },
+      },
+      { upsert: true },
+    );
 
     // Login Admin
     const adminLoginRes = await request(app.getHttpServer())

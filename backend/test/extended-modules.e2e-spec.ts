@@ -11,7 +11,8 @@ import { Booking } from '../src/bookings/schemas/booking.schema';
 import { Payment } from '../src/payments/schemas/payment.schema';
 import { MembershipPass } from '../src/membership-pass/schemas/membership-pass.schema';
 import { MatchRequest } from '../src/match-requests/schemas/match-request.schema';
-import { VenueType, BookingStatus, PaymentStatus, MembershipPassType, MatchRequestStatus, PaymentProvider } from '../src/common/enums';
+import { VenueType, BookingStatus, PaymentStatus, MembershipPassType, MatchRequestStatus, PaymentProvider, UserRole } from '../src/common/enums';
+import * as bcrypt from 'bcrypt';
 
 describe('Milestone 6: Extended Modules Full Flow (e2e)', () => {
   let app: INestApplication;
@@ -49,6 +50,35 @@ describe('Milestone 6: Extended Modules Full Flow (e2e)', () => {
     paymentModel = moduleFixture.get<Model<Payment>>(getModelToken(Payment.name));
     passModel = moduleFixture.get<Model<MembershipPass>>(getModelToken(MembershipPass.name));
     matchRequestModel = moduleFixture.get<Model<MatchRequest>>(getModelToken(MatchRequest.name));
+
+    // Ensure Admin & Staff exist
+    const adminPassHash = await bcrypt.hash('Admin@123456', 10);
+    await userModel.updateOne(
+      { phone: '0999999999' },
+      {
+        $set: {
+          phone: '0999999999',
+          passwordHash: adminPassHash,
+          fullName: 'Phanta System Administrator',
+          role: UserRole.ADMIN,
+        },
+      },
+      { upsert: true },
+    );
+
+    const staffPassHash = await bcrypt.hash('Staff@123456', 10);
+    await userModel.updateOne(
+      { phone: '0988888888' },
+      {
+        $set: {
+          phone: '0988888888',
+          passwordHash: staffPassHash,
+          fullName: 'Phanta Frontdesk Staff',
+          role: UserRole.STAFF,
+        },
+      },
+      { upsert: true },
+    );
 
     // Admin login
     const adminRes = await request(app.getHttpServer())

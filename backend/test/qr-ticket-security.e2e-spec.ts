@@ -8,7 +8,8 @@ import { Facility } from '../src/facilities/schemas/facility.schema';
 import { Venue } from '../src/venues/schemas/venue.schema';
 import { Booking } from '../src/bookings/schemas/booking.schema';
 import { User } from '../src/users/schemas/user.schema';
-import { BookingStatus, BookingSource } from '../src/common/enums';
+import { BookingStatus, BookingSource, UserRole } from '../src/common/enums';
+import * as bcrypt from 'bcrypt';
 
 describe('Changelog Item 2: Siết Chặt Logic Vé QR - Trả Tiền Mới Có Vé (e2e)', () => {
   let app: INestApplication;
@@ -40,6 +41,20 @@ describe('Changelog Item 2: Siết Chặt Logic Vé QR - Trả Tiền Mới Có 
     venueModel = moduleFixture.get<Model<Venue>>(getModelToken(Venue.name));
     bookingModel = moduleFixture.get<Model<Booking>>(getModelToken(Booking.name));
     userModel = moduleFixture.get<Model<User>>(getModelToken(User.name));
+
+    const staffPassHash = await bcrypt.hash('Staff@123456', 10);
+    await userModel.updateOne(
+      { phone: '0988888888' },
+      {
+        $set: {
+          phone: '0988888888',
+          passwordHash: staffPassHash,
+          fullName: 'Phanta Frontdesk Staff',
+          role: UserRole.STAFF,
+        },
+      },
+      { upsert: true },
+    );
 
     // Staff Token
     const staffLoginRes = await request(app.getHttpServer())
