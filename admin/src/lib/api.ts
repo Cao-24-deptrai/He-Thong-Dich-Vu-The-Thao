@@ -536,6 +536,119 @@ class ApiService {
       body: JSON.stringify({ reason }),
     });
   }
+
+  // --- INVOICES (E09) ---
+  async getAdminInvoices(params?: { search?: string; status?: string; page?: number; limit?: number }): Promise<any> {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.append('search', params.search);
+    if (params?.status) qs.append('status', params.status);
+    if (params?.page) qs.append('page', params.page.toString());
+    if (params?.limit) qs.append('limit', params.limit.toString());
+    return this.request(`/admin/invoices${qs.toString() ? `?${qs.toString()}` : ''}`);
+  }
+
+  async issueInvoice(data: any): Promise<any> {
+    return this.request('/admin/invoices/issue', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- NOTIFICATIONS (E10) ---
+  async getNotificationLogs(): Promise<any> {
+    return this.request('/admin/notifications/logs');
+  }
+
+  async sendBroadcastNotification(data: any): Promise<any> {
+    return this.request('/admin/notifications/broadcast', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- RENTALS ---
+  async getEquipments(params?: any): Promise<any[]> {
+    const qs = new URLSearchParams();
+    if (params?.sportType) qs.append('sportType', params.sportType);
+    if (params?.search) qs.append('search', params.search);
+    if (params?.availableOnly) qs.append('availableOnly', 'true');
+    return this.request(`/rentals/equipments${qs.toString() ? `?${qs.toString()}` : ''}`);
+  }
+
+  async createEquipment(data: any): Promise<any> {
+    return this.request('/rentals/equipments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEquipment(id: string, data: any): Promise<any> {
+    return this.request(`/rentals/equipments/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getRentalTickets(params?: any): Promise<any[]> {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.append('status', params.status);
+    if (params?.customerPhone) qs.append('customerPhone', params.customerPhone);
+    if (params?.bookingId) qs.append('bookingId', params.bookingId);
+    return this.request(`/rentals/tickets${qs.toString() ? `?${qs.toString()}` : ''}`);
+  }
+
+  async createRentalTicket(data: any): Promise<any> {
+    return this.request('/rentals/tickets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async returnRentalTicket(id: string, data: any): Promise<any> {
+    return this.request(`/rentals/tickets/${id}/return`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // --- REVIEWS ---
+  async getReviewSummary(facilityId?: string): Promise<any> {
+    const qs = facilityId ? `?facilityId=${facilityId}` : '';
+    return this.request(`/reviews/summary${qs}`);
+  }
+
+  async getReviews(params?: any): Promise<any> {
+    const qs = new URLSearchParams();
+    if (params?.facilityId) qs.append('facilityId', params.facilityId);
+    if (params?.search) qs.append('search', params.search);
+    return this.request(`/reviews${qs.toString() ? `?${qs.toString()}` : ''}`);
+  }
+
+  async respondToReview(id: string, response: string): Promise<any> {
+    return this.request(`/reviews/${id}/respond`, {
+      method: 'PATCH',
+      body: JSON.stringify({ response }),
+    });
+  }
+
+  async dismissReviewAttention(id: string): Promise<any> {
+    return this.request(`/reviews/${id}/dismiss`, {
+      method: 'PATCH',
+    });
+  }
+
+  // --- VOUCHERS ---
+  async getVouchers(onlyActive?: boolean): Promise<any[]> {
+    const qs = onlyActive ? '?onlyActive=true' : '';
+    return this.request(`/vouchers${qs}`);
+  }
+
+  async createVoucher(data: any): Promise<any> {
+    return this.request('/vouchers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const api = new ApiService();
