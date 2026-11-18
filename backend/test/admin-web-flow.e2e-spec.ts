@@ -97,10 +97,6 @@ describe('Milestone 4: Web Admin Operational Flow (e2e)', () => {
   }, 30000);
 
   afterAll(async () => {
-    if (userModel) {
-      await userModel.deleteOne({ phone: '0999999999' });
-      await userModel.deleteOne({ phone: '0988888888' });
-    }
     await app.close();
   });
 
