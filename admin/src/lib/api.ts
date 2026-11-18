@@ -178,7 +178,7 @@ export function findLinkedVenues(targetVenue: Venue, allVenues: Venue[]): Venue[
 }
 
 class ApiService {
-  private getToken(): string | null {
+  public getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('access_token');
     }
