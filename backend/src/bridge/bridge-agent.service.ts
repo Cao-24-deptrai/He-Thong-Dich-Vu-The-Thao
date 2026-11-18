@@ -79,7 +79,7 @@ export class BridgeAgentService {
   }
 
   async getAgents(): Promise<BridgeAgent[]> {
-    return this.agentModel.find().lean();
+    return this.agentModel.find().lean() as any;
   }
 
   async seedDefaultAgents(): Promise<number> {
