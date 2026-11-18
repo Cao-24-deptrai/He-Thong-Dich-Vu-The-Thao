@@ -9,7 +9,7 @@ import { Model, Types } from 'mongoose';
 import { DeviceEvent, DeviceEventDocument } from './schemas/device-event.schema';
 import { BridgeAgent, BridgeAgentDocument } from './schemas/bridge-agent.schema';
 import { SubmitDeviceEventDto } from './dto/bridge.dto';
-import { DeviceEventType } from '../../common/enums';
+import { DeviceEventType } from '../common/enums';
 
 @Injectable()
 export class OfflineSyncService {

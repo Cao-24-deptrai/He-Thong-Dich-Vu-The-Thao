@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import { BridgeAgent, BridgeAgentDocument } from './schemas/bridge-agent.schema';
 import { CreateBridgeAgentDto, AgentHandshakeDto, AgentHeartbeatDto } from './dto/bridge.dto';
-import { BridgeAgentStatus, DeviceType } from '../../common/enums';
+import { BridgeAgentStatus, DeviceType } from '../common/enums';
 
 @Injectable()
 export class BridgeAgentService {

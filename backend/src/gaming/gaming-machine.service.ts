@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { GamingMachine, GamingMachineDocument } from './schemas/gaming-machine.schema';
 import { CreateGamingMachineDto } from './dto/gaming.dto';
-import { GamingMachineZone, GamingMachineStatus } from '../../common/enums';
+import { GamingMachineZone, GamingMachineStatus } from '../common/enums';
 
 @Injectable()
 export class GamingMachineService {
