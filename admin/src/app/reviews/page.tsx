@@ -95,8 +95,8 @@ export default function ReviewsPage() {
   const filteredReviews = reviews.filter((r) => {
     const matchSearch =
       searchQuery === '' ||
-      r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.comment.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.customerName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.comment || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (r.customerPhone && r.customerPhone.includes(searchQuery));
 
     if (!matchSearch) return false;

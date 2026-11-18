@@ -206,15 +206,26 @@ export interface ReviewSummary {
   [key: string]: any;
 }
 
+export interface ReviewStaffResponse {
+  responderName: string;
+  respondedAt: string;
+  content: string;
+  [key: string]: any;
+}
+
 export interface Review {
   _id: string;
-  customerName?: string;
+  customerName: string;
   customerPhone?: string;
   overallRating: number;
-  comment?: string;
+  facilityRating?: number;
+  serviceRating?: number;
+  staffRating?: number;
+  cleanlinessRating?: number;
+  comment: string;
   needsAttention?: boolean;
-  staffResponse?: string;
-  createdAt?: string;
+  staffResponse?: ReviewStaffResponse;
+  createdAt: string;
   [key: string]: any;
 }
 
