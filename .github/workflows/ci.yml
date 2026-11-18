@@ -52,7 +52,16 @@ jobs:
 
       - name: Run Backend E2E Tests (including E14, E12 race specs)
         working-directory: ./backend
-        run: npm run test:e2e
+        run: |
+          set -o pipefail
+          npm run test:e2e 2>&1 | tee test-output.txt || {
+            echo "## ❌ E2E Tests Failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 120 test-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
+          echo "## ✅ All E2E Tests Passed" >> $GITHUB_STEP_SUMMARY
         env:
           JWT_SECRET: test_jwt_secret_key_12345
           MONGODB_URI: mongodb://localhost:27017/sports_booking
