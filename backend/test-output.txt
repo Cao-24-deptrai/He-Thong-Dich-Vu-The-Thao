@@ -1,0 +1,235 @@
+
+> sports-booking-backend@1.0.0 test:e2e
+> jest --config ./test/jest-e2e.json --runInBand --forceExit
+
+PASS test/extended-modules.e2e-spec.ts (8.47 s)
+PASS test/payment-checkin.e2e-spec.ts
+PASS test/admin-web-flow.e2e-spec.ts
+PASS test/mobile-full-flow.e2e-spec.ts
+PASS test/edge-cases.spec.ts
+PASS test/gaming-session.race.spec.ts
+PASS test/venue-policy-user-endpoints.e2e-spec.ts
+PASS test/crud-facilities-venues.e2e-spec.ts
+PASS test/race-condition.spec.ts
+PASS test/pt-classes.e2e-spec.ts
+FAIL test/bridge-agent.e2e-spec.ts
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 1. Agent Handshake & Heartbeat Lifecycle › should register a new Bridge Agent with attached devices
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m  95 |[39m           ][33m,[39m
+     [90m  96 |[39m         })
+    [31m[1m>[22m[39m[90m  97 |[39m         [33m.[39mexpect([35m201[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m  98 |[39m
+     [90m  99 |[39m       expect(res[33m.[39mbody[33m.[39magentId)[33m.[39mtoBe([32m'AGENT-TURNSTILE-GATE-01'[39m)[33m;[39m
+     [90m 100 |[39m       expect(res[33m.[39mbody[33m.[39mdevices[33m.[39mlength)[33m.[39mtoBe([35m2[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:97:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 1. Agent Handshake & Heartbeat Lifecycle › should receive heartbeat from registered agent
+
+    expected 200 "OK", got 404 "Not Found"
+
+    [0m [90m 120 |[39m           ][33m,[39m
+     [90m 121 |[39m         })
+    [31m[1m>[22m[39m[90m 122 |[39m         [33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 123 |[39m
+     [90m 124 |[39m       expect(res[33m.[39mbody[33m.[39msuccess)[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 125 |[39m       expect(res[33m.[39mbody[33m.[39macknowledged)[33m.[39mtoBe([36mtrue[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:122:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 1. Agent Handshake & Heartbeat Lifecycle › should list registered bridge agents for admin
+
+    expect(received).toBeGreaterThanOrEqual(expected)
+
+    Expected: >= 1
+    Received:    0
+
+    [0m [90m 133 |[39m
+     [90m 134 |[39m       expect([33mArray[39m[33m.[39misArray(res[33m.[39mbody))[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+    [31m[1m>[22m[39m[90m 135 |[39m       expect(res[33m.[39mbody[33m.[39mlength)[33m.[39mtoBeGreaterThanOrEqual([35m1[39m)[33m;[39m
+     [90m     |[39m                               [31m[1m^[22m[39m
+     [90m 136 |[39m       expect(res[33m.[39mbody[[35m0[39m][33m.[39magentId)[33m.[39mtoBe([32m'AGENT-TURNSTILE-GATE-01'[39m)[33m;[39m
+     [90m 137 |[39m     })[33m;[39m
+     [90m 138 |[39m   })[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:135:31)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 2. Remote Command Dispatch & Execution › should dispatch TRIGGER_RELAY_OPEN command from Admin to Agent
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m 149 |[39m           params[33m:[39m { pulseDurationMs[33m:[39m [35m4000[39m[33m,[39m direction[33m:[39m [32m'IN'[39m }[33m,[39m
+     [90m 150 |[39m         })
+    [31m[1m>[22m[39m[90m 151 |[39m         [33m.[39mexpect([35m201[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 152 |[39m
+     [90m 153 |[39m       expect(res[33m.[39mbody[33m.[39m_id)[33m.[39mtoBeDefined()[33m;[39m
+     [90m 154 |[39m       expect(res[33m.[39mbody[33m.[39mstatus)[33m.[39mtoBe([32m'PENDING'[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:151:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 2. Remote Command Dispatch & Execution › agent should fetch pending commands
+
+    expected 200 "OK", got 404 "Not Found"
+
+    [0m [90m 159 |[39m       [36mconst[39m res [33m=[39m [36mawait[39m request(app[33m.[39mgetHttpServer())
+     [90m 160 |[39m         [33m.[39m[36mget[39m([32m'/bridge/agents/AGENT-TURNSTILE-GATE-01/commands/pending'[39m)
+    [31m[1m>[22m[39m[90m 161 |[39m         [33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 162 |[39m
+     [90m 163 |[39m       expect([33mArray[39m[33m.[39misArray(res[33m.[39mbody))[33m.[39mtoBe([36mtrue[39m)[33m;[39m
+     [90m 164 |[39m       expect(res[33m.[39mbody[33m.[39mlength)[33m.[39mtoBeGreaterThanOrEqual([35m1[39m)[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:161:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 2. Remote Command Dispatch & Execution › agent should acknowledge command execution result
+
+    expected 200 "OK", got 404 "Not Found"
+
+    [0m [90m 174 |[39m           result[33m:[39m { relayTriggeredMs[33m:[39m [35m4000[39m[33m,[39m gpioPin[33m:[39m [35m12[39m }[33m,[39m
+     [90m 175 |[39m         })
+    [31m[1m>[22m[39m[90m 176 |[39m         [33m.[39mexpect([35m200[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 177 |[39m
+     [90m 178 |[39m       expect(res[33m.[39mbody[33m.[39mstatus)[33m.[39mtoBe([32m'COMPLETED'[39m)[33m;[39m
+     [90m 179 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:176:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 3. Event Ingestion & Idempotency Deduplication › should ingest passage event on first submission
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m 193 |[39m           payload[33m:[39m { memberId[33m:[39m [32m'USER-12345'[39m[33m,[39m direction[33m:[39m [32m'IN'[39m }[33m,[39m
+     [90m 194 |[39m         })
+    [31m[1m>[22m[39m[90m 195 |[39m         [33m.[39mexpect([35m201[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 196 |[39m
+     [90m 197 |[39m       expect(res[33m.[39mbody[33m.[39midempotencyKey)[33m.[39mtoBe(testIdempotencyKey)[33m;[39m
+     [90m 198 |[39m     })[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:195:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+  ● Epic E12 - Bridge Agent & Local IoT Devices (e2e) › 3. Event Ingestion & Idempotency Deduplication › IDEMPOTENCY: should deduplicate resubmitted event with same key without errors
+
+    expected 201 "Created", got 404 "Not Found"
+
+    [0m [90m 208 |[39m           payload[33m:[39m { memberId[33m:[39m [32m'USER-12345'[39m[33m,[39m direction[33m:[39m [32m'IN'[39m }[33m,[39m
+     [90m 209 |[39m         })
+    [31m[1m>[22m[39m[90m 210 |[39m         [33m.[39mexpect([35m201[39m)[33m;[39m
+     [90m     |[39m          [31m[1m^[22m[39m
+     [90m 211 |[39m
+     [90m 212 |[39m       [90m// Should return the previously saved event without duplication[39m
+     [90m 213 |[39m       expect(res[33m.[39mbody[33m.[39midempotencyKey)[33m.[39mtoBe(testIdempotencyKey)[33m;[39m[0m
+
+      at Object.<anonymous> (bridge-agent.e2e-spec.ts:210:10)
+      ----
+      at Test._assertStatus (../node_modules/supertest/lib/test.js:309:14)
+      at ../node_modules/supertest/lib/test.js:365:13
+      at Test._assertFunction (../node_modules/supertest/lib/test.js:342:13)
+      at Test.assert (../node_modules/supertest/lib/test.js:195:23)
+      at localAssert (../node_modules/supertest/lib/test.js:138:14)
+      at Server.<anonymous> (../node_modules/supertest/lib/test.js:152:11)
+
+PASS test/qr-ticket-security.e2e-spec.ts
+PASS test/tournaments.e2e-spec.ts
+PASS test/concurrency-stress.e2e-spec.ts
+  ● Console
+
+    console.log
+      
+      ================ STRESS TEST KẾT QUẢ ================
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:114:13)
+
+    console.log
+      Tổng số request đồng thời: 50
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:115:13)
+
+    console.log
+      Số request thành công (201 Created): 1
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:116:13)
+
+    console.log
+      Số request bị chặn hợp lệ (409 Conflict): 49
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:117:13)
+
+    console.log
+      Số lỗi hệ thống 500: 0
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:118:13)
+
+    console.log
+      Tổng thời gian xử lý: 231 ms
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:119:13)
+
+    console.log
+      Thời gian trung bình mỗi request: 4.6 ms
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:120:13)
+
+    console.log
+      =====================================================
+
+      at Object.<anonymous> (concurrency-stress.e2e-spec.ts:121:13)
+
+PASS test/auth.e2e-spec.ts
+PASS test/schema-index.spec.ts
+PASS test/swagger.spec.ts
+
+Test Suites: 1 failed, 16 passed, 17 total
+Tests:       8 failed, 126 passed, 134 total
+Snapshots:   0 total
+Time:        28.124 s
+Ran all test suites.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
