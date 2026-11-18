@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup Plan C (3D, Animation & Đổ Bóng Cao Cấp): Sports & Esports Booking</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --color-brand-darkest: #150000;
+      --color-brand-dark: #2F0000;
+      --color-accent: #FF5050;
+      --color-accent-soft: #CC4040;
+      --color-bg-page: #0f1117;
+      --color-surface-glass: rgba(26, 29, 41, 0.75);
+      --color-border-glass: rgba(255, 255, 255, 0.12);
+
+      --color-emerald-3d: #059669;
+      --color-amber-3d: #D97706;
+      --color-coral-3d: #FF5050;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, #1e1424 0%, #0c0d14 60%, #050608 100%);
+      color: #E2E8F0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* 3D Floating Animation */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(1.5deg); }
+    }
+    @keyframes floatReverse {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(-1.5deg); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(255, 80, 80, 0.4), 0 0 30px rgba(255, 80, 80, 0.2); }
+      50% { box-shadow: 0 0 25px rgba(255, 80, 80, 0.7), 0 0 45px rgba(255, 80, 80, 0.35); }
+    }
+    @keyframes radarScan {
+      0% { top: 10%; opacity: 0.8; }
+      50% { opacity: 1; }
+      100% { top: 90%; opacity: 0.2; }
+    }
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(200%); }
+    }
+
+    .animate-float-1 { animation: floatSlow 5s ease-in-out infinite; }
+    .animate-float-2 { animation: floatReverse 6s ease-in-out infinite; }
+    .glow-accent { animation: pulseGlow 3s infinite; }
+
+    /* 3D Glassmorphism Cards */
+    .card-glass-3d {
+      background: rgba(22, 24, 35, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 20px;
+      box-shadow: 
+        0 20px 40px -15px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-glass-3d:hover {
+      transform: translateY(-4px);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.75),
+        0 0 30px rgba(255, 80, 80, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    /* 3D Tactile Buttons (Đổ bóng 3 tầng + hiệu ứng lún khi bấm) */
+    .btn-3d-coral {
+      background: linear-gradient(180deg, #ff6b6b 0%, #FF5050 50%, #e03131 100%);
+      color: #FFFFFF;
+      font-weight: 500;
+      border-radius: 999px;
+      padding: 10px 24px;
+      border: none;
+      box-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.4) inset,
+        0 5px 0 #991b1b,
+        0 12px 20px -3px rgba(255, 80, 80, 0.45);
+      transition: all 0.1s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-3d-coral:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.4) inset,
+        0 6px 0 #991b1b,
+        0 16px 25px -3px rgba(255, 80, 80, 0.55);
+    }
+    .btn-3d-coral:active {
+      transform: translateY(4px);
+      box-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 1px 0 #991b1b,
+        0 4px 10px rgba(255, 80, 80, 0.3);
+    }
+
+    .btn-3d-dark {
+      background: linear-gradient(180deg, #2a1515 0%, #150000 60%, #0d0000 100%);
+      color: #FFFFFF;
+      font-weight: 500;
+      border-radius: 999px;
+      padding: 10px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 
+        0 1px 0 rgba(255, 255, 255, 0.2) inset,
+        0 4px 0 #000000,
+        0 10px 20px rgba(0, 0, 0, 0.6);
+      transition: all 0.1s ease;
+      cursor: pointer;
+    }
+    .btn-3d-dark:hover {
+      border-color: rgba(255, 80, 80, 0.3);
+      transform: translateY(-1px);
+    }
+    .btn-3d-dark:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #000000, 0 3px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 3D Elevated Slot Blocks */
+    .slot-3d {
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slot-3d-confirmed {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      color: #FFFFFF;
+      border-top: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 
+        0 4px 0 #046c4e,
+        0 10px 18px rgba(5, 150, 105, 0.35);
+    }
+    .slot-3d-confirmed:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #046c4e, 0 14px 22px rgba(5, 150, 105, 0.5);
+    }
+    .slot-3d-confirmed:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #046c4e;
+    }
+
+    .slot-3d-held {
+      background: linear-gradient(180deg, #f59e0b 0%, #D97706 100%);
+      color: #FFFFFF;
+      border-top: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: 
+        0 4px 0 #92400e,
+        0 10px 18px rgba(217, 119, 6, 0.35);
+    }
+    .slot-3d-held:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 0 #92400e, 0 14px 22px rgba(217, 119, 6, 0.5);
+    }
+    .slot-3d-held:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #92400e;
+    }
+
+    .slot-3d-available {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.25);
+      color: #94A3B8;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .slot-3d-available:hover {
+      background: rgba(5, 150, 105, 0.12);
+      border-color: #059669;
+      color: #34D399;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(5, 150, 105, 0.2);
+    }
+
+    /* 3D Ticket Holographic */
+    .ticket-3d-hologram {
+      background: linear-gradient(135deg, rgba(30, 10, 15, 0.9) 0%, rgba(15, 10, 25, 0.95) 50%, rgba(20, 25, 40, 0.9) 100%);
+      border: 1px solid rgba(255, 80, 80, 0.3);
+      border-top: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 
+        0 30px 60px -15px rgba(0, 0, 0, 0.8),
+        0 0 40px rgba(255, 80, 80, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      position: relative;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+
+  <!-- Header Section -->
+  <header class="max-w-7xl mx-auto mb-8 card-glass-3d p-5">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-white/10 pb-4 mb-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="w-3.5 h-3.5 rounded-full bg-[#FF5050] glow-accent"></span>
+          <h1 class="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            PLAN C: Mockup 3D, Animation & Đổ Bóng Chiều Sâu
+            <span class="text-xs bg-[#FF5050]/20 text-[#FF5050] border border-[#FF5050]/40 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold">Luxury 3D UI</span>
+          </h1>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">
+          Tích hợp hiệu ứng đổ bóng đa tầng (Layered Drop Shadow), phím bấm 3D xúc giác (Tactile Press), thẻ kính (Glassmorphism) và chuyển động mượt mà.
+        </p>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="flex flex-wrap gap-2 text-xs">
+        <button onclick="showTab('admin-grid-3d')" id="tab-admin-grid-3d" class="btn-3d-coral">
+          🎮 Web Admin: Lịch 3D & Radar
+        </button>
+        <button onclick="showTab('mobile-ticket-3d')" id="tab-mobile-ticket-3d" class="btn-3d-dark">
+          🎫 Mobile: Vé Hologram 3D
+        </button>
+        <button onclick="showTab('dashboard-3d')" id="tab-dashboard-3d" class="btn-3d-dark">
+          📊 Admin: Dashboard 3D
+        </button>
+        <button onclick="showTab('lab-3d')" id="tab-lab-3d" class="btn-3d-dark">
+          ⚡ Phòng Thử Nghiệm 3D (Lab)
+        </button>
+      </div>
+    </div>
+
+    <!-- Features Banner -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-300">
+      <div class="flex items-center gap-2 bg-white/5 p-2.5 rounded-xl border border-white/5">
+        <span class="text-lg">✨</span>
+        <div><strong class="text-white block">Glassmorphism</strong>Mặt kính mờ xuyên thấu</div>
+      </div>
+      <div class="flex items-center gap-2 bg-white/5 p-2.5 rounded-xl border border-white/5">
+        <span class="text-lg">🕹️</span>
+        <div><strong class="text-white block">Tactile 3D Buttons</strong>Lún phím khi bấm chuột</div>
+      </div>
+      <div class="flex items-center gap-2 bg-white/5 p-2.5 rounded-xl border border-white/5">
+        <span class="text-lg">🌊</span>
+        <div><strong class="text-white block">Ambient Shadows</strong>Đổ bóng phát quang đa tầng</div>
+      </div>
+      <div class="flex items-center gap-2 bg-white/5 p-2.5 rounded-xl border border-white/5">
+        <span class="text-lg">🚀</span>
+        <div><strong class="text-white block">Floating Elements</strong>Animation bồng bềnh 60 FPS</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto">
+
+    <!-- ============================================== -->
+    <!-- VIEW 1: WEB ADMIN 3D BOOKING GRID -->
+    <!-- ============================================== -->
+    <section id="view-admin-grid-3d" class="tab-content block">
+      <div class="flex flex-col lg:flex-row gap-6">
+        
+        <!-- 3D Sidebar -->
+        <aside class="w-full lg:w-64 card-glass-3d p-5 flex flex-col justify-between shrink-0">
+          <div>
+            <div class="flex items-center gap-3 mb-8">
+              <div class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#FF5050] to-[#b91c1c] flex items-center justify-center font-bold text-sm text-white shadow-lg shadow-red-500/40 animate-float-1">
+                SP
+              </div>
+              <div>
+                <div class="font-semibold text-sm text-white">Sports Complex</div>
+                <div class="text-[10px] text-red-400 font-medium">PLAN C • 3D WORKSPACE</div>
+              </div>
+            </div>
+
+            <nav class="space-y-2 text-xs">
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition">
+                <span>📊</span> Tổng quan
+              </a>
+              <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#FF5050] to-[#e03131] text-white font-medium shadow-md shadow-red-500/30">
+                <span>🗓️</span> Sơ đồ lịch (3D Grid)
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition">
+                <span>🏟️</span> Cụm cơ sở & sân
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition">
+                <span>💸</span> Duyệt hoàn tiền
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition">
+                <span>📷</span> Quét QR Check-in
+              </a>
+            </nav>
+          </div>
+
+          <!-- Floating 3D Badge -->
+          <div class="mt-8 p-3 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 text-center animate-float-2">
+            <div class="text-[10px] text-slate-400 mb-1">Server Đồng Bộ Thời Gian Thực</div>
+            <div class="flex items-center justify-center gap-1.5 text-xs text-emerald-400 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              Socket.io: 0ms Latency
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main 3D Grid Workspace -->
+        <div class="flex-1 space-y-6">
+          <div class="card-glass-3d p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-white/10 gap-4">
+              <div>
+                <h2 class="text-lg font-bold text-white tracking-wide">Sơ Đồ Lịch Sân Đa Chiều (3D Booking Matrix)</h2>
+                <p class="text-xs text-slate-400">Các khối slot nổi 3D cho phép thao tác nhấp chuột trực quan với âm hưởng xúc giác</p>
+              </div>
+              <button class="btn-3d-coral">
+                <span>⚡</span> Đặt Quầy Walk-in (3D POS)
+              </button>
+            </div>
+
+            <!-- Legend 3D -->
+            <div class="flex flex-wrap items-center gap-5 my-5 text-xs">
+              <span class="text-slate-400 font-medium">Trạng thái khối 3D:</span>
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-md slot-3d-confirmed shadow-sm"></span>
+                <span class="text-emerald-400 font-semibold">CONFIRMED (Đã đặt)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-md slot-3d-held shadow-sm"></span>
+                <span class="text-amber-400 font-semibold">HELD (Giữ 10p)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded-md slot-3d-available"></span>
+                <span class="text-slate-400">Trống (Click để giữ)</span>
+              </div>
+            </div>
+
+            <!-- 3D Matrix Table -->
+            <div class="overflow-x-auto pb-2">
+              <table class="w-full text-xs border-separate border-spacing-y-3">
+                <thead>
+                  <tr class="text-slate-400 text-left">
+                    <th class="py-2 px-3 font-medium w-36">Sân Thi Đấu</th>
+                    <th class="py-2 px-2 text-center font-medium">16:00 - 17:00</th>
+                    <th class="py-2 px-2 text-center font-medium">17:00 - 18:00</th>
+                    <th class="py-2 px-2 text-center font-medium">18:00 - 19:00</th>
+                    <th class="py-2 px-2 text-center font-medium">19:00 - 20:00</th>
+                    <th class="py-2 px-2 text-center font-medium">20:00 - 21:00</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Row 1 -->
+                  <tr class="bg-white/[0.02] rounded-xl">
+                    <td class="py-3 px-3 font-semibold text-white">
+                      ⚽ Sân bóng 5 #01
+                      <span class="block text-[10px] text-slate-500 font-normal">Cỏ nhân tạo FIFA</span>
+                    </td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0912***456<br><span class="text-[10px] opacity-80">#BK-8821</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0988***112<br><span class="text-[10px] opacity-80">#BK-8824</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-held">⏱ Giữ 04:32<br><span class="text-[10px] opacity-90">App Mobile</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0903***789<br><span class="text-[10px] opacity-80">#BK-8830</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-available">Trống<br><span class="text-[10px]">300k</span></div></td>
+                  </tr>
+
+                  <!-- Row 2 -->
+                  <tr class="bg-white/[0.02] rounded-xl">
+                    <td class="py-3 px-3 font-semibold text-white">
+                      🏸 Cầu lông Thảm Đỏ A
+                      <span class="block text-[10px] text-slate-500 font-normal">Sân tiêu chuẩn Yonex</span>
+                    </td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-available">Trống<br><span class="text-[10px]">120k</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0934***556<br><span class="text-[10px] opacity-80">#BK-8829</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0944***221<br><span class="text-[10px] opacity-80">#BK-8833</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-held">⏱ Giữ 08:15<br><span class="text-[10px] opacity-90">Web User</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-available">Trống<br><span class="text-[10px]">150k</span></div></td>
+                  </tr>
+
+                  <!-- Row 3 -->
+                  <tr class="bg-white/[0.02] rounded-xl">
+                    <td class="py-3 px-3 font-semibold text-white">
+                      🎮 Esports VIP Arena
+                      <span class="block text-[10px] text-slate-500 font-normal">i9 14900K • RTX 4090</span>
+                    </td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">Team Flash<br><span class="text-[10px] opacity-80">#BK-8819</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">Team Flash<br><span class="text-[10px] opacity-80">#BK-8820</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">Team Flash<br><span class="text-[10px] opacity-80">#BK-8822</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-confirmed">0966***881<br><span class="text-[10px] opacity-80">#BK-8835</span></div></td>
+                    <td class="p-1.5"><div class="slot-3d slot-3d-available">Trống<br><span class="text-[10px]">180k</span></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: MOBILE 3D HOLOGRAPHIC TICKET -->
+    <!-- ============================================== -->
+    <section id="view-mobile-ticket-3d" class="tab-content hidden">
+      <div class="max-w-md mx-auto space-y-6">
+        
+        <!-- 3D Ticket Holographic Container -->
+        <div class="ticket-3d-hologram transform hover:scale-[1.02] transition duration-300">
+          
+          <!-- Top Tag -->
+          <div class="flex justify-between items-center mb-6">
+            <div class="px-3.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              BOOKED & CONFIRMED
+            </div>
+            <span class="text-xs text-slate-400 font-mono">#BK-2026-VALORANT</span>
+          </div>
+
+          <!-- Tournament / Event Header -->
+          <div class="text-center mb-6">
+            <div class="text-[11px] uppercase tracking-widest text-[#FF5050] font-bold mb-1">Cụm Thi Đấu Thể Thao Huflit</div>
+            <h3 class="text-xl font-bold text-white tracking-wide">Sân Bóng 5 Người #01</h3>
+            <div class="text-xs text-slate-300 mt-1">19:00 - 20:00 • Hôm Nay (17/09/2026)</div>
+          </div>
+
+          <!-- 3D Floating QR Code Box -->
+          <div class="relative my-6 text-center">
+            <div class="inline-block p-4 rounded-3xl bg-gradient-to-br from-white via-slate-100 to-slate-200 shadow-2xl shadow-black/80 border-4 border-white/20 animate-float-1">
+              <svg class="w-44 h-44 mx-auto" viewBox="0 0 100 100" fill="#150000">
+                <rect x="10" y="10" width="25" height="25" rx="3"/>
+                <rect x="15" y="15" width="15" height="15" fill="#fff"/>
+                <rect x="18" y="18" width="9" height="9"/>
+                <rect x="65" y="10" width="25" height="25" rx="3"/>
+                <rect x="70" y="15" width="15" height="15" fill="#fff"/>
+                <rect x="73" y="18" width="9" height="9"/>
+                <rect x="10" y="65" width="25" height="25" rx="3"/>
+                <rect x="15" y="70" width="15" height="15" fill="#fff"/>
+                <rect x="18" y="73" width="9" height="9"/>
+                <!-- Center glowing badge -->
+                <rect x="42" y="12" width="6" height="6"/>
+                <rect x="52" y="18" width="6" height="6"/>
+                <rect x="45" y="30" width="6" height="6"/>
+                <rect x="55" y="42" width="6" height="6"/>
+                <rect x="40" y="55" width="6" height="6"/>
+                <rect x="68" y="65" width="6" height="6"/>
+                <circle cx="50" cy="50" r="7" fill="#FF5050"/>
+              </svg>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-3 font-mono tracking-tight">
+              Mã bảo mật OTP sinh động • Đổi mới sau <span class="text-[#FF5050] font-bold">42s</span>
+            </div>
+          </div>
+
+          <!-- Ticket Info Details -->
+          <div class="border-t border-white/10 pt-4 space-y-2.5 text-xs text-slate-300">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Khách hàng:</span>
+              <strong class="text-white">Nguyễn Anh Quân (0911 223 344)</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Giá vé đã quyết toán:</span>
+              <strong class="text-emerald-400 text-sm">300.000 VNĐ (VietQR)</strong>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Cổng vào sân:</span>
+              <strong class="text-white">Cổng B - Cửa Barie Tự Động</strong>
+            </div>
+          </div>
+
+          <!-- Bottom 3D CTA Button -->
+          <div class="mt-6">
+            <button class="w-full btn-3d-coral py-3.5 text-sm font-semibold tracking-wide">
+              <span>📲</span> Thêm Vào Apple / Google Wallet
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 3: WEB ADMIN 3D DASHBOARD -->
+    <!-- ============================================== -->
+    <section id="view-dashboard-3d" class="tab-content hidden">
+      <div class="space-y-6">
+        <!-- Metric Cards with 3D Depth -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          
+          <div class="card-glass-3d p-6 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition"></div>
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-xs text-slate-400 font-medium">Lượt Đặt Sân Hôm Nay</span>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+                +18% TĂNG
+              </span>
+            </div>
+            <div class="text-3xl font-extrabold text-white tracking-tight">48 Đơn</div>
+            <div class="text-xs text-slate-400 mt-2 flex items-center gap-1.5">
+              <span class="text-emerald-400 font-medium">38 Sân bóng</span> • 10 Sân cầu lông
+            </div>
+          </div>
+
+          <div class="card-glass-3d p-6 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-[#FF5050]/15 rounded-full blur-2xl group-hover:bg-[#FF5050]/25 transition"></div>
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-xs text-slate-400 font-medium">Doanh Thu Quyết Toán</span>
+              <span class="px-2.5 py-1 rounded-full bg-red-500/20 text-[#FF5050] text-[10px] font-bold border border-red-500/30">
+                VIETQR LIVE
+              </span>
+            </div>
+            <div class="text-3xl font-extrabold text-white tracking-tight">12.850.000 đ</div>
+            <div class="text-xs text-slate-400 mt-2">
+              PayOS tự động đối soát 100% không lệch sổ
+            </div>
+          </div>
+
+          <div class="card-glass-3d p-6 relative overflow-hidden group">
+            <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-amber-500/15 rounded-full blur-2xl group-hover:bg-amber-500/25 transition"></div>
+            <div class="flex justify-between items-start mb-3">
+              <span class="text-xs text-slate-400 font-medium">Yêu Cầu Hoàn Tiền Chờ Duyệt</span>
+              <span class="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30">
+                LATE WEBHOOK
+              </span>
+            </div>
+            <div class="text-3xl font-extrabold text-amber-400 tracking-tight">2 Đơn</div>
+            <div class="text-xs text-slate-400 mt-2">
+              Nút 1-click PayOS sẵn sàng giải ngân
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D Check-in Station Status -->
+        <div class="card-glass-3d p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-sm font-bold text-white tracking-wide flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Trạm Soát Vé Tự Động Camera (Active Nodes)
+            </h3>
+            <span class="text-xs text-slate-400">4 Barie đang kết nối</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/50 transition">
+              <div class="font-semibold text-white">Cổng 1: Sân Bóng #01 - #03</div>
+              <div class="text-emerald-400 text-[11px] mt-1">● Sẵn sàng (Ready)</div>
+              <div class="text-[10px] text-slate-500 mt-2">Quét lần cuối: 3 phút trước</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/50 transition">
+              <div class="font-semibold text-white">Cổng 2: Sân Cầu Lông A - D</div>
+              <div class="text-emerald-400 text-[11px] mt-1">● Sẵn sàng (Ready)</div>
+              <div class="text-[10px] text-slate-500 mt-2">Quét lần cuối: 8 phút trước</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/50 transition">
+              <div class="font-semibold text-white">Cổng 3: Phòng Esports VIP</div>
+              <div class="text-emerald-400 text-[11px] mt-1">● Đang mở cửa vào</div>
+              <div class="text-[10px] text-slate-500 mt-2">Quét lần cuối: 12 giây trước</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/50 transition">
+              <div class="font-semibold text-white">Cổng 4: Khu Phòng Gym</div>
+              <div class="text-emerald-400 text-[11px] mt-1">● Trừ lượt thẻ Gym Pass</div>
+              <div class="text-[10px] text-slate-500 mt-2">Quét lần cuối: 1 phút trước</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 4: 3D LAB EXPERIMENTS -->
+    <!-- ============================================== -->
+    <section id="view-lab-3d" class="tab-content hidden">
+      <div class="card-glass-3d p-6 md:p-8 space-y-6">
+        <div>
+          <h3 class="text-base font-bold text-white">Phòng Thử Nghiệm Tương Tác 3D (Design Lab)</h3>
+          <p class="text-xs text-slate-400">Rê chuột hoặc nhấp vào các linh kiện bên dưới để cảm nhận hiệu ứng độ sâu và animation</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Interactive Tilt Card -->
+          <div class="card-glass-3d p-5 text-center cursor-pointer transform hover:-translate-y-2 hover:rotate-1 transition duration-300">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-[#FF5050] text-white flex items-center justify-center text-xl shadow-lg shadow-red-500/50 mb-3 animate-float-1">
+              ⚽
+            </div>
+            <h4 class="font-bold text-white text-sm">3D Interactive Card</h4>
+            <p class="text-xs text-slate-400 mt-1">Di chuột để thấy thẻ nâng lên khỏi bề mặt và nghiêng góc 3D</p>
+          </div>
+
+          <!-- Tactile 3D Buttons Showcase -->
+          <div class="card-glass-3d p-5 text-center space-y-3">
+            <h4 class="font-bold text-white text-sm">Nút Bấm Xúc Giác 3D</h4>
+            <div>
+              <button class="btn-3d-coral w-full py-3">
+                Nhấp Thử Nút 3D Coral
+              </button>
+            </div>
+            <div>
+              <button class="btn-3d-dark w-full py-3">
+                Nhấp Thử Nút 3D Dark
+              </button>
+            </div>
+          </div>
+
+          <!-- Radar Scan Effect -->
+          <div class="card-glass-3d p-5 text-center relative overflow-hidden">
+            <h4 class="font-bold text-white text-sm mb-3">Hiệu Ứng Quét Radar</h4>
+            <div class="w-24 h-24 mx-auto rounded-2xl border-2 border-dashed border-emerald-400 relative overflow-hidden flex items-center justify-center bg-black/40">
+              <div class="absolute inset-x-0 h-0.5 bg-emerald-400 shadow-[0_0_10px_#10b981]" style="animation: radarScan 2.5s ease-in-out infinite;"></div>
+              <span class="text-xs font-mono text-emerald-400 font-bold">QR SCAN</span>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-3">Mô phỏng máy quét QR laser tại quầy</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('block');
+        el.classList.add('hidden');
+      });
+      document.querySelectorAll('header button').forEach(btn => {
+        if (btn.id === 'tab-' + tabId) {
+          btn.className = 'btn-3d-coral';
+        } else {
+          btn.className = 'btn-3d-dark';
+        }
+      });
+
+      const target = document.getElementById('view-' + tabId);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('block');
+      }
+    }
+  </script>
+</body>
+</html>

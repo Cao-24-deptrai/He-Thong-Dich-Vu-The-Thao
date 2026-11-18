@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three.js 3D Sports Arena: Đặt Sân Tương Tác 360°</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <!-- Three.js & OrbitControls from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #090a10;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+    .glass-panel {
+      background: rgba(18, 20, 30, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+    .btn-glow {
+      background: linear-gradient(180deg, #ff6b6b 0%, #FF5050 100%);
+      box-shadow: 0 4px 0 #991b1b, 0 10px 20px rgba(255, 80, 80, 0.4);
+      transition: all 0.1s;
+    }
+    .btn-glow:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #991b1b;
+    }
+    /* 3D Tooltip */
+    #tooltip-3d {
+      position: absolute;
+      display: none;
+      z-index: 100;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      transition: opacity 0.2s;
+    }
+  </style>
+</head>
+<body class="text-slate-200">
+
+  <!-- 3D Canvas -->
+  <div id="canvas-container"></div>
+
+  <!-- 3D Tooltip Over Court -->
+  <div id="tooltip-3d" class="glass-panel px-3 py-2 rounded-xl text-xs text-white border border-emerald-500/50 shadow-2xl">
+    <div id="tooltip-title" class="font-bold text-emerald-400">Sân Bóng 5 #01</div>
+    <div id="tooltip-desc" class="text-[11px] text-slate-300">Trạng thái: Còn trống • 300k/h</div>
+    <div class="text-[9px] text-slate-400 mt-0.5">Nhấp chuột để xem lịch & giữ chỗ</div>
+  </div>
+
+  <!-- UI Overlay: Top Navigation Bar -->
+  <header class="fixed top-4 inset-x-4 max-w-6xl mx-auto z-10 flex items-center justify-between glass-panel px-5 py-3 rounded-2xl">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-xl bg-[#FF5050] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-red-500/40">
+        3D
+      </div>
+      <div>
+        <div class="font-bold text-sm text-white flex items-center gap-2">
+          Three.js Sports Arena 360°
+          <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded-full">WebGL Live</span>
+        </div>
+        <div class="text-[11px] text-slate-400">Giữ chuột trái xoay • Cuộn chuột zoom • Nhấp vào sân để chọn</div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center gap-2 text-xs">
+      <button id="btn-toggle-lights" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition text-slate-300 flex items-center gap-1.5">
+        <span>💡</span> <span id="lights-label">Bật Đèn Đêm</span>
+      </button>
+      <button id="btn-reset-cam" class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 transition text-slate-300">
+        ↺ Đặt Lại Góc Nhìn
+      </button>
+      <button onclick="toggleTicketModal()" class="btn-glow px-4 py-2 rounded-xl text-white font-semibold text-xs">
+        🎫 Xem Vé 3D
+      </button>
+    </div>
+  </header>
+
+  <!-- Bottom Left: Stadium Legend & Status -->
+  <div class="fixed bottom-5 left-5 z-10 glass-panel p-4 rounded-2xl max-w-xs text-xs space-y-2 hidden md:block">
+    <div class="font-bold text-white mb-1">Trực Quan Hóa Cụm Sân Thể Thao:</div>
+    <div class="flex items-center gap-2">
+      <span class="w-3.5 h-3.5 rounded bg-[#059669] shadow-sm shadow-emerald-500/50"></span>
+      <span>Sân 1 (Bóng đá 5) — <strong class="text-emerald-400">Còn Trống</strong></span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="w-3.5 h-3.5 rounded bg-[#D97706] shadow-sm shadow-amber-500/50"></span>
+      <span>Sân 2 (Bóng đá 5) — <strong class="text-amber-400">Đang Giữ Chỗ (HELD)</strong></span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="w-3.5 h-3.5 rounded bg-[#2F0000] border border-red-500/40"></span>
+      <span>Sân Cầu Lông A — <strong class="text-red-400">Đã Kín (CONFIRMED)</strong></span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="w-3.5 h-3.5 rounded bg-blue-600 shadow-sm shadow-blue-500/50"></span>
+      <span>Phòng Esports VIP — <strong class="text-blue-400">Đang Tranh Đấu</strong></span>
+    </div>
+  </div>
+
+  <!-- Bottom Right: Selected Court Drawer / Booking Action -->
+  <div id="court-modal" class="fixed bottom-5 right-5 z-10 glass-panel p-5 rounded-3xl max-w-sm w-full text-xs space-y-3 transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-none">
+    <div class="flex justify-between items-start">
+      <div>
+        <div class="text-[10px] text-[#FF5050] font-bold uppercase tracking-wider">THÔNG TIN SÂN 3D</div>
+        <h3 id="selected-court-name" class="text-base font-bold text-white">Sân Bóng 5 Người #01</h3>
+      </div>
+      <button onclick="closeCourtModal()" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-400 hover:text-white">✕</button>
+    </div>
+
+    <div class="bg-black/30 p-3 rounded-xl border border-white/5 space-y-1.5">
+      <div class="flex justify-between"><span class="text-slate-400">Mặt cỏ:</span><span class="text-white">Cỏ nhân tạo Monofilament 5cm</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Hệ thống đèn:</span><span class="text-emerald-400">LED 400W chống lóa</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Khung giờ gợi ý:</span><span class="text-white font-bold">19:00 - 20:00 Tối Nay</span></div>
+      <div class="flex justify-between"><span class="text-slate-400">Đơn giá:</span><span class="text-emerald-400 font-bold text-sm">300.000 VNĐ / giờ</span></div>
+    </div>
+
+    <button onclick="alert('Đã kích hoạt API giữ chỗ 10 phút qua Redis Mutex Lock!')" class="w-full btn-glow py-3 rounded-xl text-white font-bold text-xs tracking-wide">
+      ⚡ Giữ Chỗ Sân Này 10 Phút Ngay
+    </button>
+  </div>
+
+  <!-- 3D Ticket Modal (Interactive 3D Card Simulation) -->
+  <div id="ticket-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="glass-panel p-6 rounded-3xl max-w-sm w-full text-center relative border border-white/20">
+      <button onclick="toggleTicketModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-sm">✕</button>
+      <div class="text-[10px] text-[#FF5050] font-bold tracking-widest uppercase mb-1">VÉ THỂ THAO 3D DIGITAL PASS</div>
+      <h3 class="text-lg font-bold text-white mb-4">Mã Check-in Không Gian 3D</h3>
+
+      <!-- 3D Floating Ticket Canvas inside modal -->
+      <div class="w-56 h-72 mx-auto bg-gradient-to-br from-[#2F0000] via-[#150000] to-black rounded-3xl p-4 border border-[#FF5050]/40 shadow-2xl shadow-red-500/30 flex flex-col justify-between transform hover:rotate-3 transition duration-300">
+        <div class="flex justify-between items-center text-[10px]">
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">● CONFIRMED</span>
+          <span class="text-slate-400">#BK-9901</span>
+        </div>
+        <div class="my-auto">
+          <div class="w-28 h-28 mx-auto bg-white p-2 rounded-2xl shadow-lg">
+            <!-- Simulated QR -->
+            <svg class="w-full h-full" viewBox="0 0 100 100" fill="#150000">
+              <rect x="10" y="10" width="25" height="25"/>
+              <rect x="15" y="15" width="15" height="15" fill="#fff"/>
+              <rect x="18" y="18" width="9" height="9"/>
+              <rect x="65" y="10" width="25" height="25"/>
+              <rect x="70" y="15" width="15" height="15" fill="#fff"/>
+              <rect x="73" y="18" width="9" height="9"/>
+              <rect x="10" y="65" width="25" height="25"/>
+              <rect x="15" y="70" width="15" height="15" fill="#fff"/>
+              <rect x="18" y="73" width="9" height="9"/>
+              <circle cx="50" cy="50" r="8" fill="#FF5050"/>
+            </svg>
+          </div>
+          <div class="text-[9px] text-slate-400 mt-2 font-mono">Tự đổi mới mỗi 60 giây</div>
+        </div>
+        <div class="text-left text-[10px] text-slate-300 border-t border-white/10 pt-2">
+          <div class="text-white font-bold">Sân Bóng 5 #01 (Mỹ Đình)</div>
+          <div>19:00 - 20:00 • 17/09/2026</div>
+        </div>
+      </div>
+
+      <p class="text-[11px] text-slate-400 mt-4">Có thể kết nối với WebGL Shader để tạo hiệu ứng phản quang kim loại (Hologram Foil)</p>
+    </div>
+  </div>
+
+  <!-- THREE.JS JAVASCRIPT CODE -->
+  <script>
+    // --- 1. Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x090a10, 0.018);
+
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 19, 26);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2.15; // Giới hạn không cho nhìn từ dưới đất lên
+    controls.minDistance = 10;
+    controls.maxDistance = 50;
+    controls.target.set(0, 0, 0);
+
+    // --- 2. Lighting System ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    sunLight.position.set(15, 25, 15);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 70;
+    const d = 20;
+    sunLight.shadow.camera.left = -d;
+    sunLight.shadow.camera.right = d;
+    sunLight.shadow.camera.top = d;
+    sunLight.shadow.camera.bottom = -d;
+    scene.add(sunLight);
+
+    // 4 Corner Stadium Floodlights
+    const floodlights = [];
+    const lightPositions = [
+      [-16, 12, -12],
+      [16, 12, -12],
+      [-16, 12, 12],
+      [16, 12, 12]
+    ];
+    lightPositions.forEach(pos => {
+      const spot = new THREE.SpotLight(0x90e0ef, 1.2, 45, Math.PI / 4, 0.4, 1);
+      spot.position.set(pos[0], pos[1], pos[2]);
+      spot.target.position.set(pos[0] * 0.3, 0, pos[2] * 0.3);
+      scene.add(spot.target);
+      scene.add(spot);
+      floodlights.push(spot);
+
+      // Floodlight Tower Pole Mesh
+      const poleGeo = new THREE.CylinderGeometry(0.15, 0.25, pos[1], 8);
+      const poleMat = new THREE.MeshStandardMaterial({ color: 0x222530, roughness: 0.8 });
+      const pole = new THREE.Mesh(poleGeo, poleMat);
+      pole.position.set(pos[0], pos[1] / 2, pos[2]);
+      pole.castShadow = true;
+      scene.add(pole);
+
+      // Light Head
+      const headGeo = new THREE.BoxGeometry(1.2, 0.8, 0.5);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x90e0ef, emissiveIntensity: 0.8 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.set(pos[0], pos[1], pos[2]);
+      head.lookAt(0, 0, 0);
+      scene.add(head);
+    });
+
+    // --- 3. Ground & Stadium Platform ---
+    const platformGeo = new THREE.BoxGeometry(38, 0.8, 30);
+    const platformMat = new THREE.MeshStandardMaterial({ color: 0x12141c, roughness: 0.7, metalness: 0.2 });
+    const platform = new THREE.Mesh(platformGeo, platformMat);
+    platform.position.y = -0.4;
+    platform.receiveShadow = true;
+    scene.add(platform);
+
+    // Grid wire helper
+    const grid = new THREE.GridHelper(50, 50, 0xFF5050, 0x1f293d);
+    grid.position.y = -0.79;
+    scene.add(grid);
+
+    // --- 4. Interactive Sports Courts ---
+    const interactiveCourts = [];
+
+    // Helper: Tạo Texture Canvas Sân Bóng 2D sắc nét
+    function createPitchTexture(isStriped = true) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d');
+
+      // Nền cỏ sọc
+      const stripes = 8;
+      for (let i = 0; i < stripes; i++) {
+        ctx.fillStyle = (i % 2 === 0) ? '#1f8045' : '#279c55';
+        ctx.fillRect(i * (512 / stripes), 0, 512 / stripes, 320);
+      }
+
+      // Vạch sơn trắng
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(20, 20, 472, 280);
+
+      // Đường giữa sân & vòng tròn
+      ctx.beginPath();
+      ctx.moveTo(256, 20);
+      ctx.lineTo(256, 300);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(256, 160, 45, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Vòng cấm địa 2 bên
+      ctx.strokeRect(20, 80, 70, 160);
+      ctx.strokeRect(422, 80, 70, 160);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      return texture;
+    }
+
+    // A. Sân Bóng 5 #01 (AVAILABLE - Xanh Ngọc)
+    const pitch1Mat = new THREE.MeshStandardMaterial({
+      map: createPitchTexture(),
+      roughness: 0.8,
+    });
+    const pitch1 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.4, 9), pitch1Mat);
+    pitch1.position.set(-8, 0.2, -6);
+    pitch1.castShadow = true;
+    pitch1.receiveShadow = true;
+    pitch1.userData = {
+      name: 'Sân Bóng 5 Người #01',
+      type: 'FOOTBALL',
+      status: 'AVAILABLE',
+      price: '300.000 VNĐ / giờ',
+      desc: 'Trạng thái: Đang trống • Giá giờ cao điểm: 300k'
+    };
+    scene.add(pitch1);
+    interactiveCourts.push(pitch1);
+
+    // B. Sân Bóng 5 #02 (HELD - Vàng Hổ Phách)
+    const pitch2Mat = new THREE.MeshStandardMaterial({
+      map: createPitchTexture(),
+      roughness: 0.8,
+      color: 0xffd166 // Ám vàng
+    });
+    const pitch2 = new THREE.Mesh(new THREE.BoxGeometry(13, 0.4, 9), pitch2Mat);
+    pitch2.position.set(-8, 0.2, 6);
+    pitch2.castShadow = true;
+    pitch2.receiveShadow = true;
+    pitch2.userData = {
+      name: 'Sân Bóng 5 Người #02',
+      type: 'FOOTBALL',
+      status: 'HELD',
+      price: '250.000 VNĐ / giờ',
+      desc: 'Trạng thái: Khách đang giữ chỗ (còn 06:14) • 250k'
+    };
+    scene.add(pitch2);
+    interactiveCourts.push(pitch2);
+
+    // C. Sân Cầu Lông A (Thảm Đỏ / Xanh)
+    const badmMat = new THREE.MeshStandardMaterial({
+      color: 0x991b1b,
+      roughness: 0.6,
+    });
+    const badm = new THREE.Mesh(new THREE.BoxGeometry(8, 0.4, 5.5), badmMat);
+    badm.position.set(7, 0.2, -7);
+    badm.castShadow = true;
+    badm.receiveShadow = true;
+    badm.userData = {
+      name: 'Sân Cầu Lông Thảm Đỏ A',
+      type: 'BADMINTON',
+      status: 'CONFIRMED',
+      price: '150.000 VNĐ / giờ',
+      desc: 'Trạng thái: Đã có lịch đặt (CONFIRMED) • 150k'
+    };
+    scene.add(badm);
+    interactiveCourts.push(badm);
+
+    // D. Phòng Esports VIP Arena (Pod kính Cyberpunk phát sáng)
+    const espGeo = new THREE.BoxGeometry(8, 2.5, 6);
+    const espMat = new THREE.MeshPhysicalMaterial({
+      color: 0x1e1b4b,
+      emissive: 0x3b82f6,
+      emissiveIntensity: 0.4,
+      transmission: 0.6,
+      opacity: 1,
+      transparent: true,
+      roughness: 0.1,
+      ior: 1.5
+    });
+    const espPod = new THREE.Mesh(espGeo, espMat);
+    espPod.position.set(7, 1.25, 4);
+    espPod.castShadow = true;
+    espPod.userData = {
+      name: 'Phòng Esports VIP Arena',
+      type: 'ESPORTS',
+      status: 'AVAILABLE',
+      price: '180.000 VNĐ / giờ',
+      desc: 'Trạng thái: Đang thi đấu • Cấu hình i9/RTX 4090'
+    };
+    scene.add(espPod);
+    interactiveCourts.push(espPod);
+
+    // Mini 3D Soccer Ball on Pitch 1
+    const ballGeo = new THREE.SphereGeometry(0.35, 16, 16);
+    const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+    const ball = new THREE.Mesh(ballGeo, ballMat);
+    ball.position.set(-7, 0.75, -5);
+    ball.castShadow = true;
+    scene.add(ball);
+
+    // --- 5. Raycasting for Mouse Interaction ---
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredCourt = null;
+
+    const tooltip = document.getElementById('tooltip-3d');
+    const tooltipTitle = document.getElementById('tooltip-title');
+    const tooltipDesc = document.getElementById('tooltip-desc');
+
+    window.addEventListener('pointermove', (event) => {
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(interactiveCourts);
+
+      if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        if (hoveredCourt !== obj) {
+          if (hoveredCourt) hoveredCourt.position.y = 0.2; // Reset previous
+          hoveredCourt = obj;
+          hoveredCourt.position.y = 0.45; // Nhấc bổng sân lên 3D khi hover!
+        }
+        // Hiện tooltip tại vị trí chuột
+        tooltip.style.display = 'block';
+        tooltip.style.left = event.clientX + 'px';
+        tooltip.style.top = event.clientY - 15 + 'px';
+        tooltipTitle.textContent = obj.userData.name;
+        tooltipDesc.textContent = obj.userData.desc;
+        document.body.style.cursor = 'pointer';
+      } else {
+        if (hoveredCourt) {
+          hoveredCourt.position.y = 0.2;
+          hoveredCourt = null;
+        }
+        tooltip.style.display = 'none';
+        document.body.style.cursor = 'default';
+      }
+    });
+
+    // Khi nhấp vào sân -> Mở Modal chi tiết
+    window.addEventListener('click', () => {
+      if (hoveredCourt) {
+        openCourtModal(hoveredCourt.userData);
+      }
+    });
+
+    function openCourtModal(data) {
+      document.getElementById('selected-court-name').textContent = data.name;
+      const modal = document.getElementById('court-modal');
+      modal.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+      modal.classList.add('opacity-100', 'translate-y-0');
+    }
+
+    function closeCourtModal() {
+      const modal = document.getElementById('court-modal');
+      modal.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+    }
+
+    function toggleTicketModal() {
+      const modal = document.getElementById('ticket-modal');
+      modal.classList.toggle('hidden');
+    }
+
+    // Toggle Night / Day Lighting
+    let isNight = true;
+    document.getElementById('btn-toggle-lights').addEventListener('click', () => {
+      isNight = !isNight;
+      const label = document.getElementById('lights-label');
+      if (isNight) {
+        sunLight.intensity = 0.3;
+        ambientLight.intensity = 0.25;
+        scene.fog.color.setHex(0x090a10);
+        floodlights.forEach(l => l.intensity = 1.4);
+        label.textContent = 'Tắt Đèn Đêm (Ban Ngày)';
+      } else {
+        sunLight.intensity = 1.3;
+        ambientLight.intensity = 0.8;
+        scene.fog.color.setHex(0x1a233a);
+        floodlights.forEach(l => l.intensity = 0.1);
+        label.textContent = 'Bật Đèn Đêm (Stadium)';
+      }
+    });
+
+    // Reset Camera
+    document.getElementById('btn-reset-cam').addEventListener('click', () => {
+      camera.position.set(0, 19, 26);
+      controls.target.set(0, 0, 0);
+    });
+
+    // Window Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // --- 6. Animation Loop (60 FPS) ---
+    let clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsedTime = clock.getElapsedTime();
+
+      // Mini animation: Quả bóng nhấp nhô nhẹ
+      ball.position.y = 0.75 + Math.sin(elapsedTime * 3) * 0.08;
+
+      // Phòng Esports phát quang nhịp thở
+      espMat.emissiveIntensity = 0.3 + Math.sin(elapsedTime * 2) * 0.2;
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>

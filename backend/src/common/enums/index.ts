@@ -270,3 +270,72 @@ export enum MatchLevel {
   TRUNG_BINH = 'TRUNG_BINH',
   BAN_CHUYEN = 'BAN_CHUYEN',
 }
+
+// ==================== INVOICE & NOTIFICATION & WALLET ====================
+export enum InvoiceStatus {
+  PENDING = 'PENDING',
+  ISSUED = 'ISSUED',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
+  REPLACED = 'REPLACED',
+}
+
+export enum TaxRate {
+  ZERO = 0,
+  FIVE = 5,
+  EIGHT = 8,
+  TEN = 10,
+}
+
+export enum NotificationChannel {
+  PUSH = 'PUSH',
+  ZNS = 'ZNS',
+  EMAIL = 'EMAIL',
+  IN_APP = 'IN_APP',
+  FCM = 'FCM',
+  SMS = 'SMS',
+}
+
+export enum NotificationStatus {
+  PENDING = 'PENDING',
+  SENT = 'SENT',
+  FAILED = 'FAILED',
+  FALLBACK = 'FALLBACK',
+}
+
+export enum NotificationType {
+  SYSTEM = 'SYSTEM',
+  BOOKING = 'BOOKING',
+  PAYMENT = 'PAYMENT',
+  PROMOTION = 'PROMOTION',
+  WALLET_BALANCE = 'WALLET_BALANCE',
+  REMINDER = 'REMINDER',
+}
+
+export enum WalletTxnType {
+  DEPOSIT = 'DEPOSIT',
+  PAYMENT = 'PAYMENT',
+  HOLD = 'HOLD',
+  RELEASE = 'RELEASE',
+  SETTLE = 'SETTLE',
+  REFUND = 'REFUND',
+  ADJUSTMENT = 'ADJUSTMENT',
+  WITHDRAW = 'WITHDRAW',
+}
+
+export enum WalletCategory {
+  TOPUP = 'TOPUP',
+  ADJUSTMENT = 'ADJUSTMENT',
+  COURT = 'COURT',
+  GAME_TIME = 'GAME_TIME',
+  GAME_ROOM = 'GAME_ROOM',
+  CANTEEN = 'CANTEEN',
+  RENTAL = 'RENTAL',
+}
+
+export enum WalletStatus {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+  CLOSED = 'CLOSED',
+}
+

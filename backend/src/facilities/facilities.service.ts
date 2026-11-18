@@ -22,6 +22,9 @@ export class FacilitiesService {
     const facility = new this.facilityModel({
       name: dto.name,
       address: dto.address,
+      description: dto.description || '',
+      openHour: dto.openHour || '06:00',
+      closeHour: dto.closeHour || '23:00',
       location: {
         type: 'Point',
         coordinates: [lng, lat],
@@ -38,6 +41,9 @@ export class FacilitiesService {
 
     if (dto.name !== undefined) facility.name = dto.name;
     if (dto.address !== undefined) facility.address = dto.address;
+    if (dto.description !== undefined) facility.description = dto.description;
+    if (dto.openHour !== undefined) facility.openHour = dto.openHour;
+    if (dto.closeHour !== undefined) facility.closeHour = dto.closeHour;
     if (dto.sportTypes !== undefined) {
       facility.sportTypes = dto.sportTypes;
     } else if (dto.sportType !== undefined) {

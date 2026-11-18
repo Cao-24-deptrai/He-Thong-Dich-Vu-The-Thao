@@ -183,6 +183,8 @@ export default function FacilitiesPage() {
         sportType: facilityForm.sportType,
         sportTypes: [facilityForm.sportType],
         description: facilityForm.description,
+        openHour: facilityForm.openHour,
+        closeHour: facilityForm.closeHour,
       } as any);
       setShowFacilityModal(false);
       setFacilityForm({
@@ -229,6 +231,8 @@ export default function FacilitiesPage() {
         sportType: editFacilityForm.sportType,
         sportTypes: [editFacilityForm.sportType],
         description: editFacilityForm.description,
+        openHour: editFacilityForm.openHour,
+        closeHour: editFacilityForm.closeHour,
         isActive: editFacilityForm.isActive,
       });
       setShowEditFacilityModal(false);

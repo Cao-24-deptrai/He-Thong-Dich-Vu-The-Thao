@@ -37,6 +37,18 @@ export class Facility {
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
   ownerId?: Types.ObjectId;
 
+  @ApiProperty({ description: 'Description', required: false })
+  @Prop({ type: String, default: '' })
+  description?: string;
+
+  @ApiProperty({ description: 'Opening hour', required: false, default: '06:00' })
+  @Prop({ type: String, default: '06:00' })
+  openHour?: string;
+
+  @ApiProperty({ description: 'Closing hour', required: false, default: '23:00' })
+  @Prop({ type: String, default: '23:00' })
+  closeHour?: string;
+
   @ApiProperty({ description: 'Trạng thái hoạt động (Soft delete)', default: true })
   @Prop({ type: Boolean, default: true })
   isActive: boolean;

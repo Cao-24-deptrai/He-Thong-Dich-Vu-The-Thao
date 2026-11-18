@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockups Giao Diện: Sports & Esports Booking</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --color-bg-page: #FAFAFA;
+      --color-surface: #FFFFFF;
+      --color-brand-darkest: #150000;
+      --color-brand-dark: #2F0000;
+      --color-accent: #FF5050;
+      --color-accent-soft: #CC4040;
+      --color-text-primary: #322D2D;
+      --color-text-secondary: #5B5757;
+      --color-text-muted: #848181;
+      --color-border: #D6D5D5;
+      --color-disabled-bg: #ADABAB;
+      --warning-bg: #FAECE7;
+      --warning-text: #712B13;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--color-bg-page);
+      color: var(--color-text-primary);
+      font-weight: 400;
+    }
+
+    /* Buttons */
+    .btn-primary-admin {
+      background-color: var(--color-brand-darkest);
+      color: #FFFFFF;
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn-primary-admin:hover {
+      background-color: var(--color-brand-dark);
+    }
+
+    .btn-primary-app {
+      background-color: var(--color-accent);
+      color: var(--color-brand-darkest);
+      border-radius: 999px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn-primary-app:hover {
+      background-color: var(--color-accent-soft);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border: 0.5px solid var(--color-border);
+      color: var(--color-text-primary);
+      border-radius: 999px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Cards */
+    .app-card {
+      background-color: var(--color-surface);
+      border: 0.5px solid var(--color-border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    /* Slots */
+    .slot-cell {
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.1s;
+    }
+    .slot-cell:active {
+      transform: scale(0.97);
+    }
+    .slot-confirmed {
+      background-color: var(--color-brand-dark);
+      color: #FFFFFF;
+    }
+    .slot-held {
+      background-color: var(--color-accent);
+      color: var(--color-brand-darkest);
+      font-weight: 500;
+    }
+    .slot-expired {
+      background-color: #D6D5D5;
+      color: var(--color-text-secondary);
+    }
+    .slot-available {
+      border: 0.5px dashed var(--color-disabled-bg);
+      background-color: transparent;
+      color: var(--color-text-secondary);
+    }
+
+    /* Badges */
+    .badge {
+      border-radius: 999px;
+      padding: 3px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    /* Ticket */
+    .ticket-card {
+      background-color: var(--color-brand-darkest);
+      border-radius: 20px;
+      padding: 24px;
+      color: #FFFFFF;
+    }
+    .ticket-status-badge {
+      background-color: var(--color-brand-dark);
+      color: var(--color-accent);
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+  <!-- Header & Bar Navigation -->
+  <header class="max-w-6xl mx-auto mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-[#D6D5D5] pb-5">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full bg-[#FF5050]"></span>
+        <h1 class="text-xl font-medium text-[#322D2D]">Mockup Giao Diện Chuẩn Design Spec</h1>
+      </div>
+      <p class="text-xs text-[#848181] mt-1">Tuân thủ 100% tài liệu <code class="bg-gray-200 px-1 py-0.5 rounded text-[#150000]">design-spec-color-mockups.md</code></p>
+    </div>
+
+    <!-- Screen Tabs -->
+    <div class="flex flex-wrap gap-2 text-xs">
+      <button onclick="switchTab('admin-grid')" id="tab-admin-grid" class="px-4 py-2 rounded-full font-medium transition bg-[#150000] text-white">
+        Web Admin: Sơ Đồ Lịch
+      </button>
+      <button onclick="switchTab('admin-walkin')" id="tab-admin-walkin" class="px-4 py-2 rounded-full font-medium transition bg-white border border-[#D6D5D5] text-[#322D2D]">
+        Web Admin: Đặt Quầy (Walk-in)
+      </button>
+      <button onclick="switchTab('mobile-home')" id="tab-mobile-home" class="px-4 py-2 rounded-full font-medium transition bg-white border border-[#D6D5D5] text-[#322D2D]">
+        Mobile: Trang Chủ & Giữ Chỗ
+      </button>
+      <button onclick="switchTab('mobile-ticket')" id="tab-mobile-ticket" class="px-4 py-2 rounded-full font-medium transition bg-white border border-[#D6D5D5] text-[#322D2D]">
+        Mobile: Vé Điện Tử & QR
+      </button>
+      <button onclick="switchTab('tokens')" id="tab-tokens" class="px-4 py-2 rounded-full font-medium transition bg-white border border-[#D6D5D5] text-[#322D2D]">
+        Bảng Màu & Linh Kiện
+      </button>
+    </div>
+  </header>
+
+  <!-- Content Container -->
+  <main class="max-w-6xl mx-auto">
+
+    <!-- ============================================== -->
+    <!-- VIEW 1: WEB ADMIN BOOKING GRID -->
+    <!-- ============================================== -->
+    <section id="view-admin-grid" class="block">
+      <div class="flex rounded-2xl border border-[#D6D5D5] overflow-hidden bg-white shadow-sm min-h-[580px]">
+        <!-- Sidebar Admin (#150000) -->
+        <aside class="w-60 bg-[#150000] text-white p-5 flex flex-col justify-between shrink-0">
+          <div>
+            <div class="flex items-center gap-2 mb-8">
+              <div class="w-7 h-7 rounded-lg bg-[#FF5050] flex items-center justify-center font-bold text-xs text-[#150000]">SP</div>
+              <div>
+                <div class="text-sm font-medium">Sports Center</div>
+                <div class="text-[10px] text-[#ADABAB]">Admin Operations</div>
+              </div>
+            </div>
+
+            <nav class="space-y-1.5 text-xs">
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[#ADABAB] hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                Tổng quan
+              </a>
+              <!-- Active Item: Nền #FF5050, Chữ #150000 -->
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full bg-[#FF5050] text-[#150000] font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Sơ đồ lịch (Grid)
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[#ADABAB] hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                Cơ sở & sân
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[#ADABAB] hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Danh sách hoàn tiền
+              </a>
+              <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-full text-[#ADABAB] hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                Quét QR check-in
+              </a>
+            </nav>
+          </div>
+
+          <div class="border-t border-white/10 pt-4 text-xs text-[#ADABAB]">
+            <div class="font-medium text-white">Lê Văn Quản Lý</div>
+            <div class="text-[10px]">Ca trực: Sáng 08:00 - 16:00</div>
+          </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <div class="flex-1 p-6 bg-[#FAFAFA] flex flex-col">
+          <!-- Topbar -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-5 border-b border-[#D6D5D5] gap-3">
+            <div>
+              <h2 class="text-lg font-medium text-[#322D2D]">Sơ Đồ Đặt Sân Theo Khung Giờ</h2>
+              <p class="text-xs text-[#5B5757]">Cụm sân: Sân bóng & Cầu lông Mỹ Đình • Ngày: 17/09/2026</p>
+            </div>
+            <button onclick="switchTab('admin-walkin')" class="btn-primary-admin flex items-center justify-center gap-2 self-start sm:self-auto">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Đặt nhanh tại quầy (Walk-in)
+            </button>
+          </div>
+
+          <!-- Color Legend (Theo Mục 1 Design Spec) -->
+          <div class="flex flex-wrap items-center gap-4 my-4 text-xs">
+            <span class="text-[#5B5757] font-medium">Quy tắc màu trạng thái:</span>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded bg-[#2F0000]"></span>
+              <span class="text-[#322D2D]">CONFIRMED (Đã đặt)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded bg-[#FF5050]"></span>
+              <span class="text-[#322D2D]">HELD (Đang giữ chỗ 10p)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded bg-[#D6D5D5]"></span>
+              <span class="text-[#5B5757]">EXPIRED / CANCELLED</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded border border-dashed border-[#ADABAB]"></span>
+              <span class="text-[#5B5757]">Còn trống (Available)</span>
+            </div>
+          </div>
+
+          <!-- Booking Grid Table -->
+          <div class="flex-1 bg-white border border-[#D6D5D5] rounded-xl p-4 overflow-x-auto">
+            <table class="w-full text-xs">
+              <thead>
+                <tr class="border-b border-[#D6D5D5]">
+                  <th class="py-2 px-3 text-left font-medium text-[#5B5757] w-24">Sân / Giờ</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">16:00 - 17:00</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">17:00 - 18:00</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">18:00 - 19:00</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">19:00 - 20:00</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">20:00 - 21:00</th>
+                  <th class="py-2 px-2 text-center font-medium text-[#5B5757]">21:00 - 22:00</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#D6D5D5]/40">
+                <tr>
+                  <td class="py-3 px-3 font-medium text-[#322D2D]">Sân bóng 5 #01</td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0912***456<br>#BK-8821</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0988***112<br>#BK-8824</div></td>
+                  <td class="p-1"><div class="slot-cell slot-held">Đang giữ chỗ<br>⏱ 04:32</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0903***789<br>#BK-8830</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>300k</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>250k</div></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-3 font-medium text-[#322D2D]">Sân bóng 5 #02</td>
+                  <td class="p-1"><div class="slot-cell slot-expired">Đã hủy<br>REFUND</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>250k</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0977***334<br>#BK-8827</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0911***990<br>#BK-8831</div></td>
+                  <td class="p-1"><div class="slot-cell slot-held">Đang giữ chỗ<br>⏱ 08:15</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>250k</div></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-3 font-medium text-[#322D2D]">Sân Cầu lông A</td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>120k</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0934***556<br>#BK-8829</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0944***221<br>#BK-8833</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0922***667<br>#BK-8834</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>150k</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>120k</div></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-3 font-medium text-[#322D2D]">Phòng Esports VIP</td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">Team Flash<br>#BK-8819</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">Team Flash<br>#BK-8820</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">Team Flash<br>#BK-8822</div></td>
+                  <td class="p-1"><div class="slot-cell slot-held">Đang giữ chỗ<br>⏱ 01:45</div></td>
+                  <td class="p-1"><div class="slot-cell slot-confirmed">0966***881<br>#BK-8835</div></td>
+                  <td class="p-1"><div class="slot-cell slot-available">Trống<br>180k</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: WEB ADMIN WALK-IN MODAL & WARNING BANNER -->
+    <!-- ============================================== -->
+    <section id="view-admin-walkin" class="hidden">
+      <div class="relative bg-white border border-[#D6D5D5] rounded-2xl p-6 md:p-10 shadow-sm max-w-2xl mx-auto">
+        <div class="flex items-center justify-between pb-4 border-b border-[#D6D5D5] mb-6">
+          <div>
+            <h3 class="text-base font-medium text-[#322D2D]">Modal Đặt Nhanh Tại Quầy (Walk-in)</h3>
+            <p class="text-xs text-[#5B5757]">Nhân viên lễ tân thao tác trực tiếp cho khách vãng lai</p>
+          </div>
+          <span class="badge bg-[#150000] text-white">STAFF POS</span>
+        </div>
+
+        <!-- Banner Cảnh Báo Trùng Slot (Theo Mục 2 & 4: nền #FAECE7, chữ #712B13) -->
+        <div class="mb-6 p-4 rounded-xl border border-[#D6D5D5]/50 flex items-start gap-3" style="background-color: var(--warning-bg); color: var(--warning-text);">
+          <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <div class="text-xs">
+            <div class="font-medium mb-0.5">CẢNH BÁO XUNG ĐỘT KHUNG GIỜ (Mã: SLOT_ALREADY_TAKEN_ONLINE)</div>
+            <div>Khung giờ <strong>18:00 - 19:00</strong> tại <strong>Sân bóng 5 #01</strong> vừa được một khách hàng qua App giữ chỗ online (trạng thái HELD). Vui lòng chọn khung giờ khác hoặc đợi hết hạn 10 phút.</div>
+          </div>
+        </div>
+
+        <!-- Form đặt sân -->
+        <div class="space-y-4 text-xs">
+          <div>
+            <label class="block text-[#5B5757] mb-1 font-medium">Sân thi đấu</label>
+            <input type="text" value="Sân bóng 5 người số 1 (Mỹ Đình)" class="w-full px-3.5 py-2.5 rounded-lg border border-[#D6D5D5] bg-[#FAFAFA] text-[#322D2D]" readonly>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[#5B5757] mb-1 font-medium">Ngày đặt</label>
+              <input type="text" value="17/09/2026" class="w-full px-3.5 py-2.5 rounded-lg border border-[#D6D5D5] bg-white text-[#322D2D]">
+            </div>
+            <div>
+              <label class="block text-[#5B5757] mb-1 font-medium">Khung giờ</label>
+              <select class="w-full px-3.5 py-2.5 rounded-lg border border-[#D6D5D5] bg-white text-[#322D2D]">
+                <option>20:00 - 21:00 (Còn trống - 300.000đ)</option>
+                <option>21:00 - 22:00 (Còn trống - 250.000đ)</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-[#5B5757] mb-1 font-medium">Số điện thoại khách</label>
+              <input type="text" placeholder="09xxxxxxxx" value="0987654321" class="w-full px-3.5 py-2.5 rounded-lg border border-[#D6D5D5] bg-white text-[#322D2D]">
+            </div>
+            <div>
+              <label class="block text-[#5B5757] mb-1 font-medium">Tên khách hàng</label>
+              <input type="text" placeholder="Anh Nam" value="Nguyễn Văn Nam" class="w-full px-3.5 py-2.5 rounded-lg border border-[#D6D5D5] bg-white text-[#322D2D]">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 mt-8 pt-4 border-t border-[#D6D5D5]">
+          <button class="btn-secondary">Hủy bỏ</button>
+          <button class="btn-primary-admin">Tạo đơn đặt & Thu tiền mặt (300.000đ)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 3: MOBILE APP HOME & BOOKING SLOT -->
+    <!-- ============================================== -->
+    <section id="view-mobile-home" class="hidden">
+      <div class="max-w-sm mx-auto bg-white border border-[#D6D5D5] rounded-3xl overflow-hidden shadow-sm">
+        <!-- Mobile App Hero / Header (#150000) -->
+        <div class="bg-[#150000] text-white p-5 rounded-b-3xl">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-[11px] text-[#ADABAB]">Xin chào,</div>
+              <div class="text-sm font-medium">Nguyễn Anh Quân 👋</div>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-[#2F0000] border border-[#FF5050] flex items-center justify-center text-xs text-[#FF5050]">
+              AQ
+            </div>
+          </div>
+          <!-- Search Bar -->
+          <div class="bg-white/10 rounded-full px-4 py-2 flex items-center gap-2 text-xs text-[#ADABAB]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <span>Tìm sân bóng đá, cầu lông, gym...</span>
+          </div>
+        </div>
+
+        <!-- Sport Filter Chips -->
+        <div class="p-4">
+          <div class="text-xs font-medium text-[#322D2D] mb-2.5">Chọn bộ môn</div>
+          <div class="flex gap-2 overflow-x-auto pb-1 text-xs">
+            <button class="px-3.5 py-1.5 rounded-full bg-[#FF5050] text-[#150000] font-medium shrink-0">⚽ Bóng đá</button>
+            <button class="px-3.5 py-1.5 rounded-full bg-white border border-[#D6D5D5] text-[#5B5757] shrink-0">🏸 Cầu lông</button>
+            <button class="px-3.5 py-1.5 rounded-full bg-white border border-[#D6D5D5] text-[#5B5757] shrink-0">🎾 Tennis</button>
+            <button class="px-3.5 py-1.5 rounded-full bg-white border border-[#D6D5D5] text-[#5B5757] shrink-0">🎮 Esports</button>
+            <button class="px-3.5 py-1.5 rounded-full bg-white border border-[#D6D5D5] text-[#5B5757] shrink-0">🏋️ Gym</button>
+          </div>
+        </div>
+
+        <!-- Facility Card -->
+        <div class="px-4 pb-4 space-y-3 text-xs">
+          <div class="app-card">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <div class="text-sm font-medium text-[#322D2D]">Tổ hợp Sân Mỹ Đình</div>
+                <div class="text-[11px] text-[#848181]">Lê Đức Thọ, Nam Từ Liêm • Cách 1.2 km</div>
+              </div>
+              <span class="badge bg-[#FAECE7] text-[#712B13]">Mở cửa</span>
+            </div>
+
+            <!-- Slots Grid on Mobile -->
+            <div class="mt-3 border-t border-[#D6D5D5] pt-2.5">
+              <div class="text-[11px] text-[#5B5757] mb-2 font-medium">Khung giờ tối nay (17/09):</div>
+              <div class="grid grid-cols-3 gap-1.5">
+                <div class="slot-cell slot-confirmed">17:00<br>Đã đặt</div>
+                <div class="slot-cell slot-held">18:00<br>Giữ 10p</div>
+                <div class="slot-cell slot-available border-[#FF5050] text-[#150000] bg-[#FF5050]/10 font-medium">19:00<br>300k (Chọn)</div>
+                <div class="slot-cell slot-available">20:00<br>300k</div>
+                <div class="slot-cell slot-available">21:00<br>250k</div>
+                <div class="slot-cell slot-expired">22:00<br>Đóng</div>
+              </div>
+            </div>
+
+            <!-- Sticky CTA Button on App: Nút #FF5050 chuẩn Mục 2 & 3 -->
+            <div class="mt-4 pt-3 border-t border-[#D6D5D5] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-[#848181]">Tổng tiền (1 slot)</div>
+                <div class="text-sm font-medium text-[#322D2D]">300.000 VNĐ</div>
+              </div>
+              <button onclick="switchTab('mobile-ticket')" class="btn-primary-app">
+                Giữ chỗ 10 phút ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 4: MOBILE APP ELECTRONIC TICKET & QR -->
+    <!-- ============================================== -->
+    <section id="view-mobile-ticket" class="hidden">
+      <div class="max-w-sm mx-auto space-y-4">
+        <!-- Countdown bar -->
+        <div class="app-card text-xs flex items-center justify-between">
+          <span class="text-[#5B5757]">Trạng thái đơn:</span>
+          <span class="badge bg-[#2F0000] text-white">CONFIRMED (Đã thanh toán)</span>
+        </div>
+
+        <!-- Ticket Card (#150000) theo Mục 3.5 Design Spec -->
+        <div class="ticket-card">
+          <div class="flex items-center justify-between mb-4">
+            <span class="ticket-status-badge">ĐÃ THANH TOÁN (VIETQR)</span>
+            <span class="text-[11px] text-[#ADABAB]">#BK-2026-9901</span>
+          </div>
+
+          <div class="text-center my-6">
+            <div class="text-xs text-[#ADABAB] mb-1">MÃ VÉ ĐIỆN TỬ VÀO SÂN</div>
+            <div class="text-lg font-medium text-white mb-4">Sân Bóng 5 Người #01</div>
+
+            <!-- QR Container -->
+            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto mb-3">
+              <!-- Simulated SVG QR Code -->
+              <svg class="w-40 h-40" viewBox="0 0 100 100" fill="#150000">
+                <rect x="10" y="10" width="25" height="25" fill="#150000" />
+                <rect x="15" y="15" width="15" height="15" fill="#FFFFFF" />
+                <rect x="18" y="18" width="9" height="9" fill="#150000" />
+
+                <rect x="65" y="10" width="25" height="25" fill="#150000" />
+                <rect x="70" y="15" width="15" height="15" fill="#FFFFFF" />
+                <rect x="73" y="18" width="9" height="9" fill="#150000" />
+
+                <rect x="10" y="65" width="25" height="25" fill="#150000" />
+                <rect x="15" y="70" width="15" height="15" fill="#FFFFFF" />
+                <rect x="18" y="73" width="9" height="9" fill="#150000" />
+
+                <!-- Random QR dots -->
+                <rect x="42" y="12" width="6" height="6"/>
+                <rect x="52" y="18" width="6" height="6"/>
+                <rect x="45" y="30" width="6" height="6"/>
+                <rect x="55" y="42" width="6" height="6"/>
+                <rect x="40" y="55" width="6" height="6"/>
+                <rect x="68" y="65" width="6" height="6"/>
+                <rect x="78" y="75" width="6" height="6"/>
+                <rect x="45" y="80" width="6" height="6"/>
+              </svg>
+            </div>
+            <div class="text-[10px] text-[#ADABAB]">Mã QR tự làm mới mỗi 60 giây để chống chụp màn hình chia sẻ vé</div>
+          </div>
+
+          <div class="border-t border-white/10 pt-4 text-xs space-y-2 text-[#ADABAB]">
+            <div class="flex justify-between">
+              <span>Cơ sở:</span>
+              <span class="text-white font-medium">Tổ hợp Thể thao Mỹ Đình</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Khung giờ:</span>
+              <span class="text-white font-medium">19:00 - 20:00 (17/09/2026)</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Khách hàng:</span>
+              <span class="text-white font-medium">0911 223 344</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="switchTab('admin-grid')" class="w-full btn-secondary text-center">
+          ← Quay lại màn hình vận hành
+        </button>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 5: DESIGN TOKENS & UI KIT -->
+    <!-- ============================================== -->
+    <section id="view-tokens" class="hidden">
+      <div class="bg-white border border-[#D6D5D5] rounded-2xl p-6 md:p-8">
+        <h3 class="text-base font-medium text-[#322D2D] mb-4">Design Tokens & Quy Chuẩn UI Kit Đã Chốt</h3>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs mb-8">
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#FAFAFA] border border-gray-300 mb-2"></div>
+            <div class="font-medium">color-bg-page</div>
+            <div class="text-[10px] text-[#848181]">#FAFAFA (Nền mặc định)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#FFFFFF] border border-gray-300 mb-2"></div>
+            <div class="font-medium">color-surface</div>
+            <div class="text-[10px] text-[#848181]">#FFFFFF (Card & Modal)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#150000] mb-2"></div>
+            <div class="font-medium">color-brand-darkest</div>
+            <div class="text-[10px] text-[#848181]">#150000 (Sidebar & CTA Admin)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#2F0000] mb-2"></div>
+            <div class="font-medium">color-brand-dark</div>
+            <div class="text-[10px] text-[#848181]">#2F0000 (CONFIRMED)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#FF5050] mb-2"></div>
+            <div class="font-medium">color-accent</div>
+            <div class="text-[10px] text-[#848181]">#FF5050 (HELD & CTA App)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#CC4040] mb-2"></div>
+            <div class="font-medium">color-accent-soft</div>
+            <div class="text-[10px] text-[#848181]">#CC4040 (Hover State)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#322D2D] mb-2"></div>
+            <div class="font-medium">color-text-primary</div>
+            <div class="text-[10px] text-[#848181]">#322D2D (Tiêu đề)</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[#D6D5D5]">
+            <div class="w-full h-10 rounded-lg bg-[#FAECE7] border border-[#712B13]/30 mb-2"></div>
+            <div class="font-medium">warning banner</div>
+            <div class="text-[10px] text-[#848181]">#FAECE7 / #712B13</div>
+          </div>
+        </div>
+
+        <div class="border-t border-[#D6D5D5] pt-6">
+          <h4 class="text-xs font-medium text-[#322D2D] mb-3">So Sánh Nút Bấm Chủ Đích Theo Nền Tảng (Mục 2.4):</h4>
+          <div class="flex flex-wrap items-center gap-4">
+            <div>
+              <div class="text-[10px] text-[#848181] mb-1">Web Admin (Dùng cả ngày, đỡ mỏi mắt)</div>
+              <button class="btn-primary-admin">CTA Web Admin (#150000)</button>
+            </div>
+            <div>
+              <div class="text-[10px] text-[#848181] mb-1">Mobile App (Mời gọi, nổi bật hành động)</div>
+              <button class="btn-primary-app">CTA Mobile App (#FF5050)</button>
+            </div>
+            <div>
+              <div class="text-[10px] text-[#848181] mb-1">Nút phụ chung (Secondary)</div>
+              <button class="btn-secondary">Nút Viền Phụ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    function switchTab(tabId) {
+      const views = ['admin-grid', 'admin-walkin', 'mobile-home', 'mobile-ticket', 'tokens'];
+      views.forEach(v => {
+        const el = document.getElementById('view-' + v);
+        const btn = document.getElementById('tab-' + v);
+        if (v === tabId) {
+          el.classList.remove('hidden');
+          el.classList.add('block');
+          btn.className = 'px-4 py-2 rounded-full font-medium transition bg-[#150000] text-white';
+        } else {
+          el.classList.remove('block');
+          el.classList.add('hidden');
+          btn.className = 'px-4 py-2 rounded-full font-medium transition bg-white border border-[#D6D5D5] text-[#322D2D]';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

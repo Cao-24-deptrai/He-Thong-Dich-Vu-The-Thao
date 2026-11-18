@@ -37,4 +37,19 @@ export class CreateFacilityDto {
   @IsOptional()
   @IsString()
   sportType?: string;
+
+  @ApiProperty({ example: 'Tổ hợp sân bóng và thể thao...', required: false })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiProperty({ example: '06:00', required: false })
+  @IsOptional()
+  @IsString()
+  openHour?: string;
+
+  @ApiProperty({ example: '23:00', required: false })
+  @IsOptional()
+  @IsString()
+  closeHour?: string;
 }
