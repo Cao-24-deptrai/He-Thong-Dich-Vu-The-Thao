@@ -13,6 +13,15 @@ jobs:
   backend-test:
     name: Backend Lint, Build & E2E Tests
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -36,9 +45,11 @@ jobs:
         working-directory: ./backend
         run: npm run test:e2e
         env:
-          JWT_SECRET: test_jwt_secret_key_12345
-          REDIS_HOST: localhost
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/sports_booking_test
+          REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
+          JWT_SECRET: test_jwt_secret_key_12345
 
   admin-build:
     name: Admin Web Dashboard Build
