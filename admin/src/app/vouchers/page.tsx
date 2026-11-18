@@ -311,16 +311,22 @@ export default function VouchersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {filteredVouchers.map((voucher) => {
             const isExpired = new Date(voucher.endDate) < new Date();
-            const isBudgetExhausted = voucher.totalBudget > 0 && voucher.usedBudget >= voucher.totalBudget;
-            const isQuotaExhausted = voucher.usedCount >= voucher.usageLimit;
+            const totalBudget = voucher.totalBudget ?? 0;
+            const usedBudget = voucher.usedBudget ?? voucher.spentBudget ?? 0;
+            const usageLimit = voucher.usageLimit ?? 0;
+            const usedCount = voucher.usedCount ?? 0;
+            const minOrderValue = voucher.minOrderValue ?? 0;
+
+            const isBudgetExhausted = totalBudget > 0 && usedBudget >= totalBudget;
+            const isQuotaExhausted = usageLimit > 0 && usedCount >= usageLimit;
             const isAvailable = voucher.isActive && !isExpired && !isBudgetExhausted && !isQuotaExhausted;
 
-            const budgetPercent = voucher.totalBudget > 0
-              ? Math.min(100, (voucher.usedBudget / voucher.totalBudget) * 100)
+            const budgetPercent = totalBudget > 0
+              ? Math.min(100, (usedBudget / totalBudget) * 100)
               : 0;
 
-            const usagePercent = voucher.usageLimit > 0
-              ? Math.min(100, (voucher.usedCount / voucher.usageLimit) * 100)
+            const usagePercent = usageLimit > 0
+              ? Math.min(100, (usedCount / usageLimit) * 100)
               : 0;
 
             return (
@@ -380,7 +386,7 @@ export default function VouchersPage() {
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-300">Đơn hàng tối thiểu:</span>
                       <span className="font-bold text-white">
-                        {voucher.minOrderValue > 0 ? `${voucher.minOrderValue.toLocaleString('vi-VN')} đ` : 'Không yêu cầu'}
+                        {minOrderValue > 0 ? `${minOrderValue.toLocaleString('vi-VN')} đ` : 'Không yêu cầu'}
                       </span>
                     </div>
 
@@ -411,7 +417,7 @@ export default function VouchersPage() {
                       <div className="flex items-center justify-between text-[10px] text-slate-300 font-bold mb-1">
                         <span>Ngân sách đã dùng (BR-13)</span>
                         <span className="text-amber-300">
-                          {voucher.usedBudget.toLocaleString('vi-VN')}đ / {voucher.totalBudget > 0 ? `${voucher.totalBudget.toLocaleString('vi-VN')}đ` : '∞'}
+                          {usedBudget.toLocaleString('vi-VN')}đ / {totalBudget > 0 ? `${totalBudget.toLocaleString('vi-VN')}đ` : '∞'}
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -427,7 +433,7 @@ export default function VouchersPage() {
                       <div className="flex items-center justify-between text-[10px] text-slate-300 font-bold mb-1">
                         <span>Lượt dùng toàn hệ thống</span>
                         <span className="text-purple-300">
-                          {voucher.usedCount} / {voucher.usageLimit} ({usagePercent.toFixed(0)}%)
+                          {usedCount} / {usageLimit > 0 ? usageLimit : '∞'} ({usagePercent.toFixed(0)}%)
                         </span>
                       </div>
                       <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">

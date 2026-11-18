@@ -198,8 +198,9 @@ export interface RentalTicket {
 export interface ReviewSummary {
   avgOverall: number;
   avgFacility: number;
-  avgService?: number;
-  avgCleanliness?: number;
+  avgService: number;
+  avgStaff: number;
+  avgCleanliness: number;
   avgPricing?: number;
   totalReviews: number;
   needsAttentionCount: number;
@@ -251,6 +252,7 @@ export interface CreateVoucherPayload {
 export interface Voucher extends CreateVoucherPayload {
   _id: string;
   usedCount?: number;
+  usedBudget?: number;
   spentBudget?: number;
   isActive?: boolean;
   createdAt?: string;

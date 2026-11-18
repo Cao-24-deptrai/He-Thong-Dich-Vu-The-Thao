@@ -208,12 +208,12 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <Building className="w-4 h-4 text-cyan-400" /> Cơ Sở Vật Chất
                 </span>
-                <span className="font-black text-cyan-400 text-sm">{summary.avgFacility} / 5.0</span>
+                <span className="font-black text-cyan-400 text-sm">{summary.avgFacility ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
                   className="bg-cyan-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(summary.avgFacility / 5) * 100}%` }}
+                  style={{ width: `${((summary.avgFacility ?? 5) / 5) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] text-slate-500 mt-2">Mặt sân, hệ thống chiếu sáng, lưới, khung thành</span>
@@ -225,12 +225,12 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <ThumbsUp className="w-4 h-4 text-emerald-400" /> Chất Lượng Dịch Vụ
                 </span>
-                <span className="font-black text-emerald-400 text-sm">{summary.avgService} / 5.0</span>
+                <span className="font-black text-emerald-400 text-sm">{summary.avgService ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
                   className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(summary.avgService / 5) * 100}%` }}
+                  style={{ width: `${((summary.avgService ?? 5) / 5) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] text-slate-500 mt-2">Thời gian check-in, đặt chỗ, nước uống, thiết bị thuê</span>
@@ -242,12 +242,12 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <User className="w-4 h-4 text-indigo-400" /> Thái Độ Nhân Viên
                 </span>
-                <span className="font-black text-indigo-400 text-sm">{summary.avgStaff} / 5.0</span>
+                <span className="font-black text-indigo-400 text-sm">{summary.avgStaff ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
                   className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(summary.avgStaff / 5) * 100}%` }}
+                  style={{ width: `${((summary.avgStaff ?? 5) / 5) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] text-slate-500 mt-2">Thân thiện, nhiệt tình hỗ trợ, giải đáp thắc mắc</span>
@@ -259,12 +259,12 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-400" /> Vệ Sinh Sân Bãi
                 </span>
-                <span className="font-black text-amber-400 text-sm">{summary.avgCleanliness} / 5.0</span>
+                <span className="font-black text-amber-400 text-sm">{summary.avgCleanliness ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
                   className="bg-amber-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(summary.avgCleanliness / 5) * 100}%` }}
+                  style={{ width: `${((summary.avgCleanliness ?? 5) / 5) * 100}%` }}
                 />
               </div>
               <span className="text-[10px] text-slate-500 mt-2">Khu vệ sinh, phòng thay đồ, khán đài, thùng rác</span>
