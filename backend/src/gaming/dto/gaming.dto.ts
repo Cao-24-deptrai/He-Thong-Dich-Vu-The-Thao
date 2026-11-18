@@ -33,13 +33,33 @@ export class CreateGamingMachineDto {
   @IsOptional()
   @IsString()
   roomName?: string;
+
+  @IsOptional()
+  row?: string;
+
+  @IsOptional()
+  column?: number;
+
+  @IsOptional()
+  specs?: any;
+
+  @IsOptional()
+  ipAddress?: string;
+
+  @IsOptional()
+  macAddress?: string;
 }
 
 export class StartGamingSessionDto {
-  @ApiProperty({ description: 'Machine Code', example: 'PC-01' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'Machine Code', example: 'PC-01' })
+  @IsOptional()
   @IsString()
-  machineCode: string;
+  machineCode?: string;
+
+  @ApiPropertyOptional({ description: 'Machine ID' })
+  @IsOptional()
+  @IsString()
+  machineId?: string;
 
   @ApiPropertyOptional({ description: 'Prebooked Booking ID (optional)' })
   @IsOptional()

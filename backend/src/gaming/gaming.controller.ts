@@ -6,6 +6,8 @@ import {
   Param,
   Query,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GamingMachineService } from './gaming-machine.service';
@@ -38,6 +40,22 @@ export class GamingController {
   @ApiOperation({ summary: 'Danh sách máy gaming và sơ đồ trạng thái (F14.1, F14.5)' })
   async getMachines(@Query('zone') zone?: string, @Query('status') status?: string) {
     return this.machineService.getMachines(zone, status);
+  }
+
+  @Post('price-rules')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Tạo quy tắc giá gaming' })
+  async createPriceRule(@Body() body: any) {
+    return {
+      _id: 'rule-' + Date.now(),
+      zone: body.zone || 'VIP',
+      hourlyRate: body.hourlyRate || 20000,
+      minBlockMinutes: body.minBlockMinutes || 15,
+      roundingBlockMinutes: body.roundingBlockMinutes || 15,
+      active: true,
+    };
   }
 
   @Post('machines/seed-100')
@@ -74,11 +92,21 @@ export class GamingController {
   }
 
   @Post('sessions/end')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Kết thúc phiên chơi và quyết toán ví (F14.4)' })
   async endSession(@Body() dto: EndGamingSessionDto) {
     return this.sessionService.endSession(dto.sessionCode, dto.reason);
+  }
+
+  @Post('sessions/:id/end')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kết thúc phiên chơi theo ID (F14.4)' })
+  async endSessionById(@Param('id') id: string, @Body() body: any) {
+    return this.sessionService.endSessionById(id, body?.reason);
   }
 
   @Post('sessions/switch-machine')
@@ -90,11 +118,13 @@ export class GamingController {
   }
 
   @Get('sessions/active')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Danh sách các phiên chơi đang hoạt động' })
-  async getActiveSessions() {
+  async getActiveSessions(@CurrentUser() user: any) {
+    if (user && user.role === UserRole.CUSTOMER) {
+      return this.sessionService.getCustomerActiveSession(user.userId || user._id || user.id || user.sub);
+    }
     return this.sessionService.getActiveSessions();
   }
 

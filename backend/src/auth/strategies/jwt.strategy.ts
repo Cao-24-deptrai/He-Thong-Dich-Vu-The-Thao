@@ -29,6 +29,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
     }
     return {
+      _id: user._id.toString(),
+      id: user._id.toString(),
       userId: user._id.toString(),
       phone: user.phone,
       role: user.role,

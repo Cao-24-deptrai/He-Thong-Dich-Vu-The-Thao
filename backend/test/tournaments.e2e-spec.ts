@@ -8,6 +8,7 @@ import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { TournamentsModule } from '../src/tournaments/tournaments.module';
+import { UserRole } from '../src/common/enums';
 
 describe('Epic E14 - Tournaments Module (e2e)', () => {
   let app: INestApplication;
@@ -47,7 +48,12 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     // 1. Register Admin
     const adminRes = await request(app.getHttpServer())
       .post('/auth/register')
-      .send({ phone: '0999999999', password: 'AdminPassword123', fullName: 'Admin' });
+      .send({
+        phone: '0999999999',
+        password: 'AdminPassword123',
+        fullName: 'Admin',
+        role: UserRole.ADMIN,
+      });
     adminToken = adminRes.body.accessToken;
 
     // 2. Register Captain 1

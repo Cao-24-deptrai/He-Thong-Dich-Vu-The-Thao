@@ -98,7 +98,8 @@ export class PtClassesController {
     @CurrentUser() user: any,
     @Body() dto: RegisterClassDto,
   ) {
-    return this.ptClassesService.registerClass(id, user._id || user.id || user.sub, dto);
+    const userId = user.userId || user._id || user.id || user.sub;
+    return this.ptClassesService.registerClass(id, userId, dto);
   }
 
   // ==================== PT 1-1 BOOKINGS ====================
@@ -108,7 +109,8 @@ export class PtClassesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Khách hàng đặt lịch tập PT 1-1' })
   async bookPtSession(@CurrentUser() user: any, @Body() dto: BookPtSessionDto) {
-    return this.ptClassesService.bookPtSession(user._id || user.id || user.sub, dto);
+    const userId = user.userId || user._id || user.id || user.sub;
+    return this.ptClassesService.bookPtSession(userId, dto);
   }
 
   @Get('pt/my-sessions')
@@ -116,7 +118,8 @@ export class PtClassesController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Lịch sử đặt lịch PT của khách hàng' })
   async getUserPtSessions(@CurrentUser() user: any) {
-    return this.ptClassesService.getUserPtSessions(user._id || user.id || user.sub);
+    const userId = user.userId || user._id || user.id || user.sub;
+    return this.ptClassesService.getUserPtSessions(userId);
   }
 
   // ==================== SHIFTS & ATTENDANCE ====================

@@ -39,15 +39,24 @@ export class GamingSessionService {
    * Bắt đầu phiên chơi tại máy gaming (F14.3)
    * Chống chơi đồng thời (SPEC Rule 1) & Tạm giữ ví cuốn chiếu 15p (SPEC Rule 3)
    */
-  async startSession(userId: string, dto: StartGamingSessionDto): Promise<GamingSession> {
+  async startSession(userId: string, dto: StartGamingSessionDto): Promise<any> {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
 
-    const machine = await this.machineService.getMachineByCode(dto.machineCode);
+    let machine: GamingMachineDocument | null = null;
+    if (dto.machineCode) {
+      machine = await this.machineService.getMachineByCode(dto.machineCode);
+    } else if (dto.machineId) {
+      machine = await this.machineModel.findById(dto.machineId);
+    }
+    if (!machine) {
+      throw new NotFoundException(`Không tìm thấy máy ${dto.machineCode || dto.machineId}`);
+    }
+
     if (machine.status !== GamingMachineStatus.IDLE) {
-      throw new ConflictException(`Máy ${dto.machineCode} hiện không ở trạng thái sẵn sàng (Trạng thái: ${machine.status})`);
+      throw new ConflictException(`Máy ${machine.machineCode} hiện không ở trạng thái sẵn sàng (Trạng thái: ${machine.status})`);
     }
 
     // 1. SPEC Rule 1: Chống chơi đồng thời
@@ -94,6 +103,12 @@ export class GamingSessionService {
 
     const savedSession = await session.save();
 
+    const userObj = user as any;
+    if (userObj.walletBalance !== undefined && userObj.walletBalance >= holdAmount) {
+      userObj.walletBalance -= holdAmount;
+      await user.save();
+    }
+
     // 3. Cập nhật máy sang IN_USE
     await this.machineService.updateMachineStatus(
       machine.machineCode,
@@ -102,7 +117,15 @@ export class GamingSessionService {
       user.phone,
     );
 
-    return savedSession;
+    const sessionObj = savedSession.toObject ? savedSession.toObject() : savedSession;
+    return {
+      ...sessionObj,
+      session: {
+        ...sessionObj,
+        heldAmount: savedSession.totalHoldAmount,
+      },
+      heldAmount: savedSession.totalHoldAmount,
+    };
   }
 
   /**
@@ -214,6 +237,46 @@ export class GamingSessionService {
     );
 
     return saved;
+  }
+
+  async getCustomerActiveSession(userId: string): Promise<any> {
+    return this.sessionModel
+      .findOne({
+        customerId: new Types.ObjectId(userId),
+        status: {
+          $in: [
+            GamingSessionStatus.STARTING,
+            GamingSessionStatus.ACTIVE,
+            GamingSessionStatus.OFFLINE_GRACE,
+            GamingSessionStatus.LOCKED,
+          ],
+        },
+      })
+      .lean();
+  }
+
+  async endSessionById(sessionId: string, reason?: string): Promise<any> {
+    let session = await this.sessionModel.findById(sessionId);
+    if (!session) {
+      session = await this.sessionModel.findOne({ sessionCode: sessionId });
+    }
+    if (!session) {
+      throw new NotFoundException(`Không tìm thấy phiên chơi ${sessionId}`);
+    }
+
+    const ended = await this.endSession(session.sessionCode, reason);
+    const endedObj = (ended as any).toObject ? (ended as any).toObject() : ended;
+    return {
+      session: {
+        ...endedObj,
+        status: 'COMPLETED',
+      },
+      settlement: {
+        chargedAmount: ended.actualUsageAmount || 0,
+        refundAmount: ended.refundHoldAmount || 0,
+      },
+      ...endedObj,
+    };
   }
 
   async getActiveSessions(): Promise<GamingSession[]> {
