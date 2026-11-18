@@ -24,7 +24,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload) {
-    const user = await this.usersService.findById(payload.sub);
+    let user;
+    try {
+      user = await this.usersService.findById(payload.sub);
+    } catch {
+      throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
+    }
     if (!user) {
       throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
     }
