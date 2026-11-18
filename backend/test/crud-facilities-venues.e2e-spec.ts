@@ -7,7 +7,9 @@ import { Model, Types } from 'mongoose';
 import { Facility } from '../src/facilities/schemas/facility.schema';
 import { Venue } from '../src/venues/schemas/venue.schema';
 import { Booking } from '../src/bookings/schemas/booking.schema';
-import { BookingStatus, BookingSource } from '../src/common/enums';
+import { BookingStatus, BookingSource, UserRole } from '../src/common/enums';
+import { User } from '../src/users/schemas/user.schema';
+import * as bcrypt from 'bcrypt';
 
 describe('Changelog Item 1: CRUD Facilities & Venues, Soft Delete & Ràng Buộc (e2e)', () => {
   let app: INestApplication;
@@ -32,6 +34,21 @@ describe('Changelog Item 1: CRUD Facilities & Venues, Soft Delete & Ràng Buộc
     facilityModel = moduleFixture.get<Model<Facility>>(getModelToken(Facility.name));
     venueModel = moduleFixture.get<Model<Venue>>(getModelToken(Venue.name));
     bookingModel = moduleFixture.get<Model<Booking>>(getModelToken(Booking.name));
+    const userModel = moduleFixture.get<Model<User>>(getModelToken(User.name));
+
+    const adminPassHash = await bcrypt.hash('Admin@123456', 10);
+    await userModel.updateOne(
+      { phone: '0999999999' },
+      {
+        $set: {
+          phone: '0999999999',
+          passwordHash: adminPassHash,
+          fullName: 'Admin Quản Trị',
+          role: UserRole.ADMIN,
+        },
+      },
+      { upsert: true },
+    );
 
     // Lấy token Admin
     const adminLoginRes = await request(app.getHttpServer())
