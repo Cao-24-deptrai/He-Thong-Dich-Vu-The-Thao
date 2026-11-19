@@ -197,13 +197,23 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
   });
 
   it('8. Chặn đặt trùng khung giờ PT 1-1 của HLV (TRAINER_TIME_SLOT_CONFLICT)', async () => {
-    const user2Res = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ phone: '0922334455', password: 'Password123' });
+    let user2Token: string;
+    const regRes = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ phone: '0922334455', password: 'Password123', fullName: 'Học Viên 2' });
+
+    if (regRes.status === 201) {
+      user2Token = regRes.body.accessToken;
+    } else {
+      const user2Res = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({ phone: '0922334455', password: 'Password123' });
+      user2Token = user2Res.body.accessToken;
+    }
 
     const res = await request(app.getHttpServer())
       .post('/pt-classes/pt/book')
-      .set('Authorization', `Bearer ${user2Res.body.accessToken}`)
+      .set('Authorization', `Bearer ${user2Token}`)
       .send({
         trainerId: trainerStaffId,
         sessionDate: '2026-11-15',
