@@ -62,11 +62,6 @@ describe('Epic E12 - Bridge Agent & Local IoT Devices (e2e)', () => {
     await userModel.updateOne({ phone: '0966666666' }, { role: UserRole.ADMIN });
   });
 
-  afterAll(async () => {
-    await app.close();
-    await mongod.stop();
-  });
-
   describe('1. Agent Handshake & Heartbeat Lifecycle', () => {
     it('should register a new Bridge Agent with attached devices', async () => {
       const res = await request(app.getHttpServer())

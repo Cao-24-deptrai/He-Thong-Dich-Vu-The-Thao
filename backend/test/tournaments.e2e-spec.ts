@@ -61,11 +61,6 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     captain1Token = cap1Res.body.accessToken;
   });
 
-  afterAll(async () => {
-    await app.close();
-    await mongod.stop();
-  });
-
   it('1. Admin tạo giải đấu mới (F16.1)', async () => {
     const res = await request(app.getHttpServer())
       .post('/tournaments')

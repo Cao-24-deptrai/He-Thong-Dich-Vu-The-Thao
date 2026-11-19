@@ -83,11 +83,6 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
     trainerUserId = trainerUserRes.body.user.id || trainerUserRes.body.user._id;
   });
 
-  afterAll(async () => {
-    await app.close();
-    await mongod.stop();
-  });
-
   it('1. Admin tạo hồ sơ Huấn luyện viên (StaffProfile)', async () => {
     const res = await request(app.getHttpServer())
       .post('/pt-classes/trainers')
