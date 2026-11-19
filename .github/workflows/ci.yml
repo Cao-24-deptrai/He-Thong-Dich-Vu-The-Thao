@@ -42,6 +42,16 @@ jobs:
         working-directory: ./backend
         run: npm run build
 
+      - name: Seed Test Database
+        working-directory: ./backend
+        run: npm run seed
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/sports_booking_test
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          JWT_SECRET: test_jwt_secret_key_12345
+
       - name: Run Epic E02, E11, E13 E2E Tests
         working-directory: ./backend
         run: npm run test:e2e -- test/epic-
