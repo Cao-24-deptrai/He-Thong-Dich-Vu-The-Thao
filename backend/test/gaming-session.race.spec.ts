@@ -85,11 +85,6 @@ describe('Epic E12 - Gaming Module & Concurrency Race Invariant (e2e)', () => {
     );
   });
 
-  afterAll(async () => {
-    await app.close();
-    await mongod.stop();
-  });
-
   describe('1. Setup Machines and Pricing Rules', () => {
     it('should create pricing rule for VIP Zone', async () => {
       const res = await request(app.getHttpServer())
