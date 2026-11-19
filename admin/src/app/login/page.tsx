@@ -3,7 +3,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldCheck, LogIn, Lock, Phone, AlertCircle, Clock, AlertTriangle, UserCheck } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, LogIn, Lock, Phone, AlertCircle, Clock, AlertTriangle, UserCheck, User } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export default function LoginPage() {
@@ -24,13 +25,11 @@ export default function LoginPage() {
 
     try {
       const res = await api.login(phone, password);
-      // Chỉ cho phép các vai trò quản trị/vận hành quầy đăng nhập vào Web Admin
-      if (res.user.role === 'CUSTOMER') {
-        throw new Error('Tài khoản Khách hàng không có quyền truy cập trang Quản Trị này. Vui lòng sử dụng Ứng dụng Di động.');
-      }
 
       // Điều hướng thông minh theo vai trò
-      if (res.user.role === 'STAFF') {
+      if (res.user.role === 'CUSTOMER') {
+        router.push('/booking');
+      } else if (res.user.role === 'STAFF') {
         router.push('/walk-in');
       } else {
         router.push('/facilities');
@@ -173,6 +172,19 @@ export default function LoginPage() {
                 </div>
               )}
             </button>
+
+            {/* Link to Register */}
+            <div className="pt-3 text-center">
+              <p className="text-xs text-slate-400">
+                Chưa có tài khoản thành viên?{' '}
+                <Link
+                  href="/register"
+                  className="font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors ml-1"
+                >
+                  Đăng ký tài khoản mới ngay
+                </Link>
+              </p>
+            </div>
           </form>
 
           {/* Quick login buttons for testing */}
@@ -180,7 +192,19 @@ export default function LoginPage() {
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 text-center">
               Tài khoản mẫu đăng nhập nhanh
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => fillQuick('0911223344', 'User@123456')}
+                className="px-2.5 py-2 text-xs bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-cyan-500/50 rounded-lg text-slate-300 text-left transition"
+              >
+                <div className="font-semibold text-cyan-400 flex items-center space-x-1">
+                  <User className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Khách hàng</span>
+                </div>
+                <div className="text-[10px] text-slate-400 font-mono mt-0.5">0911223344</div>
+              </button>
+
               <button
                 type="button"
                 onClick={() => fillQuick('0999999999', 'Admin@123456')}

@@ -11,9 +11,15 @@ export default function HomePage() {
   useEffect(() => {
     const user = api.getUser();
     if (user) {
-      router.replace('/facilities');
+      if (user.role === 'CUSTOMER') {
+        router.replace('/booking');
+      } else if (user.role === 'STAFF') {
+        router.replace('/walk-in');
+      } else {
+        router.replace('/facilities');
+      }
     } else {
-      router.replace('/login');
+      router.replace('/register');
     }
   }, [router]);
 

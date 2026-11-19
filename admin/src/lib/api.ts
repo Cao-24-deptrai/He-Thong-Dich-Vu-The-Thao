@@ -114,6 +114,7 @@ export interface Booking {
   createdAt?: string;
 }
 
+
 export interface CheckRecurringDto {
   venueId: string;
   startDate: string;
@@ -306,7 +307,7 @@ class ApiService {
     }
   }
 
-  private getRefreshToken(): string | null {
+  public getRefreshToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('refresh_token');
     }
@@ -422,6 +423,49 @@ class ApiService {
     }
     this.setUser(res.user);
     return { accessToken: token, refreshToken: res.refreshToken, user: res.user };
+  }
+
+  async register(phone: string, password: string, fullName: string, email?: string): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
+    const res = await this.request<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ phone, password, fullName, email }),
+    });
+    const token = res.accessToken || res.access_token || '';
+    if (token) this.setToken(token);
+    if (res.refreshToken) this.setRefreshToken(res.refreshToken);
+    if (res.user) this.setUser(res.user);
+    return { accessToken: token, refreshToken: res.refreshToken, user: res.user };
+  }
+
+  // --- CUSTOMER BOOKING METHODS ---
+  async holdSlot(payload: {
+    venueId: string;
+    bookingDate: string;
+    startTime: string;
+    endTime: string;
+  }): Promise<Booking> {
+    return this.request<Booking>('/bookings/hold', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getMyBookings(): Promise<Booking[]> {
+    return this.request<Booking[]>('/bookings/me');
+  }
+
+  async createPaymentLink(bookingId: string): Promise<{
+    checkoutUrl?: string;
+    qrCode?: string;
+    orderCode?: number;
+    amount?: number;
+    paymentUrl?: string;
+    payUrl?: string;
+  }> {
+    return this.request<any>('/payments/create-link', {
+      method: 'POST',
+      body: JSON.stringify({ bookingId }),
+    });
   }
 
   // --- FACILITIES ---
