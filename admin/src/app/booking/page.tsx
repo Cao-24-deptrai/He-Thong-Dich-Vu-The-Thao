@@ -316,13 +316,27 @@ export default function CustomerBookingPage() {
     }
   };
 
-  const filteredFacilities = facilities.filter((f) => {
+  const filteredVenues = venues.filter((v) => {
     if (selectedSport === 'ALL') return true;
-    return (
-      f.sportType === selectedSport ||
-      (f.sportTypes && f.sportTypes.includes(selectedSport))
-    );
+    if (v.sportType) return v.sportType === selectedSport;
+    const name = v.name.toLowerCase();
+    if (selectedSport === 'FOOTBALL') return name.includes('bóng') || name.includes('futsal') || name.includes('sân 5') || name.includes('sân 7') || name.includes('sân 11') || name.includes('f1') || name.includes('f2') || name.includes('f3') || name.includes('cỏ');
+    if (selectedSport === 'BADMINTON') return name.includes('cầu lông') || name.includes('badminton');
+    if (selectedSport === 'PICKLEBALL') return name.includes('pickleball');
+    if (selectedSport === 'TENNIS') return name.includes('tennis') || name.includes('quần vợt');
+    if (selectedSport === 'ESPORTS') return name.includes('gaming') || name.includes('máy') || name.includes('esport') || name.includes('vip') || name.includes('fps') || name.includes('stage') || name.includes('std') || name.includes('couple');
+    return true;
   });
+
+  useEffect(() => {
+    if (filteredVenues.length > 0) {
+      if (!selectedVenue || !filteredVenues.some((v) => v._id === selectedVenue._id)) {
+        setSelectedVenue(filteredVenues[0]);
+      }
+    } else {
+      setSelectedVenue(null);
+    }
+  }, [selectedSport, venues]);
 
   return (
     <div className="space-y-8">
@@ -420,13 +434,33 @@ export default function CustomerBookingPage() {
       {/* TAB 1: BOOKING FLOW */}
       {activeTab === 'BOOKING' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column: Select Facility & Venue */}
+          {/* Left Column: Single Facility Info & Venue Selection */}
           <div className="lg:col-span-5 space-y-6">
+            {/* Facility Header Card (Single Facility) */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 backdrop-blur-xl relative overflow-hidden">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-bold uppercase">
+                  Tổ Hợp Phanta Sports
+                </span>
+                <span className="text-xs text-emerald-400 flex items-center gap-1.5 font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Mở Cửa 06:00 - 23:00
+                </span>
+              </div>
+              <h2 className="text-base font-black text-white mt-2.5">
+                {selectedFacility?.name || 'Tổ Hợp Thể Thao Phanta Sports'}
+              </h2>
+              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                {selectedFacility?.address || '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM'}
+              </p>
+            </div>
+
             {/* Sport Types Filter */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 backdrop-blur-xl">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-cyan-400" />
-                Bộ Môn Thể Thao
+                Lọc Theo Bộ Môn
               </h3>
               <div className="flex flex-wrap gap-2">
                 {[
@@ -452,70 +486,47 @@ export default function CustomerBookingPage() {
               </div>
             </div>
 
-            {/* Facility List */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 backdrop-blur-xl">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-cyan-400" />
-                Chọn Cụm Cơ Sở
-              </h3>
-              <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-                {filteredFacilities.map((fac) => {
-                  const isSelected = selectedFacility?._id === fac._id;
-                  return (
-                    <div
-                      key={fac._id}
-                      onClick={() => setSelectedFacility(fac)}
-                      className={`p-3.5 rounded-2xl cursor-pointer border transition-all ${
-                        isSelected
-                          ? 'bg-cyan-500/10 border-cyan-500/50 text-white shadow-[0_0_15px_rgba(6,182,212,0.15)]'
-                          : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className={`text-sm font-bold ${isSelected ? 'text-cyan-300' : 'text-slate-200'}`}>
-                          {fac.name}
-                        </p>
-                        {isSelected && <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 truncate">
-                        <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-600" />
-                        {fac.address}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
             {/* Venue List */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-5 backdrop-blur-xl">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                Chọn Sân Thuộc Cơ Sở
-              </h3>
-              {venues.length === 0 ? (
-                <p className="text-xs text-slate-500 py-4 text-center">Cơ sở này hiện chưa có danh sách sân cụ thể.</p>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  Chọn Sân Đặt Chỗ
+                </h3>
+                <span className="text-[11px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                  {filteredVenues.length} sân
+                </span>
+              </div>
+
+              {filteredVenues.length === 0 ? (
+                <p className="text-xs text-slate-500 py-8 text-center">Không tìm thấy sân nào phù hợp với bộ môn này.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-2.5">
-                  {venues.map((v) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[380px] overflow-y-auto pr-1">
+                  {filteredVenues.map((v) => {
                     const isSelected = selectedVenue?._id === v._id;
                     const price = v.basePricePerHour || v.defaultPrice || 150000;
                     return (
                       <div
                         key={v._id}
                         onClick={() => setSelectedVenue(v)}
-                        className={`p-3 rounded-2xl cursor-pointer border text-left transition ${
+                        className={`p-3.5 rounded-2xl cursor-pointer border text-left transition-all ${
                           isSelected
-                            ? 'bg-emerald-500/10 border-emerald-500/50 text-white shadow-[0_0_15px_rgba(16,185,129,0.15)]'
-                            : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                            ? 'bg-emerald-500/15 border-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-1 ring-emerald-500/50'
+                            : 'bg-slate-950/70 border-slate-800/80 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                         }`}
                       >
-                        <p className={`text-xs font-bold truncate ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}>
-                          {v.name}
-                        </p>
-                        <p className="text-[11px] text-slate-400 mt-1 font-mono">
-                          {price.toLocaleString('vi-VN')} đ/h
-                        </p>
+                        <div className="flex items-start justify-between gap-1">
+                          <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}>
+                            {v.name}
+                          </p>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                        </div>
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60">
+                          <span className="text-[10px] text-slate-400">Giá thuê</span>
+                          <span className={`text-xs font-mono font-bold ${isSelected ? 'text-emerald-400' : 'text-slate-300'}`}>
+                            {price.toLocaleString('vi-VN')} đ/h
+                          </span>
+                        </div>
                       </div>
                     );
                   })}

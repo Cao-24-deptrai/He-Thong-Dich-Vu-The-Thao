@@ -41,6 +41,7 @@ export interface Venue {
   facilityId: string;
   name: string;
   venueType: string;
+  sportType?: string;
   defaultPrice: number;
   basePricePerHour?: number;
   pricingConfig?: PricingRule[];
@@ -516,6 +517,12 @@ class ApiService {
   async deleteFacility(id: string): Promise<{ message: string; facility: Facility }> {
     return this.request<{ message: string; facility: Facility }>(`/facilities/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  async consolidateFacilities(): Promise<{ message: string; facility: Facility; venuesUpdatedCount: number; deletedFacilitiesCount: number }> {
+    return this.request<any>('/facilities/consolidate-single', {
+      method: 'POST',
     });
   }
 

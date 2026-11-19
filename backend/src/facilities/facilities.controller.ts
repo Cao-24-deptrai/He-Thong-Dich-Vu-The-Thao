@@ -69,4 +69,13 @@ export class FacilitiesController {
   async remove(@Param('id') id: string) {
     return this.facilitiesService.remove(id);
   }
+
+  @Post('consolidate-single')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Gom toàn bộ hệ thống về 1 cơ sở duy nhất (Single Facility)' })
+  async consolidateSingle() {
+    return this.facilitiesService.consolidateToSingleFacility();
+  }
 }

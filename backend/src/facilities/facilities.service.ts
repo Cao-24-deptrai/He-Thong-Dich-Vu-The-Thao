@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, OnModuleInit, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Facility, FacilityDocument } from './schemas/facility.schema';
@@ -8,11 +8,26 @@ import { UpdateFacilityDto } from './dto/update-facility.dto';
 import { QueryFacilityDto } from './dto/query-facility.dto';
 
 @Injectable()
-export class FacilitiesService {
+export class FacilitiesService implements OnModuleInit {
+  private readonly logger = new Logger(FacilitiesService.name);
+
   constructor(
     @InjectModel(Facility.name) private facilityModel: Model<FacilityDocument>,
     @InjectModel(Venue.name) private venueModel: Model<VenueDocument>,
   ) {}
+
+  async onModuleInit() {
+    try {
+      const count = await this.facilityModel.countDocuments();
+      if (count > 1) {
+        this.logger.log(`[Auto-Consolidate] Phát hiện ${count} cơ sở. Đang tự động gom toàn bộ về 1 cơ sở duy nhất 'Tổ Hợp Thể Thao Phanta Sports'...`);
+        await this.consolidateToSingleFacility('Tổ Hợp Thể Thao Phanta Sports');
+        this.logger.log(`✅ [Auto-Consolidate] Đã gom toàn bộ cơ sở và các sân về 1 cơ sở duy nhất thành công.`);
+      }
+    } catch (err: any) {
+      this.logger.error(`Lỗi khi tự động gom cơ sở: ${err.message}`);
+    }
+  }
 
   async create(dto: CreateFacilityDto, ownerId?: string): Promise<FacilityDocument> {
     const lng = dto.location?.longitude ?? 106.660172;
@@ -133,5 +148,58 @@ export class FacilitiesService {
       throw new NotFoundException('Không tìm thấy tổ hợp thể thao');
     }
     return facility;
+  }
+
+  /**
+   * Gom toàn bộ hệ thống về 1 cơ sở duy nhất, chuyển toàn bộ các sân về cơ sở này
+   */
+  async consolidateToSingleFacility(targetName = 'Tổ Hợp Thể Thao Phanta Sports'): Promise<FacilityDocument> {
+    // 1. Tìm hoặc tạo cơ sở duy nhất
+    let singleFacility = await this.facilityModel.findOne({ name: targetName }).exec();
+
+    if (!singleFacility) {
+      singleFacility = await this.facilityModel.findOne().exec();
+      if (singleFacility) {
+        singleFacility.name = targetName;
+        singleFacility.address = '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM';
+        singleFacility.sportTypes = ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'];
+        singleFacility.openHour = '06:00';
+        singleFacility.closeHour = '23:00';
+        singleFacility.isActive = true;
+        await singleFacility.save();
+      } else {
+        singleFacility = new this.facilityModel({
+          name: targetName,
+          address: '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM',
+          sportTypes: ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'],
+          openHour: '06:00',
+          closeHour: '23:00',
+          isActive: true,
+          location: { type: 'Point', coordinates: [106.660172, 10.762622] },
+        });
+        await singleFacility.save();
+      }
+    } else {
+      singleFacility.address = '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM';
+      singleFacility.sportTypes = ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'];
+      singleFacility.openHour = '06:00';
+      singleFacility.closeHour = '23:00';
+      singleFacility.isActive = true;
+      await singleFacility.save();
+    }
+
+    const singleFacilityId = singleFacility._id;
+
+    // 2. Chuyển toàn bộ các sân (Venues) về cơ sở duy nhất này
+    await this.venueModel.updateMany(
+      {},
+      { $set: { facilityId: singleFacilityId, isActive: true } }
+    );
+
+    // 3. Xóa các cơ sở còn lại
+    await this.facilityModel.deleteMany({ _id: { $ne: singleFacilityId } });
+
+    this.logger.log(`Đã gom toàn bộ sân về cơ sở ID: ${singleFacilityId}`);
+    return singleFacility;
   }
 }

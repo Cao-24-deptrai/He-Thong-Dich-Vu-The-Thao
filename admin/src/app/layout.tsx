@@ -141,9 +141,9 @@ export default function RootLayout({
   const navItems = [
     {
       href: '/facilities',
-      label: 'Cơ sở & Sân bãi',
+      label: 'Quản Lý Sân Bãi',
       icon: Building2,
-      description: 'Quản lý cơ sở, sân và bảng giá',
+      description: 'Quản lý danh sách sân, bảng giá và cơ sở',
     },
     {
       href: '/walk-in',
