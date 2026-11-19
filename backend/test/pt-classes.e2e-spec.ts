@@ -2,13 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { RedisModule } from '../src/redis/redis.module';
 import { PtClassesModule } from '../src/pt-classes/pt-classes.module';
+import { User } from '../src/users/schemas/user.schema';
 import { UserRole } from '../src/common/enums';
 
 describe('Epic E14 - PT & Classes Module (e2e)', () => {
@@ -20,6 +21,7 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
   let trainerStaffId: string;
   let classTemplateId: string;
   let classSessionId: string;
+  let user2Token: string;
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -58,6 +60,8 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
         fullName: 'Admin Quản Trị',
       });
     adminToken = adminRes.body.accessToken;
+    const userModel = moduleFixture.get(getModelToken(User.name));
+    await userModel.updateOne({ phone: '0999999999' }, { role: UserRole.ADMIN });
 
     // 2. Register Customer
     const custRes = await request(app.getHttpServer())
@@ -156,10 +160,11 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
     const user2Res = await request(app.getHttpServer())
       .post('/auth/register')
       .send({ phone: '0922334455', password: 'Password123', fullName: 'Học Viên 2' });
+    user2Token = user2Res.body.accessToken;
 
     await request(app.getHttpServer())
       .post(`/pt-classes/classes/${classSessionId}/register`)
-      .set('Authorization', `Bearer ${user2Res.body.accessToken}`)
+      .set('Authorization', `Bearer ${user2Token}`)
       .expect(201);
 
     // Người thứ 3 đăng ký sẽ bị chặn 409
@@ -192,13 +197,9 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
   });
 
   it('8. Chặn đặt trùng khung giờ PT 1-1 của HLV (TRAINER_TIME_SLOT_CONFLICT)', async () => {
-    const user2Res = await request(app.getHttpServer())
-      .post('/auth/login')
-      .send({ phone: '0922334455', password: 'Password123' });
-
     const res = await request(app.getHttpServer())
       .post('/pt-classes/pt/book')
-      .set('Authorization', `Bearer ${user2Res.body.accessToken}`)
+      .set('Authorization', `Bearer ${user2Token || customerToken}`)
       .send({
         trainerId: trainerStaffId,
         sessionDate: '2026-11-15',
@@ -207,5 +208,10 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
       .expect(409);
 
     expect(res.body.message).toContain('TRAINER_TIME_SLOT_CONFLICT');
+  });
+
+  afterAll(async () => {
+    if (app) await app.close();
+    if (mongod) await mongod.stop();
   });
 });
