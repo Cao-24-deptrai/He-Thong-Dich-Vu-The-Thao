@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentLinkDto } from './dto/create-payment-link.dto';
@@ -22,6 +22,18 @@ export class PaymentsController {
     @Body() dto: CreatePaymentLinkDto,
   ) {
     return this.paymentsService.createPaymentLink(userId, dto);
+  }
+
+  @Get('status/:bookingId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Kiểm tra trạng thái thanh toán tự động với PayOS' })
+  @ApiResponse({ status: 200, description: 'Trạng thái thanh toán (CONFIRMED, HELD, EXPIRED)' })
+  async checkPaymentStatus(
+    @CurrentUser('userId') userId: string,
+    @Param('bookingId') bookingId: string,
+  ) {
+    return this.paymentsService.checkPaymentStatus(userId, bookingId);
   }
 
   @Post('webhook')

@@ -27,6 +27,10 @@ export class Payment {
   })
   provider: PaymentProvider;
 
+  @ApiProperty({ description: 'Order code for PayOS / gateway tracking', required: false })
+  @Prop({ type: Number })
+  orderCode?: number;
+
   @ApiProperty({ description: 'Transaction ID from payment gateway', required: false })
   @Prop({ type: String })
   transactionId?: string;

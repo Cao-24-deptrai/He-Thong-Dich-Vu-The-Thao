@@ -73,6 +73,7 @@ export default function CustomerBookingPage() {
   // General state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // 1. Load Facilities
   useEffect(() => {
@@ -152,8 +153,14 @@ export default function CustomerBookingPage() {
         if (prev <= 1) {
           clearInterval(timer);
           setActiveBooking(null);
+          setSelectedSlot(null);
           setShowPaymentModal(false);
-          setError('Hết 10 phút giữ chỗ. Slot sân đã được giải phóng.');
+          setError('⏰ Hết 10 phút giữ chỗ. Khung giờ đã được giải phóng trở về trạng thái trống.');
+          if (selectedVenue && selectedDate) {
+            api.getVenueAvailability(selectedVenue._id, selectedDate).then((res) => {
+              setSlots(res.slots || []);
+            });
+          }
           return 0;
         }
         return prev - 1;
@@ -161,9 +168,71 @@ export default function CustomerBookingPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [activeBooking]);
+  }, [activeBooking, selectedVenue, selectedDate]);
 
-  // 5. Load My Bookings
+  // 5. Automatic PayOS Payment Verification Polling
+  useEffect(() => {
+    if (!showPaymentModal || !activeBooking) return;
+
+    let isSubscribed = true;
+
+    const pollPaymentStatus = async () => {
+      try {
+        const res = await api.checkPaymentStatus(activeBooking._id);
+        if (!isSubscribed) return;
+
+        // Trường hợp 1: PayOS xác nhận đã thanh toán thành công
+        if (res.isPaid && res.booking) {
+          setShowPaymentModal(false);
+          setActiveBooking(null);
+          setSelectedSlot(null);
+          setError(null);
+          setSuccessMessage('🎉 Thanh toán thành công qua PayOS! Vé vào sân đã được kích hoạt.');
+
+          // Chuyển sang mục Vé Của Tôi và cập nhật danh sách
+          setActiveTab('MY_TICKETS');
+          await loadMyBookings();
+
+          // Tự động mở xem vé QR
+          handleOpenTicket(res.booking);
+          return;
+        }
+
+        // Trường hợp 2: Hết thời gian giữ chỗ 10 phút
+        if (res.isExpired) {
+          setShowPaymentModal(false);
+          setActiveBooking(null);
+          setSelectedSlot(null);
+          setError('⏰ Thời gian giữ chỗ 10 phút đã hết hạn. Khung giờ đã được giải phóng trở về trạng thái trống.');
+
+          // Tải lại ma trận slot
+          if (selectedVenue && selectedDate) {
+            const avail = await api.getVenueAvailability(selectedVenue._id, selectedDate);
+            setSlots(avail.slots || []);
+          }
+          return;
+        }
+
+        // Đồng bộ thời gian giữ chỗ nếu backend trả về
+        if (typeof res.holdTimeLeft === 'number') {
+          setHoldTimeLeft(res.holdTimeLeft);
+        }
+      } catch (err: any) {
+        console.warn('Lỗi tra cứu trạng thái thanh toán PayOS:', err);
+      }
+    };
+
+    const firstCheck = setTimeout(pollPaymentStatus, 1000);
+    const interval = setInterval(pollPaymentStatus, 2500);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(firstCheck);
+      clearInterval(interval);
+    };
+  }, [showPaymentModal, activeBooking, selectedVenue, selectedDate]);
+
+  // 6. Load My Bookings
   const loadMyBookings = async () => {
     try {
       setLoadingBookings(true);
@@ -231,8 +300,16 @@ export default function CustomerBookingPage() {
   const handleOpenTicket = async (b: Booking) => {
     setViewingTicket(b);
     try {
-      const qrToken = `TICKET:${b._id}:${Date.now()}`;
-      const url = await QRCode.toDataURL(qrToken, { width: 280, margin: 2 });
+      let tokenToEncode = b.qrToken || b.ticketCode || `TICKET:${b._id}`;
+      try {
+        const res = await api.getBookingQrToken(b._id);
+        if (res?.qrToken) {
+          tokenToEncode = res.qrToken;
+        }
+      } catch (e) {
+        // Fallback to existing token
+      }
+      const url = await QRCode.toDataURL(tokenToEncode, { width: 280, margin: 2 });
       setTicketQrUrl(url);
     } catch (e) {
       console.error(e);
@@ -315,6 +392,19 @@ export default function CustomerBookingPage() {
           >
             <CreditCard className="w-4 h-4" />
             <span>Mở Mã Thanh Toán VietQR</span>
+          </button>
+        </div>
+      )}
+
+      {/* Success alert */}
+      {successMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-emerald-300 text-xs">
+          <div className="flex items-center space-x-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+          <button onClick={() => setSuccessMessage(null)} className="text-emerald-400 hover:text-white">
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -698,16 +788,21 @@ export default function CustomerBookingPage() {
               </a>
             )}
 
-            <button
-              onClick={() => {
-                setShowPaymentModal(false);
-                setActiveTab('MY_TICKETS');
-                loadMyBookings();
-              }}
-              className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black text-xs transition"
-            >
-              Tôi Đã Chuyển Khoản Thành Công
-            </button>
+            {/* LIVE AUTOMATIC STATUS (ĐÃ BỎ NÚT XÁC NHẬN THỦ CÔNG) */}
+            <div className="mt-4 p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/30 flex items-start space-x-3 text-cyan-200 shadow-inner">
+              <div className="relative flex h-3.5 w-3.5 mt-0.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-500"></span>
+              </div>
+              <div className="text-left text-xs space-y-1">
+                <p className="font-bold text-white flex items-center gap-1.5">
+                  Đang tự động xác nhận thanh toán với PayOS
+                </p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Vui lòng quét mã trên app ngân hàng. Ngay khi tiền vào tài khoản, hệ thống sẽ tự động kích hoạt mã vé và lưu vào mục <span className="text-cyan-300 font-semibold">"Vé của tôi"</span>.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}

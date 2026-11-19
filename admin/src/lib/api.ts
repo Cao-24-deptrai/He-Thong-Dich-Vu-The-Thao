@@ -109,6 +109,9 @@ export interface Booking {
   customerName?: string;
   customerPhone?: string;
   paymentMethod?: string;
+  qrToken?: string;
+  ticketCode?: string;
+  holdExpiresAt?: string;
   refundNote?: string;
   refundedAt?: string;
   createdAt?: string;
@@ -466,6 +469,28 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ bookingId }),
     });
+  }
+
+  async checkPaymentStatus(bookingId: string): Promise<{
+    isPaid: boolean;
+    isExpired?: boolean;
+    status: string;
+    booking?: Booking;
+    qrToken?: string;
+    ticketCode?: string;
+    holdTimeLeft?: number;
+    message?: string;
+  }> {
+    return this.request<any>(`/payments/status/${bookingId}`);
+  }
+
+  async getBookingQrToken(bookingId: string): Promise<{
+    qrToken: string;
+    expiresInSeconds?: number;
+    expiresAt?: string;
+    ticketCode?: string;
+  }> {
+    return this.request<any>(`/checkin/qr-token/${bookingId}`);
   }
 
   // --- FACILITIES ---

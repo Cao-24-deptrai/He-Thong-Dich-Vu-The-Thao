@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Payment, PaymentSchema } from './schemas/payment.schema';
 import { Booking, BookingSchema } from '../bookings/schemas/booking.schema';
+import { BookingSlot, BookingSlotSchema } from '../bookings/schemas/booking-slot.schema';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { EventsModule } from '../events/events.module';
@@ -13,6 +14,7 @@ import { EventsModule } from '../events/events.module';
     MongooseModule.forFeature([
       { name: Payment.name, schema: PaymentSchema },
       { name: Booking.name, schema: BookingSchema },
+      { name: BookingSlot.name, schema: BookingSlotSchema },
     ]),
     EventsModule,
     JwtModule.registerAsync({

@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,6 +12,7 @@ import { JwtService } from '@nestjs/jwt';
 import { randomUUID } from 'crypto';
 import { Payment, PaymentDocument } from './schemas/payment.schema';
 import { Booking, BookingDocument } from '../bookings/schemas/booking.schema';
+import { BookingSlot, BookingSlotDocument } from '../bookings/schemas/booking-slot.schema';
 import { EventsGateway } from '../events/events.gateway';
 import { CreatePaymentLinkDto } from './dto/create-payment-link.dto';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
@@ -24,6 +26,7 @@ export class PaymentsService {
   constructor(
     @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
+    @InjectModel(BookingSlot.name) private bookingSlotModel: Model<BookingSlotDocument>,
     private configService: ConfigService,
     private jwtService: JwtService,
     private eventsGateway: EventsGateway,
@@ -86,10 +89,14 @@ export class PaymentsService {
         amount: booking.totalPrice,
         provider: selectedProvider,
         status: PaymentStatus.INIT,
+        orderCode,
+        transactionId: `PAYOS_${orderCode}`,
       });
       await payment.save();
-    } else if (dto.provider) {
-      payment.provider = selectedProvider;
+    } else {
+      payment.orderCode = orderCode;
+      payment.transactionId = payment.transactionId || `PAYOS_${orderCode}`;
+      if (dto.provider) payment.provider = selectedProvider;
       await payment.save();
     }
 
@@ -310,6 +317,186 @@ export class PaymentsService {
       bookingStatus: BookingStatus.CONFIRMED,
       paymentId: payment._id,
       qrToken,
+    };
+  }
+
+  /**
+   * Xác nhận thanh toán thành công và cấp vé điện tử (dùng chung cho Webhook và Check-Status)
+   */
+  async confirmPaidBooking(
+    booking: BookingDocument,
+    payment?: PaymentDocument | null,
+    rawInfo?: any,
+  ) {
+    const ticketCode =
+      booking.ticketCode ||
+      booking.bookingCode ||
+      `TCK-${booking._id.toString().slice(-6).toUpperCase()}`;
+
+    const qrPayload = {
+      bookingId: booking._id.toString(),
+      ticketCode,
+      userId: booking.userId?.toString(),
+      jti: randomUUID(),
+    };
+    const qrToken = this.jwtService.sign(qrPayload, { expiresIn: '60s' });
+
+    booking.status = BookingStatus.CONFIRMED;
+    booking.qrToken = qrToken;
+    booking.ticketCode = ticketCode;
+    booking.paymentMethod = 'PAYOS';
+    await booking.save();
+
+    // Cập nhật slot trong bookingSlotModel sang CONFIRMED
+    await this.bookingSlotModel.updateMany(
+      { bookingId: booking._id },
+      { $set: { status: BookingStatus.CONFIRMED } },
+    );
+
+    let updatedPayment = payment;
+    if (payment) {
+      payment.status = PaymentStatus.SUCCESS;
+      if (rawInfo) payment.rawPayload = rawInfo;
+      await payment.save();
+      updatedPayment = payment;
+    } else {
+      updatedPayment = await this.paymentModel.findOneAndUpdate(
+        { bookingId: booking._id },
+        {
+          amount: booking.totalPrice,
+          provider: PaymentProvider.PAYOS,
+          status: PaymentStatus.SUCCESS,
+          rawPayload: rawInfo,
+        },
+        { upsert: true, new: true },
+      );
+    }
+
+    // Broadcast Socket.io slot chuyển sang CONFIRMED (đỏ)
+    const dateStr = booking.bookingDate.toISOString().split('T')[0];
+    this.eventsGateway.broadcastSlotStatusChanged({
+      venueId: booking.venueId.toString(),
+      bookingDate: dateStr,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      status: BookingStatus.CONFIRMED,
+    });
+
+    this.logger.log(`✅ [PaymentsService] Kích hoạt thành công đơn #${booking._id}. Mã vé: ${ticketCode}.`);
+
+    return {
+      isPaid: true,
+      status: BookingStatus.CONFIRMED,
+      booking,
+      qrToken,
+      ticketCode,
+      paymentId: updatedPayment?._id,
+      message: 'Thanh toán thành công và vé đã được tạo.',
+    };
+  }
+
+  /**
+   * Tra cứu trạng thái thanh toán tự động với API của PayOS (Dành cho Client Polling & Verify)
+   */
+  async checkPaymentStatus(userId: string, bookingId: string) {
+    const booking = await this.bookingModel.findById(bookingId).populate('venueId').exec();
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt sân');
+    }
+
+    if (booking.userId?.toString() !== userId) {
+      throw new ForbiddenException('Bạn không có quyền tra cứu đơn này');
+    }
+
+    // 1. Đã thanh toán thành công trước đó
+    if (booking.status === BookingStatus.CONFIRMED) {
+      return {
+        isPaid: true,
+        status: BookingStatus.CONFIRMED,
+        booking,
+        qrToken: booking.qrToken,
+        ticketCode: booking.ticketCode,
+        message: 'Đơn đặt sân đã được xác nhận thanh toán thành công.',
+      };
+    }
+
+    // 2. Đã hết hạn hoặc bị hủy
+    if (booking.status === BookingStatus.EXPIRED || booking.status === BookingStatus.CANCELLED) {
+      return {
+        isPaid: false,
+        isExpired: true,
+        status: booking.status,
+        message: 'Thời gian giữ chỗ 10 phút đã hết hạn, khung giờ đã được giải phóng.',
+      };
+    }
+
+    // 3. Nếu đang ở HELD -> kiểm tra thời hạn giữ chỗ
+    const now = new Date();
+    if (booking.holdExpiresAt && booking.holdExpiresAt <= now) {
+      booking.status = BookingStatus.EXPIRED;
+      await booking.save();
+
+      // Giải phóng slot về EXPIRED để slot trống lại
+      await this.bookingSlotModel.updateMany(
+        { bookingId: booking._id },
+        { $set: { status: BookingStatus.EXPIRED } },
+      );
+
+      const dateStr = booking.bookingDate.toISOString().split('T')[0];
+      this.eventsGateway.broadcastSlotStatusChanged({
+        venueId: booking.venueId.toString(),
+        bookingDate: dateStr,
+        startTime: booking.startTime,
+        endTime: booking.endTime,
+        status: BookingStatus.EXPIRED,
+      });
+
+      this.logger.log(`⏰ [checkPaymentStatus] Booking ${booking._id} hết hạn giữ chỗ -> tự động chuyển EXPIRED.`);
+
+      return {
+        isPaid: false,
+        isExpired: true,
+        status: BookingStatus.EXPIRED,
+        message: 'Thời gian giữ chỗ 10 phút đã hết hạn, khung giờ đã được giải phóng.',
+      };
+    }
+
+    // 4. Đơn đang HELD và còn hạn -> Tra cứu API của PayOS
+    const payment = await this.paymentModel.findOne({ bookingId: booking._id }).sort({ createdAt: -1 }).exec();
+    const orderCode = payment?.orderCode || (payment?.transactionId ? Number(payment.transactionId.replace('PAYOS_', '')) : undefined);
+
+    let isPayosPaid = false;
+    let payosInfo: any = null;
+
+    if (this.payosInstance && orderCode) {
+      try {
+        payosInfo = this.payosInstance.paymentRequests
+          ? await this.payosInstance.paymentRequests.get(orderCode)
+          : await this.payosInstance.getPaymentLinkInformation(orderCode);
+
+        this.logger.log(`🔎 PayOS API status cho orderCode #${orderCode}: ${payosInfo?.status}`);
+
+        if (payosInfo && (payosInfo.status === 'PAID' || payosInfo.amountRemaining === 0)) {
+          isPayosPaid = true;
+        }
+      } catch (err: any) {
+        this.logger.warn(`Lỗi khi gọi API tra cứu PayOS cho đơn #${orderCode}: ${err.message}`);
+      }
+    }
+
+    // Nếu PayOS xác nhận đã nhận được tiền -> Kích hoạt đơn CONFIRMED ngay lập tức!
+    if (isPayosPaid) {
+      return this.confirmPaidBooking(booking, payment, payosInfo);
+    }
+
+    // Chưa thanh toán xong -> Giữ chỗ và đếm ngược thời gian
+    const holdTimeLeft = Math.max(0, Math.floor((booking.holdExpiresAt!.getTime() - Date.now()) / 1000));
+    return {
+      isPaid: false,
+      isExpired: false,
+      status: BookingStatus.HELD,
+      holdTimeLeft,
+      message: 'Đang giữ chỗ 10 phút, đang chờ khách hàng thanh toán qua VietQR PayOS.',
     };
   }
 }
