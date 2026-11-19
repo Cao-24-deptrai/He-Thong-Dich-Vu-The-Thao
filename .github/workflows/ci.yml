@@ -1,0 +1,77 @@
+name: CI Quality Gate — Backend & Admin
+
+on:
+  push:
+    branches:
+      - main
+      - feat/backend-kit-khang
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend-check:
+    name: Backend Build & Epic E2E Tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package.json
+
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Compile Backend (nest build)
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Run Epic E02, E11, E13 E2E Tests
+        working-directory: ./backend
+        run: npm run test:e2e -- test/epic-
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://127.0.0.1:27017/sports_booking_test
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          JWT_SECRET: test_jwt_secret_key_12345
+
+  admin-check:
+    name: Admin Web Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: admin/package.json
+
+      - name: Install Admin Dependencies
+        working-directory: ./admin
+        run: npm ci
+
+      - name: Admin Next.js Production Build
+        working-directory: ./admin
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.phanta.id.vn
