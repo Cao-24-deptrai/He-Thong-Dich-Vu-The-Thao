@@ -2,13 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { RedisModule } from '../src/redis/redis.module';
 import { PtClassesModule } from '../src/pt-classes/pt-classes.module';
+import { User } from '../src/users/schemas/user.schema';
 import { UserRole } from '../src/common/enums';
 
 describe('Epic E14 - PT & Classes Module (e2e)', () => {
@@ -58,6 +59,8 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
         fullName: 'Admin Quản Trị',
       });
     adminToken = adminRes.body.accessToken;
+    const userModel = moduleFixture.get(getModelToken(User.name));
+    await userModel.updateOne({ phone: '0999999999' }, { role: UserRole.ADMIN });
 
     // 2. Register Customer
     const custRes = await request(app.getHttpServer())

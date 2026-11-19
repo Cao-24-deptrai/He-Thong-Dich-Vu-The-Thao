@@ -2,12 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, getModelToken } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
 import { UsersModule } from '../src/users/users.module';
 import { TournamentsModule } from '../src/tournaments/tournaments.module';
+import { User } from '../src/users/schemas/user.schema';
+import { UserRole } from '../src/common/enums';
 
 describe('Epic E14 - Tournaments Module (e2e)', () => {
   let app: INestApplication;
@@ -49,6 +51,8 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
       .post('/auth/register')
       .send({ phone: '0999999999', password: 'AdminPassword123', fullName: 'Admin' });
     adminToken = adminRes.body.accessToken;
+    const userModel = moduleFixture.get(getModelToken(User.name));
+    await userModel.updateOne({ phone: '0999999999' }, { role: UserRole.ADMIN });
 
     // 2. Register Captain 1
     const cap1Res = await request(app.getHttpServer())
