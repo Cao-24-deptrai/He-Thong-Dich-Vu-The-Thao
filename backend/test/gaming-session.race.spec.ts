@@ -247,4 +247,9 @@ describe('Epic E12 - Gaming Module & Concurrency Race Invariant (e2e)', () => {
         .expect(200);
     });
   });
+
+  afterAll(async () => {
+    if (app) await app.close();
+    if (mongod) await mongod.stop();
+  });
 });

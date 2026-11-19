@@ -213,4 +213,9 @@ describe('Epic E14 - PT & Classes Module (e2e)', () => {
 
     expect(res.body.message).toContain('TRAINER_TIME_SLOT_CONFLICT');
   });
+
+  afterAll(async () => {
+    if (app) await app.close();
+    if (mongod) await mongod.stop();
+  });
 });

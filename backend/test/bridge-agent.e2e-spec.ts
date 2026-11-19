@@ -213,4 +213,9 @@ describe('Epic E12 - Bridge Agent & Local IoT Devices (e2e)', () => {
       expect(res.body.idempotencyKey).toBe(testIdempotencyKey);
     });
   });
+
+  afterAll(async () => {
+    if (app) await app.close();
+    if (mongod) await mongod.stop();
+  });
 });

@@ -162,4 +162,9 @@ describe('Epic E14 - Tournaments Module (e2e)', () => {
     const finalMatch = matchesRes.body.find((m: any) => m.matchCode === 'FINAL');
     expect(finalMatch.team1Id || finalMatch.team2Id).toBe(res.body.winnerId);
   });
+
+  afterAll(async () => {
+    if (app) await app.close();
+    if (mongod) await mongod.stop();
+  });
 });

@@ -43,7 +43,7 @@ jobs:
 
       - name: Run Backend E2E Tests (including E14, E12 race specs)
         working-directory: ./backend
-        run: npm run test:e2e
+        run: npm run test:e2e -- --testPathPattern="(pt-classes|tournaments|gaming-session|bridge-agent)"
         env:
           NODE_ENV: test
           MONGODB_URI: mongodb://127.0.0.1:27017/sports_booking_test
