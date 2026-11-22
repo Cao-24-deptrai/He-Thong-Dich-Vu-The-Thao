@@ -16,13 +16,13 @@ import { Facility } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
 
 const SPORT_CATEGORIES = [
-  { key: 'ALL', label: 'Tất cả', icon: '🏆' },
+  { key: 'ALL', label: 'Tất cả bộ môn', icon: '🏆' },
   { key: 'FOOTBALL', label: 'Bóng đá', icon: '⚽' },
+  { key: 'BASKETBALL', label: 'Bóng rổ', icon: '🏀' },
   { key: 'BADMINTON', label: 'Cầu lông', icon: '🏸' },
-  { key: 'PICKLEBALL', label: 'Pickleball', icon: '🎾' },
-  { key: 'TENNIS', label: 'Tennis', icon: '🎾' },
-  { key: 'ESPORTS', label: 'Esports', icon: '🎮' },
-  { key: 'GYM', label: 'Gym & Fitness', icon: '🏋️' },
+  { key: 'PICKLEBALL', label: 'Pickleball', icon: '🏓' },
+  { key: 'TENNIS', label: 'Quần vợt Tennis', icon: '🎾' },
+  { key: 'VOLLEYBALL', label: 'Bóng chuyền', icon: '🏐' },
 ];
 
 interface Props {
@@ -70,7 +70,7 @@ export const FacilityListScreen: React.FC<Props> = ({ onSelectFacility }) => {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Khám Phá Sân Bãi</Text>
           <Text style={styles.headerSubtitle}>
-            Hệ thống sân thể thao & esports thông minh, giá động thời gian thực
+            Hệ thống sân bãi thể thao thông minh, giá động thời gian thực
           </Text>
         </View>
 

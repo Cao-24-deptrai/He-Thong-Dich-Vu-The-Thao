@@ -157,12 +157,14 @@ export class FacilitiesService implements OnModuleInit {
     // 1. Tìm hoặc tạo cơ sở duy nhất
     let singleFacility = await this.facilityModel.findOne({ name: targetName }).exec();
 
+    const allowedSportTypes = ['FOOTBALL', 'BASKETBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'VOLLEYBALL'];
+
     if (!singleFacility) {
       singleFacility = await this.facilityModel.findOne().exec();
       if (singleFacility) {
         singleFacility.name = targetName;
         singleFacility.address = '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM';
-        singleFacility.sportTypes = ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'];
+        singleFacility.sportTypes = allowedSportTypes;
         singleFacility.openHour = '06:00';
         singleFacility.closeHour = '23:00';
         singleFacility.isActive = true;
@@ -171,7 +173,7 @@ export class FacilitiesService implements OnModuleInit {
         singleFacility = new this.facilityModel({
           name: targetName,
           address: '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM',
-          sportTypes: ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'],
+          sportTypes: allowedSportTypes,
           openHour: '06:00',
           closeHour: '23:00',
           isActive: true,
@@ -181,7 +183,7 @@ export class FacilitiesService implements OnModuleInit {
       }
     } else {
       singleFacility.address = '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM';
-      singleFacility.sportTypes = ['FOOTBALL', 'BADMINTON', 'PICKLEBALL', 'TENNIS', 'ESPORTS'];
+      singleFacility.sportTypes = allowedSportTypes;
       singleFacility.openHour = '06:00';
       singleFacility.closeHour = '23:00';
       singleFacility.isActive = true;

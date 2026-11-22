@@ -41,6 +41,7 @@ export interface Venue {
   facilityId: string;
   name: string;
   venueType: string;
+  type?: string;
   sportType?: string;
   defaultPrice: number;
   basePricePerHour?: number;
@@ -549,8 +550,14 @@ class ApiService {
     });
   }
 
-  async deleteVenue(id: string): Promise<{ message: string; venue: Venue }> {
-    return this.request<{ message: string; venue: Venue }>(`/venues/${id}`, {
+  async deleteVenue(id: string, hard: boolean = false): Promise<{ message: string; venue?: Venue; success?: boolean }> {
+    return this.request<{ message: string; venue?: Venue; success?: boolean }>(`/venues/${id}${hard ? '?hard=true' : ''}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async purgeVenues(facilityId: string): Promise<{ message: string; deletedCount: number; success: boolean }> {
+    return this.request<{ message: string; deletedCount: number; success: boolean }>(`/venues/facility/${facilityId}/purge`, {
       method: 'DELETE',
     });
   }

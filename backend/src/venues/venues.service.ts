@@ -94,7 +94,7 @@ export class VenuesService {
     return this.formatVenue(saved);
   }
 
-  async remove(id: string): Promise<any> {
+  async remove(id: string, hard: boolean = false): Promise<any> {
     const venue = await this.venueModel.findById(id).exec();
     if (!venue) {
       throw new NotFoundException('Không tìm thấy sân / địa điểm');
@@ -103,9 +103,27 @@ export class VenuesService {
     // Kiểm tra ràng buộc: không được xóa cứng/vô hiệu hóa nếu còn booking tương lai
     await this.assertNoActiveFutureBookings(id);
 
+    if (hard) {
+      await this.venueModel.findByIdAndDelete(id).exec();
+      return { message: 'Đã xóa vĩnh viễn sân thành công', _id: id, success: true };
+    }
+
     venue.isActive = false;
     const saved = await venue.save();
     return this.formatVenue(saved);
+  }
+
+  async purgeAll(facilityId?: string): Promise<any> {
+    const filter: any = {};
+    if (facilityId) {
+      filter.facilityId = new Types.ObjectId(facilityId);
+    }
+    const result = await this.venueModel.deleteMany(filter).exec();
+    return {
+      message: 'Đã xóa toàn bộ sân thành công',
+      deletedCount: result.deletedCount,
+      success: true,
+    };
   }
 
   private async assertNoActiveFutureBookings(venueId: string): Promise<void> {

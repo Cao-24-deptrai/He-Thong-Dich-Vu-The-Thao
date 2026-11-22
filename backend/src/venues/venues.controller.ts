@@ -73,15 +73,30 @@ export class VenuesController {
     return this.venuesService.update(id, dto);
   }
 
+  @Delete('facility/:facilityId/purge')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Xóa toàn bộ sân của cơ sở (ADMIN / OWNER)' })
+  @ApiResponse({ status: 200, description: 'Xóa toàn bộ sân thành công' })
+  async purgeAll(@Param('facilityId') facilityId: string) {
+    return this.venuesService.purgeAll(facilityId);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.OWNER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) sân (ADMIN / OWNER)' })
-  @ApiResponse({ status: 200, description: 'Vô hiệu hóa thành công (isActive = false)' })
-  @ApiResponse({ status: 400, description: 'Không thể vô hiệu hóa vì còn booking tương lai' })
+  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) hoặc Xóa vĩnh viễn sân (ADMIN / OWNER)' })
+  @ApiQuery({ name: 'hard', required: false, type: Boolean })
+  @ApiResponse({ status: 200, description: 'Xóa thành công' })
+  @ApiResponse({ status: 400, description: 'Không thể xóa vì còn booking tương lai' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy sân' })
-  async remove(@Param('id') id: string) {
-    return this.venuesService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @Query('hard') hard?: string | boolean,
+  ) {
+    const isHard = hard === true || hard === 'true';
+    return this.venuesService.remove(id, isHard);
   }
 }

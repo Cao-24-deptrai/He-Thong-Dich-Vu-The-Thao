@@ -26,8 +26,20 @@ export const PitchMap2D: React.FC<PitchMap2DProps> = ({
   const isEsports = sportTypes.some((s) => s.toLowerCase().includes('esport') || s.toLowerCase().includes('pc') || s.toLowerCase().includes('gaming')) ||
     venues.some((v) => v.type?.toLowerCase().includes('esport') || v.name?.toLowerCase().includes('pc') || v.name?.toLowerCase().includes('vip'));
 
-  const isBadminton = sportTypes.some((s) => s.toLowerCase().includes('cầu lông') || s.toLowerCase().includes('badminton'));
-  const isPickleball = sportTypes.some((s) => s.toLowerCase().includes('pickleball'));
+  const isBasketball = sportTypes.some((s) => s.toLowerCase().includes('bóng rổ') || s.toLowerCase().includes('basketball')) ||
+    venues.some((v) => v.type?.toLowerCase().includes('basketball') || v.name?.toLowerCase().includes('bóng rổ'));
+
+  const isBadminton = sportTypes.some((s) => s.toLowerCase().includes('cầu lông') || s.toLowerCase().includes('badminton')) ||
+    venues.some((v) => v.type?.toLowerCase().includes('badminton') || v.name?.toLowerCase().includes('cầu lông'));
+
+  const isPickleball = sportTypes.some((s) => s.toLowerCase().includes('pickleball')) ||
+    venues.some((v) => v.type?.toLowerCase().includes('pickleball') || v.name?.toLowerCase().includes('pickleball'));
+
+  const isTennis = sportTypes.some((s) => s.toLowerCase().includes('tennis') || s.toLowerCase().includes('quần vợt')) ||
+    venues.some((v) => v.type?.toLowerCase().includes('tennis') || v.name?.toLowerCase().includes('tennis') || v.name?.toLowerCase().includes('quần vợt'));
+
+  const isVolleyball = sportTypes.some((s) => s.toLowerCase().includes('bóng chuyền') || s.toLowerCase().includes('volleyball')) ||
+    venues.some((v) => v.type?.toLowerCase().includes('volleyball') || v.name?.toLowerCase().includes('bóng chuyền'));
 
   return (
     <View style={styles.container}>
@@ -35,9 +47,15 @@ export const PitchMap2D: React.FC<PitchMap2DProps> = ({
       <View style={styles.mapHeader}>
         <View style={styles.mapHeaderLeft}>
           <Text style={styles.mapTitle}>
-            {isEsports ? '🎮 SƠ ĐỒ PHÒNG MÁY CYBER VIP' : isBadminton ? '🏸 SƠ ĐỒ CỤM SÂN CẦU LÔNG' : isPickleball ? '🎾 SƠ ĐỒ SÂN PICKLEBALL 2D' : '⚽ SƠ ĐỒ MẶT SÂN CỎ NHÂN TẠO 2D'}
+            {isEsports ? '🎮 SƠ ĐỒ PHÒNG MÁY CYBER VIP' :
+             isBasketball ? '🏀 SƠ ĐỒ SÂN BÓNG RỔ TIÊU CHUẨN' :
+             isBadminton ? '🏸 SƠ ĐỒ CỤM SÂN CẦU LÔNG' :
+             isPickleball ? '🏓 SƠ ĐỒ SÂN PICKLEBALL TIÊU CHUẨN' :
+             isTennis ? '🎾 SƠ ĐỒ SÂN QUẦN VỢT TENNIS' :
+             isVolleyball ? '🏐 SƠ ĐỒ SÂN BÓNG CHUYỀN THI ĐẤU' :
+             '⚽ SƠ ĐỒ MẶT SÂN CỎ NHÂN TẠO 2D'}
           </Text>
-          <Text style={styles.mapSubtitle}>Chạm trực tiếp vào vị trí sân để chọn (Sân 5 / Sân 7 / Sân 11)</Text>
+          <Text style={styles.mapSubtitle}>Chạm trực tiếp vào vị trí sân để chọn khung giờ đặt sân</Text>
         </View>
         <View style={styles.activeCourtBadge}>
           <Text style={styles.activeCourtBadgeText}>

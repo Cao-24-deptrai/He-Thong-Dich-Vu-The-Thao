@@ -27,13 +27,68 @@ import { api, Facility, Venue, PricingRule } from '@/lib/api';
 
 const SPORT_TYPES = [
   { value: 'ALL', label: 'Tất cả bộ môn', icon: '🏆' },
-  { value: 'FOOTBALL', label: 'Bóng đá Mini & Sân 7', icon: '⚽' },
+  { value: 'FOOTBALL', label: 'Bóng đá (Sân 5 / 7 / 11)', icon: '⚽' },
+  { value: 'BASKETBALL', label: 'Bóng rổ tiêu chuẩn', icon: '🏀' },
   { value: 'BADMINTON', label: 'Cầu lông Chuyên nghiệp', icon: '🏸' },
   { value: 'PICKLEBALL', label: 'Pickleball Tiêu chuẩn QT', icon: '🏓' },
   { value: 'TENNIS', label: 'Quần vợt Tennis', icon: '🎾' },
-  { value: 'ESPORTS', label: 'Cyber Gaming & PS5 Lounge', icon: '🎮' },
-  { value: 'GYM', label: 'Gym & Fitness Center', icon: '🏋️' },
+  { value: 'VOLLEYBALL', label: 'Bóng chuyền thi đấu', icon: '🏐' },
 ];
+
+const COURT_SPORTS = [
+  { value: 'FOOTBALL_5', label: '⚽ Bóng đá - Sân 5 người (Futsal)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 5', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'FOOTBALL_7', label: '⚽ Bóng đá - Sân 7 người (Mini)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 7', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'FOOTBALL_11', label: '⚽ Bóng đá - Sân 11 người (Tiêu chuẩn)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 11', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'BASKETBALL', label: '🏀 Bóng rổ tiêu chuẩn (Indoor / Outdoor)', sport: 'BASKETBALL', badge: 'BÓNG RỔ', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+  { value: 'BADMINTON', label: '🏸 Cầu lông thảm BWF chuyên nghiệp', sport: 'BADMINTON', badge: 'CẦU LÔNG', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  { value: 'PICKLEBALL', label: '🏓 Pickleball tiêu chuẩn QT', sport: 'PICKLEBALL', badge: 'PICKLEBALL', color: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+  { value: 'TENNIS', label: '🎾 Quần vợt Tennis (Mặt cứng / Đất nện)', sport: 'TENNIS', badge: 'QUẦN VỢT TENNIS', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+  { value: 'VOLLEYBALL', label: '🏐 Bóng chuyền thi đấu', sport: 'VOLLEYBALL', badge: 'BÓNG CHUYỀN', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+];
+
+function getCourtSportBadge(venue: Venue) {
+  const vType = (venue.venueType || (venue as any).type || '').toUpperCase();
+  const vName = (venue.name || '').toUpperCase();
+
+  const matched = COURT_SPORTS.find((cs) => cs.value === vType || cs.value === (venue as any).type);
+  if (matched) return matched;
+
+  if (vName.includes('FUTSAL') || vName.includes('SÂN 5') || vType.includes('FUTSAL') || vType.includes('5')) {
+    return COURT_SPORTS[0];
+  }
+  if (vName.includes('SÂN 7') || vType.includes('7')) {
+    return COURT_SPORTS[1];
+  }
+  if (vName.includes('SÂN 11') || vType.includes('11')) {
+    return COURT_SPORTS[2];
+  }
+  if (vName.includes('BÓNG ĐÁ') || vType.includes('FOOTBALL')) {
+    return COURT_SPORTS[0];
+  }
+  if (vName.includes('BÓNG RỔ') || vType.includes('BASKETBALL')) {
+    return COURT_SPORTS[3];
+  }
+  if (vName.includes('CẦU LÔNG') || vType.includes('BADMINTON')) {
+    return COURT_SPORTS[4];
+  }
+  if (vName.includes('PICKLEBALL') || vType.includes('PICKLEBALL')) {
+    return COURT_SPORTS[5];
+  }
+  if (vName.includes('TENNIS') || vName.includes('QUẦN VỢT') || vType.includes('TENNIS')) {
+    return COURT_SPORTS[6];
+  }
+  if (vName.includes('BÓNG CHUYỀN') || vType.includes('VOLLEYBALL')) {
+    return COURT_SPORTS[7];
+  }
+
+  return {
+    value: venue.venueType || 'SPORTS',
+    label: venue.venueType || 'Sân thể thao',
+    sport: 'OTHER',
+    badge: venue.venueType || 'THỂ THAO',
+    color: 'bg-slate-800 text-cyan-300 border-slate-700',
+  };
+}
 
 export default function FacilitiesPage() {
   const [facility, setFacility] = useState<Facility | null>(null);
@@ -59,19 +114,25 @@ export default function FacilitiesPage() {
     isOpen: boolean;
     id: string;
     name: string;
+    hardDelete?: boolean;
     errorNote?: string;
   }>({
     isOpen: false,
     id: '',
     name: '',
+    hardDelete: false,
   });
+
+  // Modal Purge All
+  const [showPurgeModal, setShowPurgeModal] = useState(false);
+  const [purging, setPurging] = useState(false);
 
   // Edit Facility form
   const [editFacilityForm, setEditFacilityForm] = useState({
     _id: '',
     name: '',
     address: '',
-    sportType: 'FOOTBALL',
+    sportType: 'FOOTBALL_5',
     description: '',
     openHour: '06:00',
     closeHour: '23:00',
@@ -81,7 +142,7 @@ export default function FacilitiesPage() {
   // Create Venue form
   const [venueForm, setVenueForm] = useState({
     name: '',
-    venueType: 'Bóng đá mini',
+    venueType: 'FOOTBALL_5',
     defaultPrice: 200000,
     hasPeakHour: true,
     peakStart: '17:00',
@@ -98,7 +159,7 @@ export default function FacilitiesPage() {
   const [editVenueForm, setEditVenueForm] = useState({
     _id: '',
     name: '',
-    venueType: 'Standard',
+    venueType: 'FOOTBALL_5',
     defaultPrice: 200000,
     hasPeakHour: true,
     peakStart: '17:00',
@@ -239,7 +300,7 @@ export default function FacilitiesPage() {
       setShowVenueModal(false);
       setVenueForm({
         name: '',
-        venueType: 'Bóng đá mini',
+        venueType: 'FOOTBALL_5',
         defaultPrice: 200000,
         hasPeakHour: true,
         peakStart: '17:00',
@@ -268,7 +329,7 @@ export default function FacilitiesPage() {
     setEditVenueForm({
       _id: venue._id,
       name: venue.name,
-      venueType: venue.venueType || 'Standard',
+      venueType: venue.venueType || (venue as any).type || 'FOOTBALL_5',
       defaultPrice: defaultPriceVal,
       hasPeakHour: !!peakRule,
       peakStart: peakRule ? peakRule.startTime : '17:00',
@@ -330,6 +391,7 @@ export default function FacilitiesPage() {
       isOpen: true,
       id: venue._id,
       name: venue.name,
+      hardDelete: false,
       errorNote: undefined,
     });
   };
@@ -337,8 +399,8 @@ export default function FacilitiesPage() {
   // Execute Delete Venue
   const executeDelete = async () => {
     try {
-      await api.deleteVenue(deleteDialog.id);
-      notifySuccess(`Đã chuyển sân "${deleteDialog.name}" sang trạng thái ngừng hoạt động!`);
+      await api.deleteVenue(deleteDialog.id, deleteDialog.hardDelete);
+      notifySuccess(`Đã xóa/vô hiệu hóa sân "${deleteDialog.name}" thành công!`);
       setDeleteDialog({ ...deleteDialog, isOpen: false });
       await loadData();
     } catch (err: any) {
@@ -346,7 +408,7 @@ export default function FacilitiesPage() {
       if (errData.errorCode === 'VENUE_HAS_ACTIVE_BOOKINGS') {
         setDeleteDialog((prev) => ({
           ...prev,
-          errorNote: `Không thể vô hiệu hóa sân này vì đang có ${errData.activeBookingCount || ''} đơn đặt chỗ trong tương lai (trạng thái HELD hoặc CONFIRMED). Vui lòng xử lý các đơn đặt chỗ trước khi đóng sân!`,
+          errorNote: `Không thể xóa sân này vì đang có ${errData.activeBookingCount || ''} đơn đặt chỗ trong tương lai (trạng thái HELD hoặc CONFIRMED). Vui lòng xử lý các đơn đặt chỗ trước khi đóng sân!`,
         }));
       } else {
         setDeleteDialog((prev) => ({
@@ -357,9 +419,77 @@ export default function FacilitiesPage() {
     }
   };
 
+  // Purge All Venues
+  const handlePurgeAllVenues = async () => {
+    if (!facility) return;
+    try {
+      setPurging(true);
+      await api.purgeVenues(facility._id);
+      notifySuccess(`Đã dọn dẹp sạch toàn bộ sân bãi của cơ sở thành công!`);
+      setShowPurgeModal(false);
+      await loadData();
+    } catch (err: any) {
+      setError(err.message || 'Lỗi khi xóa sạch sân bãi');
+    } finally {
+      setPurging(false);
+    }
+  };
+
+  // Determine if venue belongs to courts/sports (Excluding Gym & Gaming)
+  const isCourtSport = (venue: Venue) => {
+    const vName = (venue.name || '').toLowerCase();
+    const vType = (venue.venueType || (venue as any).type || '').toLowerCase();
+    // Exclude gym and gaming (they have dedicated modules)
+    if (vName.includes('cyber') || vName.includes('ps5') || vName.includes('gaming') || vName.includes('std-') || vType.includes('gaming') || vType.includes('esport')) return false;
+    if (vName.includes('gym') || vName.includes('fitness') || vType.includes('gym')) return false;
+    return true;
+  };
+
+  // Get sport category for filtering
+  const getVenueSportCategory = (venue: Venue): string => {
+    const vName = (venue.name || '').toLowerCase();
+    const vType = (venue.venueType || (venue as any).type || '').toUpperCase();
+
+    if (vType.startsWith('FOOTBALL') || vType.includes('FUTSAL') || vName.includes('bóng đá') || vName.includes('futsal') || vName.includes('sân 5') || vName.includes('sân 7') || vName.includes('sân 11')) {
+      return 'FOOTBALL';
+    }
+    if (vType === 'BASKETBALL' || vName.includes('bóng rổ') || vName.includes('basketball')) {
+      return 'BASKETBALL';
+    }
+    if (vType === 'BADMINTON' || vName.includes('cầu lông') || vName.includes('badminton')) {
+      return 'BADMINTON';
+    }
+    if (vType === 'PICKLEBALL' || vName.includes('pickleball')) {
+      return 'PICKLEBALL';
+    }
+    if (vType === 'TENNIS' || vName.includes('tennis') || vName.includes('quần vợt')) {
+      return 'TENNIS';
+    }
+    if (vType === 'VOLLEYBALL' || vName.includes('bóng chuyền') || vName.includes('volleyball')) {
+      return 'VOLLEYBALL';
+    }
+    return 'OTHER';
+  };
+
+  // Pure sports court venues
+  const courtVenues = useMemo(() => {
+    return venues.filter((v) => isCourtSport(v));
+  }, [venues]);
+
+  // Count per sport category
+  const sportCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: courtVenues.length };
+    SPORT_TYPES.forEach((st) => {
+      if (st.value !== 'ALL') {
+        counts[st.value] = courtVenues.filter((v) => getVenueSportCategory(v) === st.value).length;
+      }
+    });
+    return counts;
+  }, [courtVenues]);
+
   // Filtered venues
   const filteredVenues = useMemo(() => {
-    return venues.filter((venue) => {
+    return courtVenues.filter((venue) => {
       // Search term
       if (searchTerm.trim() && !venue.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) {
         return false;
@@ -367,21 +497,16 @@ export default function FacilitiesPage() {
 
       // Sport filter
       if (selectedSport !== 'ALL') {
-        const vName = (venue.name || '').toLowerCase();
-        const vType = (venue.venueType || '').toLowerCase();
-        if (selectedSport === 'FOOTBALL' && !vName.includes('bóng') && !vName.includes('football') && !vType.includes('bóng')) return false;
-        if (selectedSport === 'BADMINTON' && !vName.includes('cầu lông') && !vName.includes('badminton') && !vType.includes('cầu lông')) return false;
-        if (selectedSport === 'PICKLEBALL' && !vName.includes('pickleball') && !vType.includes('pickleball')) return false;
-        if (selectedSport === 'TENNIS' && !vName.includes('tennis') && !vType.includes('tennis')) return false;
-        if (selectedSport === 'ESPORTS' && !vName.includes('cyber') && !vName.includes('ps5') && !vName.includes('game') && !vType.includes('esports')) return false;
-        if (selectedSport === 'GYM' && !vName.includes('gym') && !vName.includes('fitness') && !vType.includes('gym')) return false;
+        if (getVenueSportCategory(venue) !== selectedSport) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [venues, searchTerm, selectedSport]);
+  }, [courtVenues, searchTerm, selectedSport]);
 
-  const activeVenuesCount = venues.filter(v => v.isActive !== false).length;
+  const activeVenuesCount = courtVenues.filter(v => v.isActive !== false).length;
 
   return (
     <div className="space-y-6">
@@ -416,6 +541,17 @@ export default function FacilitiesPage() {
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 text-cyan-400 ${isConsolidating ? 'animate-spin' : ''}`} />
             <span>{isConsolidating ? 'Đang đồng bộ...' : 'Đồng Bộ 1 Cơ Sở'}</span>
           </button>
+
+          {courtVenues.length > 0 && (
+            <button
+              onClick={() => setShowPurgeModal(true)}
+              title="Xóa toàn bộ các sân hiện tại để tự thêm sân lại từ đầu"
+              className="inline-flex items-center px-3.5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-2xl text-xs font-bold transition active:scale-95"
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1.5 text-rose-400" />
+              <span>Xóa Tất Cả Sân ({courtVenues.length})</span>
+            </button>
+          )}
 
           <button
             onClick={() => setShowVenueModal(true)}
@@ -499,7 +635,7 @@ export default function FacilitiesPage() {
               {/* Quick stats */}
               <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Tổng số sân</span>
-                <span className="text-lg font-black text-white font-mono">{venues.length}</span>
+                <span className="text-lg font-black text-white font-mono">{courtVenues.length}</span>
               </div>
               <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Đang mở</span>
@@ -541,6 +677,15 @@ export default function FacilitiesPage() {
               >
                 <span>{st.icon}</span>
                 <span>{st.label}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                    selectedSport === st.value
+                      ? 'bg-slate-950/30 text-slate-950 font-black'
+                      : 'bg-slate-800 text-slate-300'
+                  }`}
+                >
+                  {sportCounts[st.value] || 0}
+                </span>
               </button>
             ))}
           </div>
@@ -578,12 +723,29 @@ export default function FacilitiesPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
             Đang tải danh sách sân bãi...
           </div>
+        ) : courtVenues.length === 0 ? (
+          <div className="p-16 text-center text-slate-400 bg-gradient-to-b from-slate-900/60 to-slate-950/80 rounded-3xl border border-dashed border-cyan-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">
+              🏟️
+            </div>
+            <p className="font-black text-white text-lg">Hệ Thống Sân Bãi Đang Trống</p>
+            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
+              Toàn bộ các sân cũ đã được dọn sạch. Bạn có thể bắt đầu tự thêm các sân thể thao mới (Bóng đá, Bóng rổ, Cầu lông, Pickleball, Tennis, Bóng chuyền...) vào cơ sở duy nhất.
+            </p>
+            <button
+              onClick={() => setShowVenueModal(true)}
+              className="mt-5 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
+            >
+              <Plus className="w-4 h-4 mr-1.5" />
+              + THÊM SÂN ĐẦU TIÊN
+            </button>
+          </div>
         ) : filteredVenues.length === 0 ? (
           <div className="p-16 text-center text-slate-500 bg-slate-900/60 rounded-3xl border border-dashed border-slate-800">
             <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="font-bold text-slate-300 text-base">Chưa tìm thấy sân nào phù hợp</p>
+            <p className="font-bold text-slate-300 text-base">Chưa tìm thấy sân nào thuộc bộ môn này</p>
             <p className="text-xs text-slate-500 mt-1">
-              Thử thay đổi bộ lọc hoặc bấm nút &quot;+ THÊM SÂN MỚI&quot; để tạo sân mới.
+              Thử chọn tab &quot;Tất cả bộ môn&quot; hoặc bấm nút &quot;+ THÊM SÂN MỚI&quot; để tạo sân cho bộ môn này.
             </p>
           </div>
         ) : (
@@ -615,9 +777,14 @@ export default function FacilitiesPage() {
                             </span>
                           )}
                         </div>
-                        <span className="inline-block mt-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-800 text-cyan-300 border border-slate-700">
-                          {venue.venueType || 'Tiêu chuẩn'}
-                        </span>
+                        {(() => {
+                          const badgeInfo = getCourtSportBadge(venue);
+                          return (
+                            <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-mono font-black px-2 py-0.5 rounded-md border ${badgeInfo.color}`}>
+                              {badgeInfo.badge}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       <div className="flex items-center gap-1.5">
@@ -846,16 +1013,19 @@ export default function FacilitiesPage() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Loại Sân / Bộ Môn
+                  Bộ Môn / Loại Sân
                 </label>
-                <input
-                  type="text"
-                  required
+                <select
                   value={venueForm.venueType}
                   onChange={(e) => setVenueForm({ ...venueForm, venueType: e.target.value })}
-                  placeholder="Ví dụ: Bóng đá cỏ nhân tạo, Cầu lông thảm PVC, Pickleball..."
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
+                >
+                  {COURT_SPORTS.map((cs) => (
+                    <option key={cs.value} value={cs.value} className="bg-slate-900 text-white">
+                      {cs.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1028,15 +1198,19 @@ export default function FacilitiesPage() {
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Loại Sân
+                  Bộ Môn / Loại Sân
                 </label>
-                <input
-                  type="text"
-                  required
+                <select
                   value={editVenueForm.venueType}
                   onChange={(e) => setEditVenueForm({ ...editVenueForm, venueType: e.target.value })}
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
+                >
+                  {COURT_SPORTS.map((cs) => (
+                    <option key={cs.value} value={cs.value} className="bg-slate-900 text-white">
+                      {cs.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1197,12 +1371,25 @@ export default function FacilitiesPage() {
           <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
             <h3 className="text-base font-black text-rose-400 mb-2 flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-rose-400" />
-              Xác Nhận Vô Hiệu Hóa Sân Bãi
+              Xác Nhận Xóa Sân Bãi
             </h3>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Bạn có chắc chắn muốn vô hiệu hóa sân <strong className="text-white">&quot;{deleteDialog.name}&quot;</strong> không? Khách hàng sẽ không thể đặt sân này trên ứng dụng.
+              Bạn có chắc chắn muốn xóa/vô hiệu hóa sân <strong className="text-white">&quot;{deleteDialog.name}&quot;</strong> không? Khách hàng sẽ không thể đặt sân này trên ứng dụng.
             </p>
+
+            <div className="mt-4 p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-white block">Xóa vĩnh viễn (Hard Delete)</span>
+                <span className="text-[10px] text-slate-400">Xóa hẳn khỏi cơ sở dữ liệu thay vì ẩn</span>
+              </div>
+              <input
+                type="checkbox"
+                checked={!!deleteDialog.hardDelete}
+                onChange={(e) => setDeleteDialog({ ...deleteDialog, hardDelete: e.target.checked })}
+                className="w-4 h-4 accent-rose-500 rounded cursor-pointer"
+              />
+            </div>
 
             {deleteDialog.errorNote && (
               <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
@@ -1225,9 +1412,50 @@ export default function FacilitiesPage() {
                   onClick={executeDelete}
                   className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30 transition"
                 >
-                  Xác Nhận Vô Hiệu Hóa
+                  {deleteDialog.hardDelete ? 'Xóa Vĩnh Viễn' : 'Xác Nhận Vô Hiệu Hóa'}
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: PURGE ALL VENUES CONFIRMATION */}
+      {showPurgeModal && facility && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="bg-slate-950 border border-rose-500/40 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
+            <h3 className="text-base font-black text-rose-400 mb-2 flex items-center gap-2">
+              <Trash2 className="w-5 h-5 text-rose-400" />
+              Xác Nhận Xóa Sạch Toàn Bộ Sân Bãi
+            </h3>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Hành động này sẽ <strong className="text-rose-400">xóa vĩnh viễn toàn bộ {courtVenues.length} sân thể thao</strong> thuộc cơ sở <strong className="text-white">&quot;{facility.name}&quot;</strong> để bạn có thể tự thêm lại hệ thống sân mới từ đầu.
+            </p>
+
+            <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+              <span>Lưu ý: Thao tác này sẽ dọn dẹp sạch sẽ danh sách sân. Bạn có thể tự thêm lại từng sân theo ý muốn ngay sau đó.</span>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                type="button"
+                disabled={purging}
+                onClick={() => setShowPurgeModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                disabled={purging}
+                onClick={handlePurgeAllVenues}
+                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/30 transition disabled:opacity-50 flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{purging ? 'Đang Xóa...' : 'Xác Nhận Xóa Sạch'}</span>
+              </button>
             </div>
           </div>
         </div>
