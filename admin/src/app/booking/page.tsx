@@ -24,6 +24,104 @@ import {
 import { api, Facility, Venue, SlotAvailability, Booking } from '@/lib/api';
 import QRCode from 'qrcode';
 
+const COURT_SPORTS = [
+  { value: 'FOOTBALL_5', label: '⚽ Bóng đá - Sân 5 người (Futsal)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 5', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'FOOTBALL_7', label: '⚽ Bóng đá - Sân 7 người (Mini)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 7', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'FOOTBALL_11', label: '⚽ Bóng đá - Sân 11 người (Tiêu chuẩn)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 11', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
+  { value: 'BASKETBALL', label: '🏀 Bóng rổ tiêu chuẩn (Indoor / Outdoor)', sport: 'BASKETBALL', badge: 'BÓNG RỔ', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
+  { value: 'BADMINTON', label: '🏸 Cầu lông thảm BWF chuyên nghiệp', sport: 'BADMINTON', badge: 'CẦU LÔNG', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  { value: 'PICKLEBALL', label: '🏓 Pickleball tiêu chuẩn QT', sport: 'PICKLEBALL', badge: 'PICKLEBALL', color: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
+  { value: 'TENNIS', label: '🎾 Quần vợt Tennis (Mặt cứng / Đất nện)', sport: 'TENNIS', badge: 'QUẦN VỢT TENNIS', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+  { value: 'VOLLEYBALL', label: '🏐 Bóng chuyền thi đấu', sport: 'VOLLEYBALL', badge: 'BÓNG CHUYỀN', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+];
+
+function getCourtSportBadge(venue: Venue) {
+  const vType = (venue.venueType || (venue as any).type || venue.sportType || '').toUpperCase();
+  const vName = (venue.name || '').toUpperCase();
+
+  const matched = COURT_SPORTS.find((cs) => cs.value === vType || cs.value === (venue as any).type);
+  if (matched) return matched;
+
+  if (vName.includes('FUTSAL') || vName.includes('SÂN 5') || vType.includes('FUTSAL') || vType.includes('5')) {
+    return COURT_SPORTS[0];
+  }
+  if (vName.includes('SÂN 7') || vType.includes('7')) {
+    return COURT_SPORTS[1];
+  }
+  if (vName.includes('SÂN 11') || vType.includes('11')) {
+    return COURT_SPORTS[2];
+  }
+  if (vName.includes('BÓNG ĐÁ') || vType.includes('FOOTBALL')) {
+    return COURT_SPORTS[0];
+  }
+  if (vName.includes('BÓNG RỔ') || vType.includes('BASKETBALL')) {
+    return COURT_SPORTS[3];
+  }
+  if (vName.includes('CẦU LÔNG') || vType.includes('BADMINTON')) {
+    return COURT_SPORTS[4];
+  }
+  if (vName.includes('PICKLEBALL') || vType.includes('PICKLEBALL')) {
+    return COURT_SPORTS[5];
+  }
+  if (vName.includes('TENNIS') || vName.includes('QUẦN VỢT') || vType.includes('TENNIS')) {
+    return COURT_SPORTS[6];
+  }
+  if (vName.includes('BÓNG CHUYỀN') || vType.includes('VOLLEYBALL')) {
+    return COURT_SPORTS[7];
+  }
+
+  return {
+    value: venue.venueType || 'SPORTS',
+    label: venue.venueType || 'Sân thể thao',
+    sport: 'OTHER',
+    badge: venue.venueType || 'THỂ THAO',
+    color: 'bg-slate-800 text-cyan-300 border-slate-700',
+  };
+}
+
+const getVenueSportCategory = (venue: Venue): string => {
+  const badge = getCourtSportBadge(venue);
+  if (badge.sport && badge.sport !== 'OTHER') {
+    return badge.sport;
+  }
+  const vName = (venue.name || '').toLowerCase();
+  const vType = (venue.venueType || (venue as any).type || venue.sportType || '').toUpperCase();
+
+  if (vType.startsWith('FOOTBALL') || vType.includes('FUTSAL') || vName.includes('bóng đá') || vName.includes('futsal') || vName.includes('sân 5') || vName.includes('sân 7') || vName.includes('sân 11') || vName.includes('cỏ') || vName.includes('f1') || vName.includes('f2') || vName.includes('f3')) {
+    return 'FOOTBALL';
+  }
+  if (vType === 'BASKETBALL' || vName.includes('bóng rổ') || vName.includes('basketball')) {
+    return 'BASKETBALL';
+  }
+  if (vType === 'BADMINTON' || vName.includes('cầu lông') || vName.includes('badminton')) {
+    return 'BADMINTON';
+  }
+  if (vType === 'PICKLEBALL' || vName.includes('pickleball')) {
+    return 'PICKLEBALL';
+  }
+  if (vType === 'TENNIS' || vName.includes('tennis') || vName.includes('quần vợt')) {
+    return 'TENNIS';
+  }
+  if (vType === 'VOLLEYBALL' || vName.includes('bóng chuyền') || vName.includes('volleyball')) {
+    return 'VOLLEYBALL';
+  }
+  if (vType.includes('ESPORT') || vType.includes('GAMING') || vName.includes('gaming') || vName.includes('máy') || vName.includes('esport') || vName.includes('vip') || vName.includes('fps')) {
+    return 'ESPORTS';
+  }
+  return 'OTHER';
+};
+
+const SPORT_FILTER_TABS = [
+  { id: 'ALL', label: 'Tất cả' },
+  { id: 'FOOTBALL', label: '⚽ Bóng Đá' },
+  { id: 'BASKETBALL', label: '🏀 Bóng Rổ' },
+  { id: 'BADMINTON', label: '🏸 Cầu Lông' },
+  { id: 'PICKLEBALL', label: '🏓 Pickleball' },
+  { id: 'TENNIS', label: '🎾 Tennis' },
+  { id: 'VOLLEYBALL', label: '🏐 Bóng Chuyền' },
+  { id: 'ESPORTS', label: '🎮 Esports' },
+];
+
 export default function CustomerBookingPage() {
   const [activeTab, setActiveTab] = useState<'BOOKING' | 'MY_TICKETS'>('BOOKING');
 
@@ -318,14 +416,7 @@ export default function CustomerBookingPage() {
 
   const filteredVenues = venues.filter((v) => {
     if (selectedSport === 'ALL') return true;
-    if (v.sportType) return v.sportType === selectedSport;
-    const name = v.name.toLowerCase();
-    if (selectedSport === 'FOOTBALL') return name.includes('bóng') || name.includes('futsal') || name.includes('sân 5') || name.includes('sân 7') || name.includes('sân 11') || name.includes('f1') || name.includes('f2') || name.includes('f3') || name.includes('cỏ');
-    if (selectedSport === 'BADMINTON') return name.includes('cầu lông') || name.includes('badminton');
-    if (selectedSport === 'PICKLEBALL') return name.includes('pickleball');
-    if (selectedSport === 'TENNIS') return name.includes('tennis') || name.includes('quần vợt');
-    if (selectedSport === 'ESPORTS') return name.includes('gaming') || name.includes('máy') || name.includes('esport') || name.includes('vip') || name.includes('fps') || name.includes('stage') || name.includes('std') || name.includes('couple');
-    return true;
+    return getVenueSportCategory(v) === selectedSport;
   });
 
   useEffect(() => {
@@ -463,26 +554,31 @@ export default function CustomerBookingPage() {
                 Lọc Theo Bộ Môn
               </h3>
               <div className="flex flex-wrap gap-2">
-                {[
-                  { id: 'ALL', label: 'Tất cả' },
-                  { id: 'FOOTBALL', label: '⚽ Bóng Đá' },
-                  { id: 'BADMINTON', label: '🏸 Cầu Lông' },
-                  { id: 'PICKLEBALL', label: '🏓 Pickleball' },
-                  { id: 'TENNIS', label: '🎾 Tennis' },
-                  { id: 'ESPORTS', label: '🎮 Esports' },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setSelectedSport(s.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                      selectedSport === s.id
-                        ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
-                        : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+                {SPORT_FILTER_TABS.map((s) => {
+                  const count = s.id === 'ALL'
+                    ? venues.length
+                    : venues.filter((v) => getVenueSportCategory(v) === s.id).length;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedSport(s.id)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                        selectedSport === s.id
+                          ? 'bg-cyan-500 text-slate-950 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                          : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <span>{s.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                          selectedSport === s.id ? 'bg-slate-950/20 text-slate-950 font-black' : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -505,6 +601,7 @@ export default function CustomerBookingPage() {
                   {filteredVenues.map((v) => {
                     const isSelected = selectedVenue?._id === v._id;
                     const price = v.basePricePerHour || v.defaultPrice || 150000;
+                    const badge = getCourtSportBadge(v);
                     return (
                       <div
                         key={v._id}
@@ -516,9 +613,14 @@ export default function CustomerBookingPage() {
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1">
-                          <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}>
-                            {v.name}
-                          </p>
+                          <div>
+                            <p className={`text-xs font-bold leading-tight ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}>
+                              {v.name}
+                            </p>
+                            <span className={`inline-block mt-1 text-[9px] font-bold px-1.5 py-0.5 rounded border ${badge.color}`}>
+                              {badge.badge}
+                            </span>
+                          </div>
                           {isSelected && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
                         </div>
                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/60">
@@ -573,7 +675,7 @@ export default function CustomerBookingPage() {
                     Khung Giờ 30 Phút
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {selectedVenue?.name || 'Vui lòng chọn sân'} • Ngày {selectedDate}
+                    {selectedVenue ? `${selectedVenue.name} (${getCourtSportBadge(selectedVenue).badge})` : 'Vui lòng chọn sân'} • Ngày {selectedDate}
                   </p>
                 </div>
                 <div className="flex items-center space-x-3 text-[11px] text-slate-400">
