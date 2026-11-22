@@ -176,6 +176,17 @@ export class BookingsService {
    * Lớp 3: Unique Partial Index của MongoDB trên Booking và BookingSlot (trên các leaf units cơ sở)
    */
   async holdBooking(userId: string, dto: HoldBookingDto): Promise<BookingDocument> {
+    // 0. Khóa chặt: Không cho phép đặt slot trong quá khứ
+    const now = new Date();
+    const slotStartTime = new Date(`${dto.bookingDate}T${dto.startTime}:00+07:00`);
+    if (slotStartTime.getTime() <= now.getTime()) {
+      throw new BadRequestException({
+        statusCode: 400,
+        errorCode: 'SLOT_IN_PAST',
+        message: 'Khung giờ này đã trôi qua. Vui lòng chọn khung giờ khác trong tương lai!',
+      });
+    }
+
     // 1. Kiểm tra Venue có tồn tại không
     const venue = await this.venueModel.findById(dto.venueId).exec();
     if (!venue) {
@@ -456,15 +467,32 @@ export class BookingsService {
       const nextIdx = hour * 2 + 1;
       const occupiedSlot = occupiedSlotMap.get(startIdx) || occupiedSlotMap.get(nextIdx);
 
+      const slotStart = new Date(`${dateStr}T${startTime}:00+07:00`);
+      const isPast = slotStart.getTime() <= now.getTime();
+
       let status = 'AVAILABLE';
       let holdExpiresAt = undefined;
 
       if (existingBooking) {
-        status = existingBooking.status;
-        holdExpiresAt = existingBooking.holdExpiresAt;
+        if (existingBooking.status === BookingStatus.CONFIRMED) {
+          status = BookingStatus.CONFIRMED;
+        } else if (isPast) {
+          status = 'PAST';
+        } else {
+          status = existingBooking.status;
+          holdExpiresAt = existingBooking.holdExpiresAt;
+        }
       } else if (occupiedSlot) {
-        status = occupiedSlot.status;
-        holdExpiresAt = occupiedSlot.holdExpiresAt;
+        if (occupiedSlot.status === BookingStatus.CONFIRMED) {
+          status = BookingStatus.CONFIRMED;
+        } else if (isPast) {
+          status = 'PAST';
+        } else {
+          status = occupiedSlot.status;
+          holdExpiresAt = occupiedSlot.holdExpiresAt;
+        }
+      } else if (isPast) {
+        status = 'PAST';
       }
 
       let price = venue.basePricePerHour;
@@ -484,6 +512,7 @@ export class BookingsService {
         status,
         price,
         holdExpiresAt,
+        isPast,
       });
     }
 
@@ -495,14 +524,23 @@ export class BookingsService {
     ) {
       const nightExisting = bookingMap.get('23:00');
       const nightSlot = occupiedSlotMap.get(46); // 23:00
+      const nightStart = new Date(`${dateStr}T23:00:00+07:00`);
+      const isNightPast = nightStart.getTime() <= now.getTime();
+
+      let nightStatus = nightExisting ? nightExisting.status : (nightSlot ? nightSlot.status : 'AVAILABLE');
+      if (isNightPast && nightStatus !== BookingStatus.CONFIRMED) {
+        nightStatus = 'PAST';
+      }
+
       slots.push({
         slot: '23:00 - 06:00 (Combo Đêm)',
         startTime: '23:00',
         endTime: '06:00',
-        status: nightExisting ? nightExisting.status : (nightSlot ? nightSlot.status : 'AVAILABLE'),
+        status: nightStatus,
         price: venue.pricingRules?.nightCombo?.comboPrice || 70000,
         isNightCombo: true,
         holdExpiresAt: nightExisting?.holdExpiresAt || nightSlot?.holdExpiresAt,
+        isPast: isNightPast,
       });
     }
 
@@ -539,8 +577,11 @@ export class BookingsService {
         }
       }
 
-      // 3. Phân định trạng thái chuẩn 4 mức: AVAILABLE, HELD, CONFIRMED, MAINTENANCE
-      let status: 'AVAILABLE' | 'HELD' | 'CONFIRMED' | 'MAINTENANCE';
+      // 3. Phân định trạng thái chuẩn 5 mức: AVAILABLE, HELD, CONFIRMED, MAINTENANCE, PAST
+      const blockStart = new Date(`${dateStr}T${startTime}:00+07:00`);
+      const isBlockPast = blockStart.getTime() <= now.getTime();
+
+      let status: 'AVAILABLE' | 'HELD' | 'CONFIRMED' | 'MAINTENANCE' | 'PAST';
       let holdExpiresAt: Date | undefined = undefined;
       let countdownSeconds: number | undefined = undefined;
 
@@ -554,14 +595,22 @@ export class BookingsService {
             status = 'CONFIRMED';
             confirmedCount++;
           } else if (occupied.status === BookingStatus.HELD && occupied.holdExpiresAt && occupied.holdExpiresAt > now) {
-            status = 'HELD';
-            holdExpiresAt = occupied.holdExpiresAt;
-            countdownSeconds = Math.max(0, Math.floor((occupied.holdExpiresAt.getTime() - now.getTime()) / 1000));
-            heldCount++;
+            if (isBlockPast) {
+              status = 'PAST';
+            } else {
+              status = 'HELD';
+              holdExpiresAt = occupied.holdExpiresAt;
+              countdownSeconds = Math.max(0, Math.floor((occupied.holdExpiresAt.getTime() - now.getTime()) / 1000));
+              heldCount++;
+            }
+          } else if (isBlockPast) {
+            status = 'PAST';
           } else {
             status = 'AVAILABLE';
             availableCount++;
           }
+        } else if (isBlockPast) {
+          status = 'PAST';
         } else {
           status = 'AVAILABLE';
           availableCount++;
@@ -578,6 +627,7 @@ export class BookingsService {
         holdExpiresAt,
         countdownSeconds,
         isOperating,
+        isPast: isBlockPast,
       });
     }
 
@@ -1019,6 +1069,16 @@ export class BookingsService {
     const venue = await this.venueModel.findById(dto.venueId).exec();
     if (!venue) {
       throw new NotFoundException('Không tìm thấy sân');
+    }
+
+    const now = new Date();
+    const slotEndTime = new Date(`${dto.bookingDate}T${dto.endTime}:00+07:00`);
+    if (slotEndTime.getTime() <= now.getTime()) {
+      throw new BadRequestException({
+        statusCode: 400,
+        errorCode: 'SLOT_IN_PAST',
+        message: 'Khung giờ này đã kết thúc. Vui lòng chọn khung giờ hiện tại hoặc tiếp theo!',
+      });
     }
 
     const bookingDate = new Date(`${dto.bookingDate}T00:00:00.000Z`);

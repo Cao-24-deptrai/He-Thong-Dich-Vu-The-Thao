@@ -122,6 +122,14 @@ const SPORT_FILTER_TABS = [
   { id: 'ESPORTS', label: '🎮 Esports' },
 ];
 
+const isSlotInPast = (dateStr: string, startTime: string): boolean => {
+  if (!dateStr || !startTime) return false;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const [hour, min] = startTime.split(':').map(Number);
+  const slotDate = new Date(y, m - 1, d, hour, min, 0, 0);
+  return slotDate.getTime() <= Date.now();
+};
+
 export default function CustomerBookingPage() {
   const [activeTab, setActiveTab] = useState<'BOOKING' | 'MY_TICKETS'>('BOOKING');
 
@@ -132,19 +140,35 @@ export default function CustomerBookingPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
-  // Date selection
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Date selection (format locally to prevent UTC date offset)
+  const formatLocalDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const todayStr = formatLocalDate(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
 
   // Generate 7 upcoming days
   const dateOptions = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(d);
     const dayName = i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : `Thứ ${d.getDay() + 1 === 1 ? 'CN' : d.getDay() + 1}`;
     const dayMonth = `${d.getDate()}/${d.getMonth() + 1}`;
     return { dateStr, dayName, dayMonth };
   });
+
+  // Real-time ticker to auto-lock past slots as time progresses
+  const [currentTimeTick, setCurrentTimeTick] = useState<number>(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTimeTick(Date.now());
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Slots availability
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
@@ -352,6 +376,11 @@ export default function CustomerBookingPage() {
   // Handle Hold Slot
   const handleHoldSlot = async () => {
     if (!selectedVenue || !selectedSlot) return;
+    if (isSlotInPast(selectedDate, selectedSlot.startTime)) {
+      setError('⏰ Khung giờ này đã trôi qua. Vui lòng chọn khung giờ khác trong tương lai!');
+      setSelectedSlot(null);
+      return;
+    }
     setError(null);
     setHolding(true);
 
@@ -688,6 +717,9 @@ export default function CustomerBookingPage() {
                   <span className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block" /> Đã đặt
                   </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700 inline-block" /> Đã qua
+                  </span>
                 </div>
               </div>
 
@@ -703,9 +735,10 @@ export default function CustomerBookingPage() {
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5 max-h-96 overflow-y-auto pr-1">
                   {slots.map((s, idx) => {
-                    const isAvailable = s.status === 'AVAILABLE';
-                    const isHeld = s.status === 'HELD';
+                    const isPast = isSlotInPast(selectedDate, s.startTime) || s.status === 'PAST';
                     const isBooked = s.status === 'CONFIRMED';
+                    const isHeld = s.status === 'HELD' && !isPast;
+                    const isAvailable = s.status === 'AVAILABLE' && !isPast && !isBooked;
                     const isSelected = selectedSlot?.startTime === s.startTime;
 
                     return (
@@ -717,15 +750,23 @@ export default function CustomerBookingPage() {
                           isSelected
                             ? 'bg-cyan-500 text-slate-950 font-black border-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.4)] scale-105'
                             : isAvailable
-                            ? 'bg-slate-950/80 border-emerald-500/30 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10'
+                            ? 'bg-slate-950/80 border-emerald-500/30 text-emerald-300 hover:border-emerald-400 hover:bg-emerald-500/10 cursor-pointer'
                             : isHeld
                             ? 'bg-amber-500/10 border-amber-500/30 text-amber-400/80 cursor-not-allowed opacity-60'
-                            : 'bg-slate-950/40 border-slate-800/50 text-slate-600 cursor-not-allowed opacity-40'
+                            : isBooked
+                            ? 'bg-slate-950/40 border-slate-800/50 text-slate-600 cursor-not-allowed opacity-40'
+                            : 'bg-slate-950/30 border-slate-900/60 text-slate-600 cursor-not-allowed opacity-40 select-none'
                         }`}
                       >
                         <div className="text-xs font-bold tracking-tight">{s.startTime}</div>
-                        <div className="text-[10px] mt-0.5 opacity-80">
-                          {isAvailable ? `${(s.price / 1000).toFixed(0)}k` : isHeld ? 'Giữ chỗ' : 'Đã đặt'}
+                        <div className="text-[10px] mt-0.5 opacity-80 font-medium">
+                          {isAvailable
+                            ? `${(s.price / 1000).toFixed(0)}k`
+                            : isHeld
+                            ? 'Giữ chỗ'
+                            : isBooked
+                            ? 'Đã đặt'
+                            : 'Đã qua'}
                         </div>
                       </button>
                     );

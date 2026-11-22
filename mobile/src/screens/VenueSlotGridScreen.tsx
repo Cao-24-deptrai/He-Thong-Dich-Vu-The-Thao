@@ -277,6 +277,8 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
                 const isHeld = s.status === 'HELD';
                 const isConfirmed = s.status === 'CONFIRMED';
 
+                const isPast = s.status === 'PAST';
+
                 let cardStyle = styles.slotCardAvailable;
                 let statusLabel = 'Còn trống';
                 let labelStyle = styles.slotStatusAvailable;
@@ -288,6 +290,10 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
                 } else if (isConfirmed) {
                   cardStyle = styles.slotCardConfirmed;
                   statusLabel = 'Đã đặt';
+                  labelStyle = styles.slotStatusConfirmed;
+                } else if (isPast) {
+                  cardStyle = styles.slotCardConfirmed;
+                  statusLabel = 'Đã qua';
                   labelStyle = styles.slotStatusConfirmed;
                 }
 
