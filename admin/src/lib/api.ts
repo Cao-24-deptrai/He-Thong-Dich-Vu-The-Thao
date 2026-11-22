@@ -327,14 +327,31 @@ class ApiService {
 
   public setUser(user: User) {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('admin_user', JSON.stringify(user));
+      try {
+        if (!user) {
+          localStorage.removeItem('admin_user');
+        } else {
+          localStorage.setItem('admin_user', JSON.stringify(user));
+        }
+      } catch (e) {
+        console.warn('Failed to save user to localStorage:', e);
+      }
     }
   }
 
   public getUser(): User | null {
     if (typeof window !== 'undefined') {
-      const data = localStorage.getItem('admin_user');
-      return data ? JSON.parse(data) : null;
+      try {
+        const data = localStorage.getItem('admin_user');
+        if (!data || data === 'undefined' || data === 'null') return null;
+        return JSON.parse(data);
+      } catch (e) {
+        console.warn('Corrupted admin_user in localStorage, clearing:', e);
+        try {
+          localStorage.removeItem('admin_user');
+        } catch (_) {}
+        return null;
+      }
     }
     return null;
   }

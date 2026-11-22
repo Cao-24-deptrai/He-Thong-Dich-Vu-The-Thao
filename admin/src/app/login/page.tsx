@@ -26,13 +26,13 @@ export default function LoginPage() {
     try {
       const res = await api.login(phone, password);
 
-      // Điều hướng thông minh theo vai trò
-      if (res.user.role === 'CUSTOMER') {
-        router.push('/booking');
-      } else if (res.user.role === 'STAFF') {
-        router.push('/walk-in');
+      // Điều hướng thông minh theo vai trò (Dùng window.location.href để nạp phiên mới sạch sẽ)
+      if (res?.user?.role === 'CUSTOMER') {
+        window.location.href = '/booking';
+      } else if (res?.user?.role === 'STAFF') {
+        window.location.href = '/walk-in';
       } else {
-        router.push('/facilities');
+        window.location.href = '/facilities';
       }
     } catch (err: any) {
       console.error('Login error:', err);

@@ -53,9 +53,9 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    // If not logged in and not on login/register page, redirect to register
+    // If not logged in and not on login/register page, redirect to login
     if (!currentUser && pathname !== '/login' && pathname !== '/register') {
-      router.push('/register');
+      router.replace('/login');
       return;
     }
 
@@ -69,86 +69,8 @@ export default function RootLayout({
     api.logout();
   };
 
-  // On login or register page, render full screen without layout sidebar
-  if (pathname === '/login' || pathname === '/register') {
-    return (
-      <html lang="vi">
-        <body>{children}</body>
-      </html>
-    );
-  }
-
-  // Customer portal layout (Header without admin sidebar)
-  if (user?.role === 'CUSTOMER' || pathname.startsWith('/booking')) {
-    return (
-      <html lang="vi">
-        <head>
-          <title>Phanta Sports • Đặt Sân Thể Thao Trực Tuyến</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-        </head>
-        <body className="bg-[#090D16] text-slate-100 flex flex-col min-h-screen relative selection:bg-cyan-500 selection:text-black">
-          {/* Top glow */}
-          <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Customer Top Header */}
-          <header className="sticky top-0 z-50 bg-[#0d121f]/95 border-b border-slate-800/80 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-              <Link href="/booking" className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                  ⚡
-                </div>
-                <div>
-                  <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
-                    PHANTA SPORTS
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                      Member
-                    </span>
-                  </h1>
-                  <p className="text-[11px] text-slate-400 font-medium">Đặt Sân & Dịch Vụ Thể Thao Trực Tuyến</p>
-                </div>
-              </Link>
-
-              <div className="flex items-center space-x-4">
-                {user ? (
-                  <>
-                    <div className="hidden sm:flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
-                      <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">
-                        <UserIcon className="w-4 h-4" />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-white leading-tight">{user.fullName || user.phone}</p>
-                        <span className="text-[10px] text-emerald-400 font-mono">Thành viên</span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-rose-400 bg-slate-900/60 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 rounded-xl transition"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Đăng xuất</span>
-                    </button>
-                  </>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                  >
-                    Đăng nhập
-                  </Link>
-                )}
-              </div>
-            </div>
-          </header>
-
-          {/* Customer Page Body */}
-          <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10">
-            {children}
-          </main>
-        </body>
-      </html>
-    );
-  }
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isCustomerPortal = user?.role === 'CUSTOMER' || pathname.startsWith('/booking');
 
   interface NavSubItem {
     href: string;
@@ -344,13 +266,92 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <head>
-        <title>Hệ Thống Quản Trị Sân Thể Thao & Esports • Neo-Athletic</title>
+        <title>
+          {isCustomerPortal
+            ? 'Phanta Sports • Đặt Sân Thể Thao Trực Tuyến'
+            : isAuthPage
+            ? 'Sports & Esports Booking • Đăng nhập'
+            : 'Hệ Thống Quản Trị Sân Thể Thao & Esports • Neo-Athletic'}
+        </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="bg-[#090D16] text-slate-100 flex min-h-screen relative selection:bg-cyan-500 selection:text-black">
-        {/* Ambient Top Glow Orbs */}
-        <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
+      <body
+        className={
+          isAuthPage
+            ? 'bg-slate-900 text-slate-100 min-h-screen'
+            : isCustomerPortal
+            ? 'bg-[#090D16] text-slate-100 flex flex-col min-h-screen relative selection:bg-cyan-500 selection:text-black'
+            : 'bg-[#090D16] text-slate-100 flex min-h-screen relative selection:bg-cyan-500 selection:text-black'
+        }
+      >
+        {isAuthPage ? (
+          children
+        ) : isCustomerPortal ? (
+          <>
+            {/* Top glow */}
+            <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Customer Top Header */}
+            <header className="sticky top-0 z-50 bg-[#0d121f]/95 border-b border-slate-800/80 backdrop-blur-xl">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+                <Link href="/booking" className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+                    ⚡
+                  </div>
+                  <div>
+                    <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
+                      PHANTA SPORTS
+                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+                        Member
+                      </span>
+                    </h1>
+                    <p className="text-[11px] text-slate-400 font-medium">Đặt Sân & Dịch Vụ Thể Thao Trực Tuyến</p>
+                  </div>
+                </Link>
+
+                <div className="flex items-center space-x-4">
+                  {user ? (
+                    <>
+                      <div className="hidden sm:flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
+                        <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">
+                          <UserIcon className="w-4 h-4" />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-white leading-tight">{user.fullName || user.phone}</p>
+                          <span className="text-[10px] text-emerald-400 font-mono">Thành viên</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-rose-400 bg-slate-900/60 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 rounded-xl transition"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Đăng xuất</span>
+                      </button>
+                    </>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="px-4 py-2 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                    >
+                      Đăng nhập
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </header>
+
+            {/* Customer Page Body */}
+            <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10">
+              {children}
+            </main>
+          </>
+        ) : (
+          <>
+            {/* Ambient Top Glow Orbs */}
+            <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Desktop Sidebar */}
         <aside className="hidden md:flex flex-col w-72 bg-[#0d121f]/95 border-r border-slate-800/80 backdrop-blur-xl shrink-0 z-20">
@@ -595,8 +596,9 @@ export default function RootLayout({
         <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto w-full relative z-10">
           {children}
         </main>
-      </body>
-
-    </html>
+      </>
+    )}
+  </body>
+</html>
   );
 }
