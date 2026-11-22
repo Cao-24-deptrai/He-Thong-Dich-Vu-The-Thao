@@ -209,7 +209,6 @@ export class BookingsService {
 
     try {
       // --- LỚP 2: Business Hold & Composite Pitches Check (Kiểm tra DB) ---
-      const now = new Date();
       const leafUnits = this.resolveLeafUnits(venue);
       const slotBlocks = this.getSlotsForRange(dto.startTime, dto.endTime);
       const slotIndexes = slotBlocks.map((s) => s.slotIndex);
@@ -1106,7 +1105,6 @@ export class BookingsService {
     const leafUnits = this.resolveLeafUnits(venue);
     const slotBlocks = this.getSlotsForRange(dto.startTime, dto.endTime);
     const slotIndexes = slotBlocks.map((s) => s.slotIndex);
-    const now = new Date();
 
     // Kiểm tra DB trước khi lưu walk-in
     const occupiedSlot = await this.bookingSlotModel
