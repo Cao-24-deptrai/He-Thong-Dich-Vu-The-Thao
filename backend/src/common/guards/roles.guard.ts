@@ -27,6 +27,16 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
+    // MANAGER có quyền quản lý và kế thừa các quyền nghiệp vụ của STAFF
+    if (user.role === UserRole.MANAGER) {
+      if (
+        requiredRoles.includes(UserRole.MANAGER) ||
+        requiredRoles.includes(UserRole.STAFF)
+      ) {
+        return true;
+      }
+    }
+
     const hasRole = requiredRoles.includes(user.role);
     if (!hasRole) {
       throw new ForbiddenException(`Quyền truy cập bị từ chối: Yêu cầu vai trò [${requiredRoles.join(', ')}]`);

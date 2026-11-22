@@ -14,9 +14,9 @@ export default () => ({
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   },
   admin: {
-    phone: process.env.ADMIN_PHONE || '0999999999',
-    password: process.env.ADMIN_PASSWORD || 'Admin@123456',
-    name: process.env.ADMIN_NAME || 'Super Admin',
+    phone: process.env.ADMIN_PHONE || '240106',
+    password: process.env.ADMIN_PASSWORD || '123456',
+    name: process.env.ADMIN_NAME || 'Quản trị viên',
   },
   payos: {
     clientId: process.env.PAYOS_CLIENT_ID || '',

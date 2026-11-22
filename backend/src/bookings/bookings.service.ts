@@ -682,7 +682,13 @@ export class BookingsService {
       ? (userOrUserId?.userId || userOrUserId?._id?.toString() || userOrUserId?.id)
       : userOrUserId;
     const role = typeof userOrUserId === 'object' ? userOrUserId?.role : undefined;
-    const isStaffOrAdmin = role === UserRole.STAFF || role === UserRole.ADMIN || role === 'STAFF' || role === 'ADMIN';
+    const isStaffOrAdmin =
+      role === UserRole.STAFF ||
+      role === UserRole.ADMIN ||
+      role === UserRole.MANAGER ||
+      role === 'STAFF' ||
+      role === 'ADMIN' ||
+      role === 'MANAGER';
     const isOwner = booking.userId?.toString() === userId;
 
     if (!isStaffOrAdmin && !isOwner) {
@@ -814,7 +820,13 @@ export class BookingsService {
         ? (userOrUserId?.userId || userOrUserId?._id?.toString() || userOrUserId?.id)
         : userOrUserId;
       const role = typeof userOrUserId === 'object' ? userOrUserId?.role : undefined;
-      const isStaffOrAdmin = role === UserRole.STAFF || role === UserRole.ADMIN || role === 'STAFF' || role === 'ADMIN';
+      const isStaffOrAdmin =
+        role === UserRole.STAFF ||
+        role === UserRole.ADMIN ||
+        role === UserRole.MANAGER ||
+        role === 'STAFF' ||
+        role === 'ADMIN' ||
+        role === 'MANAGER';
       const isOwner = booking.userId?.toString() === userId;
 
       if (!isStaffOrAdmin && !isOwner) {

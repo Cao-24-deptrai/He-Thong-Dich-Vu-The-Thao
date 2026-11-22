@@ -17,12 +17,12 @@ async function seed() {
   const venuesService = app.get(VenuesService);
   const configService = app.get(ConfigService);
 
-  const adminPhone = configService.get<string>('admin.phone') || '0999999999';
-  const adminPassword = configService.get<string>('admin.password') || 'Admin@123456';
-  const adminName = configService.get<string>('admin.name') || 'Super Admin';
+  const adminPhone = configService.get<string>('admin.phone') || '240106';
+  const adminPassword = configService.get<string>('admin.password') || '123456';
+  const adminName = configService.get<string>('admin.name') || 'Quản trị viên';
 
   try {
-    // 1. Tạo tài khoản Admin & Staff
+    // 1. Tạo tài khoản Admin, Staff (Nhân viên quầy), Manager (Quản lý)
     let admin = await usersService.findByPhone(adminPhone);
     if (!admin) {
       admin = await usersService.create({
@@ -32,24 +32,39 @@ async function seed() {
         email: 'admin@sportsbooking.vn',
         role: UserRole.ADMIN,
       });
-      logger.log(`✅ Đã tạo tài khoản ADMIN: SĐT: ${adminPhone} | Mật khẩu: ${adminPassword}`);
+      logger.log(`✅ Đã tạo tài khoản ADMIN: Tài khoản: ${adminPhone} | Mật khẩu: ${adminPassword}`);
     } else {
       logger.log(`ℹ️ Tài khoản ADMIN (${adminPhone}) đã tồn tại.`);
     }
 
-    const staffPhone = '0988888888';
+    const staffPhone = '280906';
     let staff = await usersService.findByPhone(staffPhone);
     if (!staff) {
       staff = await usersService.create({
         phone: staffPhone,
-        password: 'Staff@123456',
+        password: '123456',
         fullName: 'Nhân viên Quầy',
         email: 'staff@sportsbooking.vn',
         role: UserRole.STAFF,
       });
-      logger.log(`✅ Đã tạo tài khoản STAFF: SĐT: ${staffPhone} | Mật khẩu: Staff@123456`);
+      logger.log(`✅ Đã tạo tài khoản STAFF: Tài khoản: ${staffPhone} | Mật khẩu: 123456`);
     } else {
       logger.log(`ℹ️ Tài khoản STAFF (${staffPhone}) đã tồn tại.`);
+    }
+
+    const managerPhone = '190705';
+    let manager = await usersService.findByPhone(managerPhone);
+    if (!manager) {
+      manager = await usersService.create({
+        phone: managerPhone,
+        password: '123456',
+        fullName: 'Quản lý Cơ sở',
+        email: 'manager@sportsbooking.vn',
+        role: UserRole.MANAGER,
+      });
+      logger.log(`✅ Đã tạo tài khoản MANAGER: Tài khoản: ${managerPhone} | Mật khẩu: 123456`);
+    } else {
+      logger.log(`ℹ️ Tài khoản MANAGER (${managerPhone}) đã tồn tại.`);
     }
 
     // 2. Tạo Cơ sở thể thao mẫu nếu chưa có

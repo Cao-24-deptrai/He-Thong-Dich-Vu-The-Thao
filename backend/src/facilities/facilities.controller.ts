@@ -32,9 +32,9 @@ export class FacilitiesController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.MANAGER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Tạo tổ hợp thể thao mới (Dành cho ADMIN / OWNER)' })
+  @ApiOperation({ summary: 'Tạo tổ hợp thể thao mới (Dành cho ADMIN / OWNER / MANAGER)' })
   @ApiResponse({ status: 201, description: 'Tạo thành công' })
   async create(
     @Body() dto: CreateFacilityDto,
@@ -45,9 +45,9 @@ export class FacilitiesController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.MANAGER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cập nhật thông tin tổ hợp thể thao (ADMIN / OWNER)' })
+  @ApiOperation({ summary: 'Cập nhật thông tin tổ hợp thể thao (ADMIN / OWNER / MANAGER)' })
   @ApiResponse({ status: 200, description: 'Cập nhật thành công' })
   @ApiResponse({ status: 400, description: 'Lỗi ràng buộc dữ liệu' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy tổ hợp' })
@@ -60,9 +60,9 @@ export class FacilitiesController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.MANAGER)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) tổ hợp thể thao (ADMIN / OWNER)' })
+  @ApiOperation({ summary: 'Vô hiệu hóa (Soft delete) tổ hợp thể thao (ADMIN / OWNER / MANAGER)' })
   @ApiResponse({ status: 200, description: 'Vô hiệu hóa thành công (isActive = false)' })
   @ApiResponse({ status: 400, description: 'Không thể vô hiệu hóa vì còn sân con đang hoạt động' })
   @ApiResponse({ status: 404, description: 'Không tìm thấy tổ hợp' })
@@ -72,7 +72,7 @@ export class FacilitiesController {
 
   @Post('consolidate-single')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.MANAGER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Gom toàn bộ hệ thống về 1 cơ sở duy nhất (Single Facility)' })
   async consolidateSingle() {

@@ -4,13 +4,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShieldCheck, LogIn, Lock, Phone, AlertCircle, Clock, AlertTriangle, UserCheck, User } from 'lucide-react';
+import { LogIn, Lock, Phone, AlertCircle, Clock, AlertTriangle } from 'lucide-react';
 import { api } from '@/lib/api';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [phone, setPhone] = useState('0999999999');
-  const [password, setPassword] = useState('Admin@123456');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lockedInfo, setLockedInfo] = useState<{ remainingMinutes?: number; lockedUntil?: string } | null>(null);
@@ -55,14 +55,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillQuick = (quickPhone: string, quickPass: string) => {
-    setPhone(quickPhone);
-    setPassword(quickPass);
-    setError(null);
-    setLockedInfo(null);
-    setAttemptsLeft(null);
   };
 
   return (
@@ -119,7 +111,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">
-                Số điện thoại
+                Tài khoản / Số điện thoại
               </label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -130,7 +122,7 @@ export default function LoginPage() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="0999999999"
+                  placeholder="Nhập tài khoản (vd: 240106)"
                   className="block w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
               </div>
@@ -186,62 +178,6 @@ export default function LoginPage() {
               </p>
             </div>
           </form>
-
-          {/* Quick login buttons for testing */}
-          <div className="mt-8 pt-6 border-t border-slate-700/80">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 text-center">
-              Tài khoản mẫu đăng nhập nhanh
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button
-                type="button"
-                onClick={() => fillQuick('0911223344', 'User@123456')}
-                className="px-2.5 py-2 text-xs bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-cyan-500/50 rounded-lg text-slate-300 text-left transition"
-              >
-                <div className="font-semibold text-cyan-400 flex items-center space-x-1">
-                  <User className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Khách hàng</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">0911223344</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fillQuick('0999999999', 'Admin@123456')}
-                className="px-2.5 py-2 text-xs bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-blue-500/50 rounded-lg text-slate-300 text-left transition"
-              >
-                <div className="font-semibold text-white flex items-center space-x-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Admin</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">0999999999</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fillQuick('0988888888', 'Staff@123456')}
-                className="px-2.5 py-2 text-xs bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-emerald-500/50 rounded-lg text-slate-300 text-left transition"
-              >
-                <div className="font-semibold text-white flex items-center space-x-1">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Lễ tân</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">0988888888</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => fillQuick('0911000003', 'Password@123')}
-                className="px-2.5 py-2 text-xs bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-purple-500/50 rounded-lg text-slate-300 text-left transition"
-              >
-                <div className="font-semibold text-white flex items-center space-x-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Quản lý</span>
-                </div>
-                <div className="text-[10px] text-slate-400 font-mono mt-0.5">0911000003</div>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
