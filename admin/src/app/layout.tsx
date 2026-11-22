@@ -27,7 +27,8 @@ import {
   BarChart3,
   PackageCheck,
   Star,
-  Ticket
+  Ticket,
+  ChevronDown
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -41,6 +42,11 @@ export default function RootLayout({
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroupId((prev) => (prev === groupId ? null : groupId));
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -50,6 +56,12 @@ export default function RootLayout({
     // If not logged in and not on login/register page, redirect to register
     if (!currentUser && pathname !== '/login' && pathname !== '/register') {
       router.push('/register');
+      return;
+    }
+
+    // Nhân viên quầy (STAFF) không có quyền vào Quản Lý Sân Bãi (/facilities)
+    if (currentUser?.role === 'STAFF' && pathname.startsWith('/facilities')) {
+      router.replace('/walk-in');
     }
   }, [pathname, router]);
 
@@ -138,110 +150,196 @@ export default function RootLayout({
     );
   }
 
-  const navItems = [
+  interface NavSubItem {
+    href: string;
+    label: string;
+    icon: any;
+    description: string;
+    roles?: string[];
+  }
+
+  interface NavGroup {
+    id: string;
+    label: string;
+    icon: any;
+    description: string;
+    items: NavSubItem[];
+  }
+
+  const navGroups: NavGroup[] = [
     {
-      href: '/facilities',
-      label: 'Quản Lý Sân Bãi',
-      icon: Building2,
-      description: 'Quản lý danh sách sân, bảng giá và cơ sở',
-    },
-    {
-      href: '/walk-in',
-      label: 'Đặt tại Quầy (Walk-in)',
+      id: 'operations',
+      label: 'Vận Hành & Đặt Sân',
       icon: CalendarPlus,
-      description: 'Lịch sân & đặt chỗ tại chỗ',
+      description: 'Lịch sân, walk-in, check-in QR & hoàn tiền',
+      items: [
+        {
+          href: '/facilities',
+          label: 'Quản Lý Sân Bãi',
+          icon: Building2,
+          description: 'Quản lý danh sách sân, bảng giá và cơ sở',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
+        },
+        {
+          href: '/walk-in',
+          label: 'Đặt tại Quầy (Walk-in)',
+          icon: CalendarPlus,
+          description: 'Lịch sân & đặt chỗ tại chỗ',
+        },
+        {
+          href: '/checkin',
+          label: 'Quét Check-in QR',
+          icon: QrCode,
+          description: 'Xác thực vé vào sân bằng QR',
+        },
+        {
+          href: '/refunds',
+          label: 'Xử lý Hoàn tiền',
+          icon: RotateCcw,
+          description: 'Booking thanh toán muộn (Refund Pending)',
+        },
+      ],
     },
     {
-      href: '/checkin',
-      label: 'Quét Check-in QR',
-      icon: QrCode,
-      description: 'Xác thực vé vào sân bằng QR',
-    },
-    {
-      href: '/refunds',
-      label: 'Xử lý Hoàn tiền',
-      icon: RotateCcw,
-      description: 'Booking thanh toán muộn (Refund Pending)',
-    },
-    {
-      href: '/gym',
-      label: 'Hội Viên Gym',
+      id: 'services',
+      label: 'Dịch Vụ & Bộ Môn',
       icon: Dumbbell,
-      description: 'Quản lý gói tập & soát vé (Mục 6.1)',
+      description: 'Gym, PT, giải đấu, gaming & cáp kèo',
+      items: [
+        {
+          href: '/gym',
+          label: 'Hội Viên Gym',
+          icon: Dumbbell,
+          description: 'Quản lý gói tập & soát vé (Mục 6.1)',
+        },
+        {
+          href: '/pt-classes',
+          label: 'PT & Lớp Học',
+          icon: Award,
+          description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
+        },
+        {
+          href: '/tournaments',
+          label: 'Giải Đấu Thể Thao',
+          icon: Trophy,
+          description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
+        },
+        {
+          href: '/gaming',
+          label: 'Khu Gaming 100 Máy',
+          icon: Gamepad2,
+          description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
+        },
+        {
+          href: '/matchmaking',
+          label: 'Cáp Kèo Thể Thao',
+          icon: Users,
+          description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+        },
+      ],
     },
     {
-      href: '/pt-classes',
-      label: 'PT & Lớp Học',
-      icon: Award,
-      description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
-    },
-    {
-      href: '/tournaments',
-      label: 'Giải Đấu Thể Thao',
-      icon: Trophy,
-      description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
-    },
-    {
-      href: '/gaming',
-      label: 'Khu Gaming 100 Máy',
-      icon: Gamepad2,
-      description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
-    },
-    {
-      href: '/bridge',
-      label: 'Bridge Agent & IoT',
-      icon: Cpu,
-      description: 'Thiết bị quầy & Cửa xoay (M22)',
-    },
-    {
-      href: '/canteen',
-      label: 'POS Canteen',
+      id: 'retail',
+      label: 'Bán Lẻ & Tiện Ích',
       icon: Coffee,
-      description: 'Bán lẻ & ca thu ngân (M12)',
+      description: 'POS Canteen, dụng cụ & vouchers',
+      items: [
+        {
+          href: '/canteen',
+          label: 'POS Canteen',
+          icon: Coffee,
+          description: 'Bán lẻ & ca thu ngân (M12)',
+        },
+        {
+          href: '/rentals',
+          label: 'Cho Thuê Dụng Cụ',
+          icon: PackageCheck,
+          description: 'Thuê dụng cụ theo slot (M13)',
+        },
+        {
+          href: '/vouchers',
+          label: 'Mã Giảm Giá & Combo',
+          icon: Ticket,
+          description: 'Vouchers & gói ưu đãi (M15)',
+        },
+      ],
     },
     {
-      href: '/rentals',
-      label: 'Cho Thuê Dụng Cụ',
-      icon: PackageCheck,
-      description: 'Thuê dụng cụ theo slot (M13)',
-    },
-    {
-      href: '/invoices',
-      label: 'Hóa Đơn Điện Tử',
+      id: 'finance',
+      label: 'Tài Chính & CSKH',
       icon: Receipt,
-      description: 'Hóa đơn VAT & tra cứu (M08)',
+      description: 'Hóa đơn VAT, đánh giá & thông báo',
+      items: [
+        {
+          href: '/invoices',
+          label: 'Hóa Đơn Điện Tử',
+          icon: Receipt,
+          description: 'Hóa đơn VAT & tra cứu (M08)',
+        },
+        {
+          href: '/reviews',
+          label: 'Đánh Giá Dịch Vụ',
+          icon: Star,
+          description: 'Phản hồi khách hàng (FR-16)',
+        },
+        {
+          href: '/notifications',
+          label: 'Thông Báo',
+          icon: Bell,
+          description: 'Push FCM & Zalo ZNS (M09)',
+        },
+      ],
     },
     {
-      href: '/notifications',
-      label: 'Thông Báo',
-      icon: Bell,
-      description: 'Push FCM & Zalo ZNS (M09)',
-    },
-    {
-      href: '/vouchers',
-      label: 'Mã Giảm Giá & Combo',
-      icon: Ticket,
-      description: 'Vouchers & gói ưu đãi (M15)',
-    },
-    {
-      href: '/reviews',
-      label: 'Đánh Giá Dịch Vụ',
-      icon: Star,
-      description: 'Phản hồi khách hàng (FR-16)',
-    },
-    {
-      href: '/analytics',
-      label: 'Báo Cáo & Thống Kê',
+      id: 'system',
+      label: 'Hệ Thống & Báo Cáo',
       icon: BarChart3,
-      description: 'Doanh thu & tỷ lệ lấp đầy (M17)',
-    },
-    {
-      href: '/matchmaking',
-      label: 'Cáp Kèo Thể Thao',
-      icon: Users,
-      description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+      description: 'Thống kê doanh thu & thiết bị IoT',
+      items: [
+        {
+          href: '/analytics',
+          label: 'Báo Cáo & Thống Kê',
+          icon: BarChart3,
+          description: 'Doanh thu & tỷ lệ lấp đầy (M17)',
+        },
+        {
+          href: '/bridge',
+          label: 'Bridge Agent & IoT',
+          icon: Cpu,
+          description: 'Thiết bị quầy & Cửa xoay (M22)',
+        },
+      ],
     },
   ];
+
+  const filteredNavGroups = navGroups
+    .map((group) => {
+      const validItems = group.items.filter((item) => {
+        // Ẩn Quản Lý Sân Bãi đối với Nhân viên quầy (STAFF)
+        if (user?.role === 'STAFF' && item.href === '/facilities') {
+          return false;
+        }
+        if (item.roles && user && !item.roles.includes(user.role)) {
+          return false;
+        }
+        return true;
+      });
+      return {
+        ...group,
+        items: validItems,
+      };
+    })
+    .filter((group) => group.items.length > 0);
+
+  // Tự động mở nhóm chứa trang hiện tại khi pathname hoặc vai trò thay đổi
+  useEffect(() => {
+    const activeGroup = filteredNavGroups.find((group) =>
+      group.items.some((item) => pathname.startsWith(item.href))
+    );
+    if (activeGroup) {
+      setExpandedGroupId(activeGroup.id);
+    }
+  }, [pathname, user?.role]);
 
   return (
     <html lang="vi">
@@ -275,31 +373,86 @@ export default function RootLayout({
           </div>
 
           {/* Navigation Links */}
-          <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
-              VẬN HÀNH & ĐIỀU HÀNH
+          <nav className="flex-1 p-3.5 space-y-1.5 overflow-y-auto">
+            <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500">
+              DANH MỤC QUẢN TRỊ
             </div>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname.startsWith(item.href);
+            {filteredNavGroups.map((group) => {
+              const GroupIcon = group.icon;
+              const isExpanded = expandedGroupId === group.id;
+              const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
+
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-start space-x-3 px-3.5 py-3 rounded-2xl transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-cyan-300 border-l-4 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.15)] font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
-                  <div>
-                    <div className="text-sm tracking-tight">{item.label}</div>
-                    <div className={`text-[11px] mt-0.5 ${isActive ? 'text-cyan-200/70' : 'text-slate-500'}`}>
-                      {item.description}
+                <div key={group.id} className="space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all duration-200 text-left ${
+                      isGroupActive
+                        ? 'bg-slate-800/90 text-white font-bold border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
+                        : isExpanded
+                        ? 'bg-slate-800/50 text-slate-200 border border-slate-700/60'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5 min-w-0">
+                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                        isGroupActive
+                          ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-black shadow-md shadow-cyan-500/30'
+                          : isExpanded
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          : 'bg-slate-800 text-slate-400'
+                      }`}>
+                        <GroupIcon className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-bold tracking-tight truncate flex items-center gap-1.5">
+                          {group.label}
+                          {isGroupActive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-500 truncate font-normal">
+                          {group.items.length} mục chức năng
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                    <ChevronDown
+                      className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                        isExpanded ? 'rotate-180 text-cyan-400' : 'text-slate-500'
+                      }`}
+                    />
+                  </button>
+
+                  {/* Sub-items with smooth accordion dropdown */}
+                  {isExpanded && (
+                    <div className="ml-3.5 pl-3 border-l-2 border-slate-800/80 space-y-1 py-1">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = pathname.startsWith(item.href);
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`flex items-start space-x-2.5 px-3 py-2 rounded-xl transition-all duration-200 ${
+                              isActive
+                                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-cyan-300 border-l-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] font-bold'
+                                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <Icon className={`w-4 h-4 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
+                            <div className="min-w-0">
+                              <div className="text-xs tracking-tight truncate leading-tight">{item.label}</div>
+                              <div className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-cyan-200/70' : 'text-slate-500'}`}>
+                                {item.description}
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -349,23 +502,77 @@ export default function RootLayout({
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 bg-[#090D16]/98 pt-20 p-6 flex flex-col justify-between">
-            <nav className="space-y-2">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname.startsWith(item.href);
+          <div className="md:hidden fixed inset-0 z-40 bg-[#090D16]/98 pt-20 p-6 flex flex-col justify-between overflow-y-auto">
+            <nav className="space-y-2 overflow-y-auto pb-4">
+              {filteredNavGroups.map((group) => {
+                const GroupIcon = group.icon;
+                const isExpanded = expandedGroupId === group.id;
+                const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
+
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center space-x-3 p-3.5 rounded-2xl ${
-                      isActive ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold' : 'text-slate-300 bg-slate-900/80 border border-slate-800'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 text-cyan-400" />
-                    <span className="text-sm font-semibold">{item.label}</span>
-                  </Link>
+                  <div key={group.id} className="space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-200 text-left ${
+                        isGroupActive
+                          ? 'bg-slate-800/90 text-white font-bold border border-cyan-500/40'
+                          : isExpanded
+                          ? 'bg-slate-800/60 text-slate-200 border border-slate-700/60'
+                          : 'text-slate-300 bg-slate-900/80 border border-slate-800'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          isGroupActive
+                            ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-black'
+                            : 'bg-slate-800 text-cyan-400'
+                        }`}>
+                          <GroupIcon className="w-4 h-4" />
+                        </div>
+                        <div className="truncate">
+                          <div className="text-sm font-semibold tracking-tight truncate">
+                            {group.label}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">
+                            {group.items.length} mục chức năng
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronDown
+                        className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-180 text-cyan-400' : 'text-slate-500'
+                        }`}
+                      />
+                    </button>
+
+                    {isExpanded && (
+                      <div className="ml-4 pl-3 border-l-2 border-slate-800 space-y-1.5 py-1">
+                        {group.items.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = pathname.startsWith(item.href);
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={`flex items-center space-x-3 p-3 rounded-xl ${
+                                isActive
+                                  ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold'
+                                  : 'text-slate-300 bg-slate-900/60 border border-slate-800/60'
+                              }`}
+                            >
+                              <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
+                              <div className="min-w-0">
+                                <div className="text-xs font-semibold truncate">{item.label}</div>
+                                <div className="text-[10px] text-slate-500 truncate">{item.description}</div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>

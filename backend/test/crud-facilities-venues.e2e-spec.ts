@@ -16,6 +16,7 @@ describe('Changelog Item 1: CRUD Facilities & Venues, Soft Delete & Ràng Buộc
   let bookingModel: Model<Booking>;
 
   let adminToken: string;
+  let staffToken: string;
   let testFacilityId: string;
   let testVenueId: string;
 
@@ -38,6 +39,12 @@ describe('Changelog Item 1: CRUD Facilities & Venues, Soft Delete & Ràng Buộc
       .post('/auth/login')
       .send({ phone: '0999999999', password: 'Admin@123456' });
     adminToken = adminLoginRes.body.accessToken;
+
+    // Lấy token Staff
+    const staffLoginRes = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ phone: '0988888888', password: 'Staff@123456' });
+    staffToken = staffLoginRes.body.accessToken;
   });
 
   afterAll(async () => {
@@ -202,5 +209,36 @@ describe('Changelog Item 1: CRUD Facilities & Venues, Soft Delete & Ràng Buộc
     const foundInAllFac = getAllFacilitiesRes.body.find((f: any) => f._id === testFacilityId);
     expect(foundInAllFac).toBeDefined();
     expect(foundInAllFac.isActive).toBe(false);
+  });
+
+  it('9. Nhân viên quầy (STAFF) không có quyền tạo/sửa/xóa cơ sở & sân -> 403 Forbidden', async () => {
+    // Thử tạo cơ sở mới
+    await request(app.getHttpServer())
+      .post('/facilities')
+      .set('Authorization', `Bearer ${staffToken}`)
+      .send({
+        name: 'Cơ sở thử nghiệm trái phép',
+        address: 'Địa chỉ test',
+        sportType: 'FOOTBALL',
+      })
+      .expect(403);
+
+    // Thử gom cơ sở consolidate-single
+    await request(app.getHttpServer())
+      .post('/facilities/consolidate-single')
+      .set('Authorization', `Bearer ${staffToken}`)
+      .expect(403);
+
+    // Thử tạo sân mới
+    await request(app.getHttpServer())
+      .post('/venues')
+      .set('Authorization', `Bearer ${staffToken}`)
+      .send({
+        facilityId: new Types.ObjectId().toString(),
+        name: 'Sân bóng mini trái phép',
+        venueType: 'FOOTBALL_5',
+        defaultPrice: 100000,
+      })
+      .expect(403);
   });
 });

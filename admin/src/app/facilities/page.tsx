@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   Building2, 
   Plus, 
@@ -23,7 +24,7 @@ import {
   SlidersHorizontal,
   Info
 } from 'lucide-react';
-import { api, Facility, Venue, PricingRule } from '@/lib/api';
+import { api, Facility, Venue, PricingRule, User } from '@/lib/api';
 
 const SPORT_TYPES = [
   { value: 'ALL', label: 'Tất cả bộ môn', icon: '🏆' },
@@ -91,6 +92,9 @@ function getCourtSportBadge(venue: Venue) {
 }
 
 export default function FacilitiesPage() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isStaffDenied, setIsStaffDenied] = useState(false);
   const [facility, setFacility] = useState<Facility | null>(null);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,8 +211,15 @@ export default function FacilitiesPage() {
   };
 
   useEffect(() => {
+    const user = api.getUser();
+    setCurrentUser(user);
+    if (user?.role === 'STAFF') {
+      setIsStaffDenied(true);
+      router.replace('/walk-in');
+      return;
+    }
     loadData();
-  }, [includeInactiveVenues]);
+  }, [includeInactiveVenues, router]);
 
   // Consolidate database to single facility
   const handleConsolidate = async () => {
@@ -507,6 +518,26 @@ export default function FacilitiesPage() {
   }, [courtVenues, searchTerm, selectedSport]);
 
   const activeVenuesCount = courtVenues.filter(v => v.isActive !== false).length;
+
+  if (isStaffDenied || currentUser?.role === 'STAFF') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-black text-white tracking-tight mb-2">Truy Cập Bị Từ Chối</h2>
+        <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
+          Tài khoản Nhân viên quầy không có quyền hạn truy cập hoặc chỉnh sửa khu vực <span className="text-rose-400 font-semibold">Quản Lý Sân Bãi & Biểu Giá</span>. Đang chuyển hướng về trang làm việc...
+        </p>
+        <button
+          onClick={() => router.replace('/walk-in')}
+          className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+        >
+          Quay lại Đặt tại Quầy
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

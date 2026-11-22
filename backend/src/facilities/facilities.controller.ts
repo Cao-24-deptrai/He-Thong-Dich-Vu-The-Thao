@@ -72,7 +72,7 @@ export class FacilitiesController {
 
   @Post('consolidate-single')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.OWNER, UserRole.STAFF)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Gom toàn bộ hệ thống về 1 cơ sở duy nhất (Single Facility)' })
   async consolidateSingle() {
