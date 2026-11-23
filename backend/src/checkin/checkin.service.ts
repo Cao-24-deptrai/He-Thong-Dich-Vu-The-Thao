@@ -130,9 +130,17 @@ export class CheckinService {
    * Quét mã QR check-in tại quầy - Chống race condition đa cửa bằng Atomic findOneAndUpdate
    */
   async scanCheckin(qrToken: string, staffId?: string) {
+    let cleanToken = (qrToken || '').trim();
+    if (cleanToken.startsWith('{') && cleanToken.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(cleanToken);
+        cleanToken = parsed.qrToken || parsed.token || cleanToken;
+      } catch (e) {}
+    }
+
     let decoded: any;
     try {
-      decoded = this.jwtService.verify(qrToken);
+      decoded = this.jwtService.verify(cleanToken);
     } catch (err) {
       throw new BadRequestException({
         statusCode: 400,

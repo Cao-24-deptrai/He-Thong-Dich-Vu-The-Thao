@@ -117,16 +117,20 @@ export default function MyTicketsPage() {
   // Mở modal xem mã QR check-in
   const handleOpenQrModal = async (booking: Booking) => {
     setQrModalBooking(booking);
+    setQrCodeDataUrl('');
     try {
-      const qrData = JSON.stringify({
-        bookingId: booking._id,
-        bookingCode: booking.bookingCode || booking._id.slice(-6).toUpperCase(),
-        date: booking.bookingDate,
-        time: `${booking.startTime}-${booking.endTime}`,
-        venue: (booking.venueId as any)?.name || 'Sân thể thao',
-        token: booking.qrToken || booking._id,
-      });
-      const url = await QRCode.toDataURL(qrData, {
+      let activeToken = booking.qrToken;
+      try {
+        const qrRes = await api.getBookingQr(booking._id);
+        if (qrRes?.qrToken) {
+          activeToken = qrRes.qrToken;
+        }
+      } catch (err) {
+        console.warn('Lỗi lấy mã QR động, dùng mã mặc định:', err);
+      }
+
+      const qrValue = activeToken || booking.bookingCode || booking._id;
+      const url = await QRCode.toDataURL(qrValue, {
         width: 320,
         margin: 2,
         color: { dark: '#171C1A', light: '#FFFFFF' },

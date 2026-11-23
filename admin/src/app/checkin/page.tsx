@@ -138,8 +138,16 @@ export default function CheckinPage() {
     setLoading(true);
     setScanResult(null);
 
+    let cleanToken = token.trim();
+    if (cleanToken.startsWith('{') && cleanToken.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(cleanToken);
+        cleanToken = parsed.qrToken || parsed.token || cleanToken;
+      } catch (e) {}
+    }
+
     try {
-      const res = await api.scanCheckin(token.trim());
+      const res = await api.scanCheckin(cleanToken);
       playCheckinSound('SUCCESS');
       setScanResult({
         status: 'SUCCESS',
