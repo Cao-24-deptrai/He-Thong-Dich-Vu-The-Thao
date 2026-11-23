@@ -199,13 +199,25 @@ export default function RefundsPage() {
                     </td>
                     <td className="py-4 px-4">
                       <span className="font-bold text-rose-600 font-mono text-sm">
-                        {b.totalPrice?.toLocaleString('vi-VN')} đ
+                        {((b as any).amount || b.refundAmount || b.totalPrice || 0).toLocaleString('vi-VN')} đ
                       </span>
+                      {b.refundRate !== undefined && (
+                        <div className="text-[10px] text-slate-500 font-mono">
+                          Tỷ lệ: {Math.round(b.refundRate * 100)}%
+                        </div>
+                      )}
                     </td>
                     <td className="py-4 px-4">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                        Thanh toán trễ (Late Webhook)
-                      </span>
+                      <div className="text-xs max-w-xs break-words">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                          {b.refundNote ? 'Khách yêu cầu hoàn' : 'Thanh toán trễ (Late)'}
+                        </span>
+                        {b.refundNote && (
+                          <p className="mt-1 text-[11px] text-slate-600 leading-snug">
+                            {b.refundNote}
+                          </p>
+                        )}
+                      </div>
                     </td>
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">

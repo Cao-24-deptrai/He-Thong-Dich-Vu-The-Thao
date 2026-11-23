@@ -115,6 +115,8 @@ export interface Booking {
   ticketCode?: string;
   holdExpiresAt?: string;
   refundNote?: string;
+  refundAmount?: number;
+  refundRate?: number;
   refundedAt?: string;
   createdAt?: string;
 }

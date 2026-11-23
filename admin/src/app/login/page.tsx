@@ -28,7 +28,7 @@ export default function LoginPage() {
 
       // Điều hướng thông minh theo vai trò (Dùng window.location.href để nạp phiên mới sạch sẽ)
       if (res?.user?.role === 'CUSTOMER') {
-        window.location.href = '/booking';
+        window.location.href = '/home';
       } else if (res?.user?.role === 'STAFF') {
         window.location.href = '/walk-in';
       } else {

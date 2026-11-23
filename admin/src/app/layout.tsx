@@ -28,7 +28,10 @@ import {
   PackageCheck,
   Star,
   Ticket,
-  ChevronDown
+  ChevronDown,
+  Home,
+  HelpCircle,
+  Info
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
 
@@ -53,8 +56,12 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    // If not logged in and not on login/register page, redirect to login
-    if (!currentUser && pathname !== '/login' && pathname !== '/register') {
+    const isPublicCustomerRoute = ['/home', '/booking', '/support', '/about'].some(
+      (route) => pathname === route || pathname.startsWith(route + '/')
+    );
+
+    // If not logged in and not on login/register or public customer page, redirect to login
+    if (!currentUser && pathname !== '/login' && pathname !== '/register' && !isPublicCustomerRoute) {
       router.replace('/login');
       return;
     }
@@ -70,7 +77,18 @@ export default function RootLayout({
   };
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
-  const isCustomerPortal = user?.role === 'CUSTOMER' || pathname.startsWith('/booking');
+  const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about'];
+  const isCustomerPortal =
+    user?.role === 'CUSTOMER' ||
+    customerRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
+
+  const customerNavLinks = [
+    { href: '/home', label: 'Trang chính', icon: Home },
+    { href: '/booking', label: 'Đặt sân', icon: CalendarPlus },
+    { href: '/my-tickets', label: 'Vé của tôi', icon: Ticket },
+    { href: '/support', label: 'Hỗ trợ', icon: HelpCircle },
+    { href: '/about', label: 'Giới thiệu', icon: Info },
+  ];
 
   interface NavSubItem {
     href: string;
@@ -295,7 +313,7 @@ export default function RootLayout({
             {/* Customer Top Header */}
             <header className="sticky top-0 z-50 bg-[#0d121f]/95 border-b border-slate-800/80 backdrop-blur-xl">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <Link href="/booking" className="flex items-center space-x-3">
+                <Link href="/home" className="flex items-center space-x-3 shrink-0">
                   <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
                     ⚡
                   </div>
@@ -303,14 +321,36 @@ export default function RootLayout({
                     <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
                       PHANTA SPORTS
                       <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                        Member
+                        {user ? 'Member' : 'Sports Hub'}
                       </span>
                     </h1>
-                    <p className="text-[11px] text-slate-400 font-medium">Đặt Sân & Dịch Vụ Thể Thao Trực Tuyến</p>
+                    <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Hệ Sinh Thái Thể Thao & Đặt Sân Trực Tuyến</p>
                   </div>
                 </Link>
 
-                <div className="flex items-center space-x-4">
+                {/* Desktop Customer Navigation */}
+                <nav className="hidden md:flex items-center space-x-1">
+                  {customerNavLinks.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                          isActive
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)] font-bold'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <div className="flex items-center space-x-3">
                   {user ? (
                     <>
                       <div className="hidden sm:flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
@@ -331,15 +371,68 @@ export default function RootLayout({
                       </button>
                     </>
                   ) : (
-                    <Link
-                      href="/login"
-                      className="px-4 py-2 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                    >
-                      Đăng nhập
-                    </Link>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href="/login"
+                        className="px-3.5 py-1.5 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                      >
+                        Đăng nhập
+                      </Link>
+                      <Link
+                        href="/register"
+                        className="hidden sm:inline-flex px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition"
+                      >
+                        Đăng ký
+                      </Link>
+                    </div>
                   )}
+
+                  {/* Mobile Menu Toggle */}
+                  <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="p-2 md:hidden text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 border border-slate-800"
+                    aria-label="Toggle Menu"
+                  >
+                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                  </button>
                 </div>
               </div>
+
+              {/* Mobile Navigation Drawer */}
+              {mobileMenuOpen && (
+                <div className="md:hidden border-t border-slate-800 bg-[#0d121f] px-4 py-3 space-y-1 backdrop-blur-2xl">
+                  {customerNavLinks.map((item) => {
+                    const isActive = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
+                          isActive
+                            ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-cyan-400" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                  {user && (
+                    <div className="pt-2 border-t border-slate-800/80 mt-2 flex items-center justify-between text-xs text-slate-400">
+                      <span>Đang đăng nhập: <strong className="text-white">{user.fullName || user.phone}</strong></span>
+                      <button
+                        onClick={handleLogout}
+                        className="text-rose-400 hover:text-rose-300 font-semibold"
+                      >
+                        Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </header>
 
             {/* Customer Page Body */}

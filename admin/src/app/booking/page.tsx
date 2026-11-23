@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Building2,
   Calendar,
@@ -477,29 +478,15 @@ export default function CustomerBookingPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex bg-slate-950/80 p-1.5 rounded-2xl border border-slate-800 shrink-0 self-start md:self-center">
-            <button
-              onClick={() => setActiveTab('BOOKING')}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'BOOKING'
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+          <div className="flex items-center space-x-2 shrink-0 self-start md:self-center">
+            <Link
+              href="/my-tickets"
+              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition shadow-sm"
             >
-              <Calendar className="w-4 h-4" />
-              <span>Đặt Sân Mới</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('MY_TICKETS')}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-                activeTab === 'MY_TICKETS'
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Ticket className="w-4 h-4" />
-              <span>Vé & Đơn Đặt ({myBookings.length})</span>
-            </button>
+              <Ticket className="w-4 h-4 text-cyan-400" />
+              <span>Vé Của Tôi & Hoàn Tiền</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </div>
@@ -992,6 +979,14 @@ export default function CustomerBookingPage() {
             <p className="text-[11px] text-slate-400 leading-relaxed">
               Vui lòng đưa mã này cho nhân viên quầy lễ tân quét check-in khi bạn đến sân.
             </p>
+
+            <Link
+              href="/my-tickets"
+              className="mt-4 w-full py-2.5 px-4 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center justify-center space-x-1.5 transition"
+            >
+              <Ticket className="w-4 h-4" />
+              <span>Xem Tất Cả Vé Tại "Vé Của Tôi"</span>
+            </Link>
           </div>
         </div>
       )}

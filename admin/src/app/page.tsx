@@ -12,14 +12,14 @@ export default function HomePage() {
     const user = api.getUser();
     if (user) {
       if (user.role === 'CUSTOMER') {
-        router.replace('/booking');
+        router.replace('/home');
       } else if (user.role === 'STAFF') {
         router.replace('/walk-in');
       } else {
         router.replace('/facilities');
       }
     } else {
-      router.replace('/register');
+      router.replace('/home');
     }
   }, [router]);
 

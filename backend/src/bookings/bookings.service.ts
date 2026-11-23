@@ -735,7 +735,13 @@ export class BookingsService {
       }
     }
 
-    booking.status = BookingStatus.CANCELLED;
+    // Nếu đơn đã thanh toán (CONFIRMED) và đủ điều kiện hoàn tiền (refundAmount > 0)
+    // thì chuyển sang REFUND_PENDING để bộ phận quản trị xử lý hoàn tiền
+    if (booking.status === BookingStatus.CONFIRMED && refundAmount > 0) {
+      booking.status = BookingStatus.REFUND_PENDING;
+    } else {
+      booking.status = BookingStatus.CANCELLED;
+    }
     booking.refundRate = refundRate;
     booking.refundAmount = refundAmount;
     if (cancelReason) {
