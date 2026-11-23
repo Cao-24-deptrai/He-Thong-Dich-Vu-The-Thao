@@ -33,12 +33,17 @@ export class AdminService {
         .exec();
 
       results.push({
+        _id: b._id,
         bookingId: b._id,
+        bookingCode: b.bookingCode || b._id.toString().slice(-6).toUpperCase(),
         customerName: (b.userId as any)?.fullName || 'Khách vãng lai',
         customerPhone: (b.userId as any)?.phone || 'N/A',
         venueName: (b.venueId as any)?.name || 'Sân',
         bookingDate: b.bookingDate,
+        startTime: b.startTime,
+        endTime: b.endTime,
         timeSlot: `${b.startTime} - ${b.endTime}`,
+        totalPrice: b.totalPrice,
         amount: b.refundAmount !== undefined ? b.refundAmount : (payment?.amount || b.totalPrice),
         refundAmount: b.refundAmount,
         refundRate: b.refundRate,

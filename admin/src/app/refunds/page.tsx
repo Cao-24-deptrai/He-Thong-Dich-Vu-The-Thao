@@ -20,12 +20,12 @@ import {
 import { api, Booking } from '@/lib/api';
 
 export default function RefundsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Refund modal states
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
   const [refundNote, setRefundNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -48,9 +48,10 @@ export default function RefundsPage() {
     fetchRefundList();
   }, []);
 
-  const handleOpenRefundModal = (booking: Booking) => {
+  const handleOpenRefundModal = (booking: any) => {
     setSelectedBooking(booking);
-    setRefundNote(`Đã chuyển khoản hoàn tiền ${booking.totalPrice?.toLocaleString('vi-VN')} đ cho khách qua STK ngân hàng`);
+    const amt = booking.amount !== undefined ? booking.amount : (booking.refundAmount || booking.totalPrice || 0);
+    setRefundNote(`Đã chuyển khoản hoàn tiền ${amt.toLocaleString('vi-VN')} đ cho khách qua STK ngân hàng`);
   };
 
   const handleConfirmRefund = async (e: React.FormEvent) => {
@@ -61,8 +62,9 @@ export default function RefundsPage() {
     setSuccessMessage(null);
 
     try {
-      await api.processRefund(selectedBooking._id, refundNote);
-      setSuccessMessage(`Đã cập nhật hoàn tất hoàn tiền cho booking #${selectedBooking._id}`);
+      const bId = selectedBooking.bookingId || selectedBooking._id;
+      await api.processRefund(bId, refundNote);
+      setSuccessMessage(`Đã cập nhật hoàn tất hoàn tiền cho booking #${selectedBooking.bookingCode || bId}`);
       setSelectedBooking(null);
       setRefundNote('');
       await fetchRefundList();
@@ -176,71 +178,74 @@ export default function RefundsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {bookings.map((b) => (
-                  <tr key={b._id} className="hover:bg-slate-50/60 transition">
-                    <td className="py-4 px-4 font-mono font-bold text-xs text-blue-600">
-                      #{b.bookingCode || b._id.slice(-8)}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="font-semibold text-slate-900">
-                        {b.customerName || b.userId?.fullName || 'Khách vãng lai'}
-                      </div>
-                      <div className="text-xs text-slate-500 font-mono">
-                        {b.customerPhone || b.userId?.phone || 'N/A'}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="font-medium text-slate-900">
-                        {b.venueId?.name || 'Sân thể thao'}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {b.bookingDate} ({b.startTime} - {b.endTime})
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <span className="font-bold text-rose-600 font-mono text-sm">
-                        {((b as any).amount || b.refundAmount || b.totalPrice || 0).toLocaleString('vi-VN')} đ
-                      </span>
-                      {b.refundRate !== undefined && (
-                        <div className="text-[10px] text-slate-500 font-mono">
-                          Tỷ lệ: {Math.round(b.refundRate * 100)}%
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="text-xs max-w-xs break-words">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                          {b.refundNote ? 'Khách yêu cầu hoàn' : 'Thanh toán trễ (Late)'}
+                {bookings.map((b: any, index: number) => {
+                  const bId = String(b.bookingId || b._id || `booking-${index}`);
+                  const code = b.bookingCode || (b._id ? String(b._id).slice(-6).toUpperCase() : bId.slice(-6).toUpperCase());
+                  const custName = b.customerName || b.userId?.fullName || 'Khách vãng lai';
+                  const custPhone = b.customerPhone || b.userId?.phone || 'N/A';
+                  const venueTitle = b.venueName || b.venueId?.name || 'Sân thể thao';
+                  const dateText = b.bookingDate ? String(b.bookingDate).split('T')[0] : 'N/A';
+                  const timeText = b.timeSlot || (b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : 'Khung giờ');
+                  const refundAmountVal = (b.amount !== undefined ? b.amount : (b.refundAmount || b.totalPrice || 0));
+
+                  return (
+                    <tr key={bId} className="hover:bg-slate-50/60 transition">
+                      <td className="py-4 px-4 font-mono font-bold text-xs text-blue-600">
+                        #{code}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="font-semibold text-slate-900">{custName}</div>
+                        <div className="text-xs text-slate-500 font-mono">{custPhone}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="font-medium text-slate-900">{venueTitle}</div>
+                        <div className="text-xs text-slate-500">{dateText} ({timeText})</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="font-bold text-rose-600 font-mono text-sm">
+                          {refundAmountVal.toLocaleString('vi-VN')} đ
                         </span>
-                        {b.refundNote && (
-                          <p className="mt-1 text-[11px] text-slate-600 leading-snug">
-                            {b.refundNote}
-                          </p>
+                        {b.refundRate !== undefined && (
+                          <div className="text-[10px] text-slate-500 font-mono">
+                            Tỷ lệ: {Math.round(b.refundRate * 100)}%
+                          </div>
                         )}
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleAutoRefund(b)}
-                          disabled={submitting}
-                          className="inline-flex items-center px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-xs transition disabled:opacity-50"
-                          title="Tự động gọi cổng thanh toán hoàn tiền"
-                        >
-                          ⚡ Auto-Refund
-                        </button>
-                        <button
-                          onClick={() => handleOpenRefundModal(b)}
-                          disabled={submitting}
-                          className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition"
-                        >
-                          <Check className="w-3.5 h-3.5 mr-1" />
-                          Thủ công
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-xs max-w-sm break-words">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                            {b.refundNote ? 'Khách yêu cầu hoàn' : 'Thanh toán trễ (Late)'}
+                          </span>
+                          {b.refundNote && (
+                            <p className="mt-1 text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200 leading-snug">
+                              {b.refundNote}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => handleAutoRefund(b)}
+                            disabled={submitting}
+                            className="inline-flex items-center px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-xs transition disabled:opacity-50"
+                            title="Tự động gọi cổng thanh toán hoàn tiền"
+                          >
+                            ⚡ Auto-Refund
+                          </button>
+                          <button
+                            onClick={() => handleOpenRefundModal(b)}
+                            disabled={submitting}
+                            className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition"
+                          >
+                            <Check className="w-3.5 h-3.5 mr-1" />
+                            Thủ công
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -275,9 +280,17 @@ export default function RefundsPage() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Số tiền cần hoàn:</span>
                 <span className="font-bold text-rose-600 font-mono text-sm">
-                  {selectedBooking.totalPrice?.toLocaleString('vi-VN')} đ
+                  {(selectedBooking.amount !== undefined ? selectedBooking.amount : (selectedBooking.refundAmount || selectedBooking.totalPrice || 0)).toLocaleString('vi-VN')} đ
                 </span>
               </div>
+              {selectedBooking.refundNote && (
+                <div className="pt-2 border-t border-slate-200">
+                  <span className="text-slate-500 block mb-1 font-semibold">Thông tin nhận tiền của khách:</span>
+                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-[11px] font-mono leading-relaxed select-all">
+                    {selectedBooking.refundNote}
+                  </div>
+                </div>
+              )}
             </div>
 
             <form onSubmit={handleConfirmRefund} className="space-y-4">
