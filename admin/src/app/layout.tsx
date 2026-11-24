@@ -56,19 +56,51 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    const isPublicCustomerRoute = ['/home', '/booking', '/support', '/about'].some(
+    const isCustomerDomain =
+      typeof window !== 'undefined' &&
+      !window.location.hostname.startsWith('admin.');
+
+    const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about'];
+    const isCustomerRoute = customerRoutesList.some(
       (route) => pathname === route || pathname.startsWith(route + '/')
     );
 
-    // If not logged in and not on login/register or public customer page, redirect to login
-    if (!currentUser && pathname !== '/login' && pathname !== '/register' && !isPublicCustomerRoute) {
+    // 1. Nếu đang ở domain khách hàng (phanta.id.vn):
+    if (isCustomerDomain) {
+      // Nếu cố tình truy cập vào các trang quản trị nội bộ -> chuyển về /home
+      if (!isCustomerRoute && pathname !== '/login' && pathname !== '/register') {
+        router.replace('/home');
+        return;
+      }
+      return;
+    }
+
+    // 2. Nếu đang ở domain quản trị (admin.phanta.id.vn):
+    // Khách hàng vãng lai chưa đăng nhập -> bắt buộc về /login
+    if (!currentUser && pathname !== '/login') {
       router.replace('/login');
       return;
     }
 
-    // Nhân viên quầy (STAFF) không có quyền vào Quản Lý Sân Bãi (/facilities)
-    if (currentUser?.role === 'STAFF' && pathname.startsWith('/facilities')) {
-      router.replace('/walk-in');
+    // Tài khoản CUSTOMER đăng nhập vào trang admin -> chuyển hướng sang domain khách hàng
+    if (currentUser?.role === 'CUSTOMER') {
+      if (typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')) {
+        window.location.href = 'https://phanta.id.vn/home';
+        return;
+      }
+    }
+
+    // Phân quyền chi tiết cho nhân viên quầy (STAFF / CASHIER):
+    // Chỉ được phép vào các trang vận hành quầy: /walk-in, /checkin, /canteen, /rentals
+    if (currentUser?.role === 'STAFF') {
+      const allowedStaffRoutes = ['/walk-in', '/checkin', '/canteen', '/rentals'];
+      const isAllowed = allowedStaffRoutes.some(
+        (r) => pathname === r || pathname.startsWith(r + '/')
+      );
+      if (!isAllowed && pathname !== '/login') {
+        router.replace('/walk-in');
+        return;
+      }
     }
   }, [pathname, router]);
 
@@ -125,18 +157,21 @@ export default function RootLayout({
           label: 'Đặt tại Quầy (Walk-in)',
           icon: CalendarPlus,
           description: 'Lịch sân & đặt chỗ tại chỗ',
+          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/checkin',
           label: 'Quét Check-in QR',
           icon: QrCode,
           description: 'Xác thực vé vào sân bằng QR',
+          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/refunds',
           label: 'Xử lý Hoàn tiền',
           icon: RotateCcw,
           description: 'Booking thanh toán muộn (Refund Pending)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
@@ -151,30 +186,35 @@ export default function RootLayout({
           label: 'Hội Viên Gym',
           icon: Dumbbell,
           description: 'Quản lý gói tập & soát vé (Mục 6.1)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/pt-classes',
           label: 'PT & Lớp Học',
           icon: Award,
           description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/tournaments',
           label: 'Giải Đấu Thể Thao',
           icon: Trophy,
           description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/gaming',
           label: 'Khu Gaming 100 Máy',
           icon: Gamepad2,
           description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/matchmaking',
           label: 'Cáp Kèo Thể Thao',
           icon: Users,
           description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
@@ -189,18 +229,21 @@ export default function RootLayout({
           label: 'POS Canteen',
           icon: Coffee,
           description: 'Bán lẻ & ca thu ngân (M12)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/rentals',
           label: 'Cho Thuê Dụng Cụ',
           icon: PackageCheck,
           description: 'Thuê dụng cụ theo slot (M13)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/vouchers',
           label: 'Mã Giảm Giá & Combo',
           icon: Ticket,
           description: 'Vouchers & gói ưu đãi (M15)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
@@ -215,18 +258,21 @@ export default function RootLayout({
           label: 'Hóa Đơn Điện Tử',
           icon: Receipt,
           description: 'Hóa đơn VAT & tra cứu (M08)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/reviews',
           label: 'Đánh Giá Dịch Vụ',
           icon: Star,
           description: 'Phản hồi khách hàng (FR-16)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/notifications',
           label: 'Thông Báo',
           icon: Bell,
           description: 'Push FCM & Zalo ZNS (M09)',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
@@ -241,12 +287,14 @@ export default function RootLayout({
           label: 'Báo Cáo & Thống Kê',
           icon: BarChart3,
           description: 'Doanh thu & tỷ lệ lấp đầy (M17)',
+          roles: ['ADMIN', 'OWNER'],
         },
         {
           href: '/bridge',
           label: 'Bridge Agent & IoT',
           icon: Cpu,
           description: 'Thiết bị quầy & Cửa xoay (M22)',
+          roles: ['ADMIN', 'OWNER'],
         },
       ],
     },

@@ -26,9 +26,17 @@ export default function LoginPage() {
     try {
       const res = await api.login(phone, password);
 
-      // Điều hướng thông minh theo vai trò (Dùng window.location.href để nạp phiên mới sạch sẽ)
+      // Điều hướng thông minh theo vai trò và domain
+      const isCustomerDomain =
+        typeof window !== 'undefined' &&
+        !window.location.hostname.startsWith('admin.');
+
       if (res?.user?.role === 'CUSTOMER') {
-        window.location.href = '/home';
+        if (!isCustomerDomain && window.location.hostname.includes('phanta.id.vn')) {
+          window.location.href = 'https://phanta.id.vn/home';
+        } else {
+          window.location.href = '/home';
+        }
       } else if (res?.user?.role === 'STAFF') {
         window.location.href = '/walk-in';
       } else {

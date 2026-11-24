@@ -9,17 +9,30 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
+    const isCustomerDomain =
+      typeof window !== 'undefined' &&
+      !window.location.hostname.startsWith('admin.');
+
     const user = api.getUser();
+
+    if (isCustomerDomain) {
+      // Domain khách hàng: phanta.id.vn
+      router.replace('/home');
+      return;
+    }
+
+    // Domain quản trị: admin.phanta.id.vn
     if (user) {
       if (user.role === 'CUSTOMER') {
-        router.replace('/home');
+        // Tài khoản khách truy cập nhầm trang admin -> chuyển về cổng khách hàng
+        window.location.href = 'https://phanta.id.vn/home';
       } else if (user.role === 'STAFF') {
         router.replace('/walk-in');
       } else {
         router.replace('/facilities');
       }
     } else {
-      router.replace('/home');
+      router.replace('/login');
     }
   }, [router]);
 
@@ -29,3 +42,4 @@ export default function HomePage() {
     </div>
   );
 }
+
