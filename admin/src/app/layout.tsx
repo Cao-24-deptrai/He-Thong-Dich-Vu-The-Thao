@@ -38,6 +38,7 @@ import {
 import { api, User } from '@/lib/api';
 import ThemeToggle from '@/components/ThemeToggle';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
 
 export default function RootLayout({
   children,
@@ -68,10 +69,12 @@ export default function RootLayout({
     const isCustomerRoute = customerRoutesList.some(
       (route) => pathname === route || pathname.startsWith(route + '/')
     );
+    const authPublicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+    const isPublicAuthPath = authPublicRoutes.includes(pathname);
 
     // 1. Nếu đang ở domain khách hàng (phanta.id.vn):
     if (isCustomerDomain) {
-      if (!isCustomerRoute && pathname !== '/login' && pathname !== '/register') {
+      if (!isCustomerRoute && !isPublicAuthPath) {
         router.replace('/home');
         return;
       }
@@ -79,7 +82,7 @@ export default function RootLayout({
     }
 
     // 2. Nếu đang ở domain quản trị (admin.phanta.id.vn):
-    if (!currentUser && pathname !== '/login') {
+    if (!currentUser && pathname !== '/login' && pathname !== '/forgot-password') {
       router.replace('/login');
       return;
     }
@@ -110,7 +113,11 @@ export default function RootLayout({
     setUser(null);
   };
 
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage =
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password';
   const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about'];
   const isCustomerPortal =
     pathname === '/' ||
@@ -460,6 +467,12 @@ export default function RootLayout({
 
             {/* Customer Page Body */}
             <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10 pb-20 md:pb-8">
+              {mounted && user && user.role === 'CUSTOMER' && !user.phone && (
+                <PhoneCompletionBanner
+                  user={user}
+                  onUpdated={(updatedUser) => setUser(updatedUser)}
+                />
+              )}
               {children}
             </main>
 

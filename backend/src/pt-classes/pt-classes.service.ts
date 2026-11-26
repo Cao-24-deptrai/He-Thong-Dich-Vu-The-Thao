@@ -217,6 +217,9 @@ export class PtClassesService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
+    if (!user.phone) {
+      throw new BadRequestException('PHONE_REQUIRED: Vui lòng cập nhật số điện thoại trước khi đăng ký lớp học');
+    }
 
     // 1. Kiểm tra đăng ký trùng
     const existing = await this.registrationModel.findOne({
@@ -263,6 +266,9 @@ export class PtClassesService {
     const user = await this.userModel.findById(userId);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
+    }
+    if (!user.phone) {
+      throw new BadRequestException('PHONE_REQUIRED: Vui lòng cập nhật số điện thoại trước khi đặt lịch PT');
     }
     const trainer = await this.staffModel.findById(dto.trainerId);
     if (!trainer) {

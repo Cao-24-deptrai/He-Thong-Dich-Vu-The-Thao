@@ -14,6 +14,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { UsersService } from './users.service';
 import { UpdateFcmTokenDto } from './dto/update-fcm-token.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdatePhoneDto } from './dto/update-phone.dto';
 import { QueryUserDto } from './dto/query-user.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { LockUserDto } from './dto/lock-user.dto';
@@ -40,9 +41,12 @@ export class UsersController {
       phone: user.phone,
       fullName: user.fullName,
       email: user.email,
+      avatarUrl: user.avatarUrl,
+      authProviders: user.authProviders || ['local'],
       role: user.role,
       permissions: user.permissions,
       isPhoneVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified,
       invoiceInfo: user.invoiceInfo,
       createdAt: user.createdAt,
     };
@@ -61,9 +65,34 @@ export class UsersController {
       phone: user.phone,
       fullName: user.fullName,
       email: user.email,
+      avatarUrl: user.avatarUrl,
+      authProviders: user.authProviders || ['local'],
       role: user.role,
       permissions: user.permissions,
       invoiceInfo: user.invoiceInfo,
+    };
+  }
+
+  @Patch('me/phone')
+  @ApiOperation({ summary: 'Bổ sung hoặc cập nhật số điện thoại cho tài khoản (PATCH /users/me/phone)' })
+  @ApiResponse({ status: 200, description: 'Cập nhật số điện thoại thành công' })
+  @ApiResponse({ status: 409, description: 'Số điện thoại đã được liên kết với tài khoản khác' })
+  async updateMyPhone(
+    @CurrentUser('userId') userId: string,
+    @Body() dto: UpdatePhoneDto,
+  ) {
+    const user = await this.usersService.updatePhone(userId, dto.phone, false);
+    return {
+      id: user._id,
+      phone: user.phone,
+      fullName: user.fullName,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      authProviders: user.authProviders || ['local'],
+      role: user.role,
+      permissions: user.permissions,
+      isPhoneVerified: user.isPhoneVerified,
+      isEmailVerified: user.isEmailVerified,
     };
   }
 

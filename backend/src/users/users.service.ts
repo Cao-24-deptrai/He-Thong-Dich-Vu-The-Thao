@@ -93,30 +93,72 @@ export class UsersService implements OnModuleInit {
     role?: UserRole;
     permissions?: string[];
   }): Promise<UserDocument> {
-    const existing = await this.userModel.findOne({ phone: userData.phone }).exec();
+    const cleanPhone = userData.phone.trim();
+    const existing = await this.userModel.findOne({ phone: cleanPhone }).exec();
     if (existing) {
       throw new ConflictException('Số điện thoại đã được đăng ký');
+    }
+
+    const normalizedEmail = userData.email?.trim().toLowerCase() || undefined;
+    if (normalizedEmail) {
+      const existingEmail = await this.userModel.findOne({ email: normalizedEmail }).exec();
+      if (existingEmail) {
+        throw new ConflictException('Địa chỉ email này đã được đăng ký cho tài khoản khác');
+      }
     }
 
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(userData.password, saltRounds);
 
     const user = new this.userModel({
-      phone: userData.phone,
+      phone: cleanPhone,
       passwordHash,
-      fullName: userData.fullName,
-      email: userData.email,
+      fullName: userData.fullName.trim(),
+      email: normalizedEmail,
       role: userData.role || UserRole.CUSTOMER,
       permissions: userData.permissions || [],
+      authProviders: ['local'],
       failedLoginAttempts: 0,
       isPhoneVerified: false,
+      isEmailVerified: false,
+    });
+
+    return user.save();
+  }
+
+  async createGoogleUser(data: {
+    firebaseUid: string;
+    email: string;
+    fullName: string;
+    avatarUrl?: string;
+    isEmailVerified?: boolean;
+  }): Promise<UserDocument> {
+    const user = new this.userModel({
+      firebaseUid: data.firebaseUid,
+      email: data.email.trim().toLowerCase(),
+      fullName: data.fullName.trim() || 'Khách hàng Phanta',
+      avatarUrl: data.avatarUrl,
+      role: UserRole.CUSTOMER,
+      permissions: [],
+      authProviders: ['google'],
+      failedLoginAttempts: 0,
+      isPhoneVerified: false,
+      isEmailVerified: data.isEmailVerified ?? true,
     });
 
     return user.save();
   }
 
   async findByPhone(phone: string): Promise<UserDocument | null> {
-    return this.userModel.findOne({ phone }).exec();
+    return this.userModel.findOne({ phone: phone.trim() }).exec();
+  }
+
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ email: email.trim().toLowerCase() }).exec();
+  }
+
+  async findByFirebaseUid(firebaseUid: string): Promise<UserDocument | null> {
+    return this.userModel.findOne({ firebaseUid }).exec();
   }
 
   async findById(id: string): Promise<UserDocument> {
@@ -133,10 +175,44 @@ export class UsersService implements OnModuleInit {
     return user.save();
   }
 
+  async updatePhone(
+    userId: string,
+    phone: string,
+    isPhoneVerified = false,
+  ): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    const trimmed = phone.trim();
+    const normalizedPhone = trimmed.startsWith('+84') ? `0${trimmed.slice(3)}` : trimmed;
+
+    const conflict = await this.userModel
+      .findOne({ phone: normalizedPhone, _id: { $ne: user._id } })
+      .exec();
+    if (conflict) {
+      throw new ConflictException('Số điện thoại này đã được liên kết với một tài khoản khác');
+    }
+
+    user.phone = normalizedPhone;
+    if (isPhoneVerified) {
+      user.isPhoneVerified = true;
+    }
+    return user.save();
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserDocument> {
     const user = await this.findById(userId);
-    if (dto.fullName !== undefined) user.fullName = dto.fullName;
-    if (dto.email !== undefined) user.email = dto.email;
+    if (dto.fullName !== undefined) user.fullName = dto.fullName.trim();
+    if (dto.email !== undefined) {
+      const normalizedEmail = dto.email.trim().toLowerCase() || undefined;
+      if (normalizedEmail && normalizedEmail !== user.email) {
+        const conflict = await this.userModel
+          .findOne({ email: normalizedEmail, _id: { $ne: user._id } })
+          .exec();
+        if (conflict) {
+          throw new ConflictException('Email này đã được sử dụng cho tài khoản khác');
+        }
+      }
+      user.email = normalizedEmail;
+    }
     if (dto.invoiceInfo !== undefined) {
       user.invoiceInfo = dto.invoiceInfo;
     }

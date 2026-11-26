@@ -4,12 +4,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 export interface User {
   _id: string;
   id?: string;
-  phone: string;
+  phone?: string;
   fullName: string;
   email?: string;
+  avatarUrl?: string;
+  authProviders?: string[];
   role: 'CUSTOMER' | 'STAFF' | 'MANAGER' | 'OWNER' | 'ADMIN' | 'PT';
   permissions?: string[];
   isPhoneVerified?: boolean;
+  isEmailVerified?: boolean;
   invoiceInfo?: {
     buyerTaxCode?: string;
     companyName?: string;
@@ -435,18 +438,30 @@ class ApiService {
   }
 
   // --- AUTH ---
+  private persistAuthSession(res: any): {
+    accessToken: string;
+    refreshToken?: string;
+    user: User;
+    requiresPhoneCompletion?: boolean;
+  } {
+    const token = res.accessToken || res.access_token || '';
+    if (token) this.setToken(token);
+    if (res.refreshToken) this.setRefreshToken(res.refreshToken);
+    if (res.user) this.setUser(res.user);
+    return {
+      accessToken: token,
+      refreshToken: res.refreshToken,
+      user: res.user,
+      requiresPhoneCompletion: res.requiresPhoneCompletion,
+    };
+  }
+
   async login(phone: string, password: string): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
     const res = await this.request<any>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone, password, deviceName: 'Web Admin Dashboard' }),
     });
-    const token = res.accessToken || res.access_token || '';
-    this.setToken(token);
-    if (res.refreshToken) {
-      this.setRefreshToken(res.refreshToken);
-    }
-    this.setUser(res.user);
-    return { accessToken: token, refreshToken: res.refreshToken, user: res.user };
+    return this.persistAuthSession(res);
   }
 
   async register(phone: string, password: string, fullName: string, email?: string): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
@@ -454,11 +469,52 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ phone, password, fullName, email }),
     });
-    const token = res.accessToken || res.access_token || '';
-    if (token) this.setToken(token);
-    if (res.refreshToken) this.setRefreshToken(res.refreshToken);
-    if (res.user) this.setUser(res.user);
-    return { accessToken: token, refreshToken: res.refreshToken, user: res.user };
+    return this.persistAuthSession(res);
+  }
+
+  async loginWithGoogle(idToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    user: User;
+    requiresPhoneCompletion?: boolean;
+  }> {
+    const res = await this.request<any>('/auth/firebase/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, deviceName: 'Google Web Portal' }),
+    });
+    return this.persistAuthSession(res);
+  }
+
+  async resetPasswordByPhone(idToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return this.request('/auth/forgot-password/phone/verify-and-reset', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, newPassword }),
+    });
+  }
+
+  async prepareEmailReset(email: string): Promise<{ ready: boolean; email: string }> {
+    return this.request('/auth/forgot-password/email/prepare', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async completeEmailReset(idToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return this.request('/auth/forgot-password/email/complete', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, newPassword }),
+    });
+  }
+
+  async updateMyPhone(phone: string): Promise<User> {
+    const updatedUser = await this.request<User>('/users/me/phone', {
+      method: 'PATCH',
+      body: JSON.stringify({ phone }),
+    });
+    const current = this.getUser();
+    const merged = { ...(current || {}), ...updatedUser } as User;
+    this.setUser(merged);
+    return merged;
   }
 
   // --- CUSTOMER BOOKING METHODS ---

@@ -44,6 +44,9 @@ export class GamingSessionService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
+    if (!user.phone) {
+      throw new BadRequestException('PHONE_REQUIRED: Vui lòng cập nhật số điện thoại trước khi bắt đầu phiên chơi');
+    }
 
     const machine = await this.machineService.getMachineByCode(dto.machineCode);
     if (machine.status !== GamingMachineStatus.IDLE) {

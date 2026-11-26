@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
+import { FirebaseAdminService } from './firebase-admin.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -31,7 +32,7 @@ import { OtpChallenge, OtpChallengeSchema } from './schemas/otp-challenge.schema
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, OtpService, JwtStrategy],
-  exports: [AuthService, OtpService, JwtModule, PassportModule, MongooseModule],
+  providers: [AuthService, OtpService, FirebaseAdminService, JwtStrategy],
+  exports: [AuthService, OtpService, FirebaseAdminService, JwtModule, PassportModule, MongooseModule],
 })
 export class AuthModule {}

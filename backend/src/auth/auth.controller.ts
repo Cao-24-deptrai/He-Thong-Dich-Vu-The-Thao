@@ -15,6 +15,12 @@ import { LoginDto } from './dto/login.dto';
 import { SendOtpDto } from './dto/send-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import {
+  GoogleLoginDto,
+  PrepareEmailResetDto,
+  ResetPasswordByEmailDto,
+  ResetPasswordByPhoneDto,
+} from './dto/firebase-auth.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -45,6 +51,39 @@ export class AuthController {
   @ApiResponse({ status: 403, description: 'Tài khoản bị tạm khóa 15 phút do nhập sai 5 lần' })
   async login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('firebase/google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đăng nhập / Đăng ký khách hàng bằng Google (Firebase ID Token)' })
+  @ApiResponse({ status: 200, description: 'Đăng nhập Google thành công, trả về access token & refresh token' })
+  @ApiResponse({ status: 403, description: 'Tài khoản quản trị/nhân viên không được phép đăng nhập qua Google' })
+  async loginWithGoogle(@Body() dto: GoogleLoginDto) {
+    return this.authService.loginWithGoogle(dto);
+  }
+
+  @Post('forgot-password/phone/verify-and-reset')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đặt lại mật khẩu sau khi xác thực OTP SĐT qua Firebase' })
+  @ApiResponse({ status: 200, description: 'Đặt lại mật khẩu thành công' })
+  async resetPasswordByPhone(@Body() dto: ResetPasswordByPhoneDto) {
+    return this.authService.resetPasswordByPhone(dto);
+  }
+
+  @Post('forgot-password/email/prepare')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Kiểm tra email khách hàng và đồng bộ sang Firebase Auth trước khi gửi link đặt lại mật khẩu' })
+  @ApiResponse({ status: 200, description: 'Sẵn sàng gửi link đặt lại mật khẩu qua Firebase' })
+  async prepareEmailReset(@Body() dto: PrepareEmailResetDto) {
+    return this.authService.prepareEmailReset(dto);
+  }
+
+  @Post('forgot-password/email/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Đồng bộ mật khẩu mới về MongoDB sau khi người dùng xác nhận qua Email Link Firebase' })
+  @ApiResponse({ status: 200, description: 'Cập nhật mật khẩu thành công' })
+  async completeEmailReset(@Body() dto: ResetPasswordByEmailDto) {
+    return this.authService.completeEmailReset(dto);
   }
 
   @Post('refresh')

@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../src/config/configuration';
 import { AuthModule } from '../src/auth/auth.module';
+import { FirebaseAdminService } from '../src/auth/firebase-admin.service';
 import { UsersModule } from '../src/users/users.module';
 import { UserRole } from '../src/common/enums';
 import { AllExceptionsFilter } from '../src/common/filters/http-exception.filter';
@@ -15,6 +16,57 @@ describe('Auth & RBAC (e2e)', () => {
   let mongod: MongoMemoryServer;
   let customerToken: string;
   let adminToken: string;
+  const ensureEmailUserExistsMock = jest.fn().mockResolvedValue(undefined);
+  const verifyIdTokenMock = jest.fn(async (token: string) => {
+    switch (token) {
+      case 'google-new-user':
+        return {
+          uid: 'fb-uid-new-1',
+          email: 'googleplayer@gmail.com',
+          email_verified: true,
+          name: 'Google Player',
+          picture: 'https://example.com/avatar.png',
+          firebase: { sign_in_provider: 'google.com' },
+        };
+      case 'google-existing-customer':
+        return {
+          uid: 'fb-uid-existing-1',
+          email: 'nguyenvana@gmail.com',
+          email_verified: true,
+          name: 'Nguyễn Văn A',
+          firebase: { sign_in_provider: 'google.com' },
+        };
+      case 'google-admin-blocked':
+        return {
+          uid: 'fb-uid-admin-1',
+          email: 'admin@sportsbooking.vn',
+          email_verified: true,
+          name: 'Admin User',
+          firebase: { sign_in_provider: 'google.com' },
+        };
+      case 'phone-otp-customer':
+        return {
+          uid: 'fb-uid-phone-1',
+          phone_number: '+84912345678',
+          firebase: { sign_in_provider: 'phone' },
+        };
+      case 'phone-otp-admin':
+        return {
+          uid: 'fb-uid-phone-admin',
+          phone_number: '240106',
+          firebase: { sign_in_provider: 'phone' },
+        };
+      case 'email-reset-customer':
+        return {
+          uid: 'fb-uid-email-1',
+          email: 'nguyenvana@gmail.com',
+          email_verified: true,
+          firebase: { sign_in_provider: 'password' },
+        };
+      default:
+        throw new Error('Invalid mock token');
+    }
+  });
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -30,7 +82,14 @@ describe('Auth & RBAC (e2e)', () => {
         AuthModule,
         UsersModule,
       ],
-    }).compile();
+    })
+      .overrideProvider(FirebaseAdminService)
+      .useValue({
+        isConfigured: () => true,
+        verifyIdToken: verifyIdTokenMock,
+        ensureEmailUserExists: ensureEmailUserExistsMock,
+      })
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -167,6 +226,112 @@ describe('Auth & RBAC (e2e)', () => {
         .expect(200);
 
       expect(res.body.message).toContain('Xin chào Admin');
+    });
+  });
+
+  describe('4. Đăng nhập Google qua Firebase & Bổ sung SĐT', () => {
+    let googleUserToken: string;
+
+    it('Đăng nhập Google lần đầu -> tự tạo CUSTOMER không cần SĐT và yêu cầu bổ sung SĐT', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/firebase/google')
+        .send({ idToken: 'google-new-user' })
+        .expect(200);
+
+      expect(res.body).toHaveProperty('accessToken');
+      expect(res.body.requiresPhoneCompletion).toBe(true);
+      expect(res.body.user.role).toBe(UserRole.CUSTOMER);
+      expect(res.body.user.email).toBe('googleplayer@gmail.com');
+      expect(res.body.user.phone).toBeUndefined();
+      googleUserToken = res.body.accessToken;
+    });
+
+    it('Cập nhật số điện thoại cho tài khoản Google (PATCH /users/me/phone)', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/users/me/phone')
+        .set('Authorization', `Bearer ${googleUserToken}`)
+        .send({ phone: '0987654321' })
+        .expect(200);
+
+      expect(res.body.phone).toBe('0987654321');
+    });
+
+    it('Đăng nhập Google trùng email tài khoản CUSTOMER sẵn có -> tự động liên kết', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/firebase/google')
+        .send({ idToken: 'google-existing-customer' })
+        .expect(200);
+
+      expect(res.body.requiresPhoneCompletion).toBe(false);
+      expect(res.body.user.phone).toBe('0912345678');
+      expect(res.body.user.authProviders).toContain('google');
+    });
+
+    it('Chặn tài khoản ADMIN đăng nhập qua Google -> 403 Forbidden', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/firebase/google')
+        .send({ idToken: 'google-admin-blocked' })
+        .expect(403);
+    });
+  });
+
+  describe('5. Quên mật khẩu qua Firebase (SĐT OTP & Email Link)', () => {
+    it('Đặt lại mật khẩu bằng OTP SĐT (+84912345678 -> 0912345678) -> thành công & đăng nhập lại được', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/auth/forgot-password/phone/verify-and-reset')
+        .send({
+          idToken: 'phone-otp-customer',
+          newPassword: 'ResetPhone@123',
+        })
+        .expect(200);
+
+      expect(res.body.success).toBe(true);
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: '0912345678',
+          password: 'ResetPhone@123',
+        })
+        .expect(200);
+    });
+
+    it('Chặn tài khoản ADMIN tự đặt lại mật khẩu qua SĐT -> 403 Forbidden', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/forgot-password/phone/verify-and-reset')
+        .send({
+          idToken: 'phone-otp-admin',
+          newPassword: 'HackedPassword@123',
+        })
+        .expect(403);
+    });
+
+    it('Chuẩn bị & hoàn tất đặt lại mật khẩu qua Email Link Firebase', async () => {
+      const prep = await request(app.getHttpServer())
+        .post('/auth/forgot-password/email/prepare')
+        .send({ email: 'nguyenvana@gmail.com' })
+        .expect(200);
+
+      expect(prep.body.ready).toBe(true);
+      expect(ensureEmailUserExistsMock).toHaveBeenCalledWith('nguyenvana@gmail.com', 'Nguyễn Văn A');
+
+      const complete = await request(app.getHttpServer())
+        .post('/auth/forgot-password/email/complete')
+        .send({
+          idToken: 'email-reset-customer',
+          newPassword: 'ResetEmail@123',
+        })
+        .expect(200);
+
+      expect(complete.body.success).toBe(true);
+
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: '0912345678',
+          password: 'ResetEmail@123',
+        })
+        .expect(200);
     });
   });
 });

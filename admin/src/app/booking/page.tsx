@@ -336,6 +336,13 @@ export default function CustomerBookingPage() {
       return;
     }
 
+    const currentUser = api.getUser();
+    if (currentUser && !currentUser.phone) {
+      setError('Vui lòng cập nhật số điện thoại ở thanh thông báo phía trên trước khi đặt sân.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     try {
       setHolding(true);
       setError(null);

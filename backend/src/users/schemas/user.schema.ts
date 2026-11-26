@@ -7,13 +7,29 @@ export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
-  @ApiProperty({ description: 'Phone number of the user', example: '0912345678' })
-  @Prop({ type: String, required: true, unique: true, index: true })
-  phone: string;
+  @ApiProperty({ description: 'Phone number of the user', example: '0912345678', required: false })
+  @Prop({ type: String, required: false, unique: true, sparse: true, index: true })
+  phone?: string;
 
   @ApiProperty({ description: 'Email address of the user', example: 'user@example.com', required: false })
-  @Prop({ type: String })
+  @Prop({ type: String, required: false, unique: true, sparse: true, index: true, lowercase: true, trim: true })
   email?: string;
+
+  @ApiProperty({ description: 'Firebase Authentication UID', required: false })
+  @Prop({ type: String, required: false, unique: true, sparse: true, index: true })
+  firebaseUid?: string;
+
+  @ApiProperty({ description: 'Enabled authentication providers', example: ['local', 'google'], default: ['local'] })
+  @Prop({ type: [String], default: ['local'] })
+  authProviders: string[];
+
+  @ApiProperty({ description: 'Email verification status', default: false })
+  @Prop({ type: Boolean, default: false })
+  isEmailVerified: boolean;
+
+  @ApiProperty({ description: 'Profile avatar URL', required: false })
+  @Prop({ type: String })
+  avatarUrl?: string;
 
   @ApiProperty({ description: 'Full name of the user', example: 'Nguyễn Văn A' })
   @Prop({ type: String, required: true })
@@ -62,8 +78,8 @@ export class User {
   @Prop({ type: String })
   fcmToken?: string;
 
-  @Prop({ type: String, required: true })
-  passwordHash: string;
+  @Prop({ type: String, required: false })
+  passwordHash?: string;
 
   @ApiProperty({ description: 'Creation date' })
   @Prop({ type: Date, default: Date.now })

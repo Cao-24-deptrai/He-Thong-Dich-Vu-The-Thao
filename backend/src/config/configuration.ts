@@ -23,4 +23,9 @@ export default () => ({
     apiKey: process.env.PAYOS_API_KEY || '',
     checksumKey: process.env.PAYOS_CHECKSUM_KEY || '',
   },
+  firebase: {
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+    privateKey: process.env.FIREBASE_PRIVATE_KEY || '',
+  },
 });
