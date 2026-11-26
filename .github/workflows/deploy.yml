@@ -18,6 +18,7 @@ jobs:
             set -e
             git config --global --add safe.directory /var/www/He-Thong-Dich-Vu-The-Thao
             cd /var/www/He-Thong-Dich-Vu-The-Thao
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             docker compose up -d --build
             docker image prune -f

@@ -2,40 +2,88 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 248, 250, 252;
-  --background-rgb: 9, 13, 22;
+/* =========================================================
+   PHANTA SPORTS DESIGN TOKENS
+   Light Mode (Playo Inspired) & Dark Mode (admin.html Inspired)
+   ========================================================= */
+
+:root,
+[data-theme="light"] {
+  --bg-page: #FFFFFF;
+  --bg-surface: #F8F9FA;
+  --bg-card: #FFFFFF;
+  --bg-card-inner: #F1F3F2;
+  --bg-hover: #F2F2F4;
+  --border-subtle: #E3E8E6;
+  --border-strong: #D6DCD9;
+  
+  --text-main: #171C1A;
+  --text-heading: #0B0E0B;
+  --text-sub: #3B4540;
+  --text-muted: #758A80;
+  
+  --color-primary: #00B562;
+  --color-primary-hover: #00914E;
+  --color-primary-light: #CCF0E0;
+  --color-primary-soft: #E6F8F0;
+}
+
+[data-theme="dark"] {
+  --bg-page: #0C0F0C;
+  --bg-surface: #121512;
+  --bg-card: #191C14;
+  --bg-card-inner: #22261E;
+  --bg-hover: #262C22;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(156, 255, 147, 0.22);
+  
+  --text-main: #F3F4F6;
+  --text-heading: #FFFFFF;
+  --text-sub: #D1D5DB;
+  --text-muted: #A1A79F;
+  
+  --color-primary: #9CFF93;
+  --color-primary-hover: #1ED760;
+  --color-primary-light: rgba(156, 255, 147, 0.15);
+  --color-primary-soft: rgba(156, 255, 147, 0.08);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background-color: #090D16;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-lexend), 'Lexend', sans-serif;
   min-height: 100vh;
   letter-spacing: -0.01em;
 }
 
-/* Custom Tactical Scrollbars */
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: var(--font-barlow), 'Barlow', sans-serif;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090D16;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1E293B;
+  background: rgba(120, 120, 120, 0.25);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: rgba(120, 120, 120, 0.45);
 }
 
 /* Selection */
 ::selection {
-  background: #00F2FE;
-  color: #090D16;
+  background: #00B562;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] ::selection {
+  background: #9CFF93;
+  color: #0C0F0C;
 }

@@ -4,6 +4,7 @@
 import './globals.css';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Building2, 
@@ -29,11 +30,14 @@ import {
   Star,
   Ticket,
   ChevronDown,
+  MapPin,
   Home,
   HelpCircle,
   Info
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
+import ThemeToggle from '@/components/ThemeToggle';
+import MobileBottomNav from '@/components/MobileBottomNav';
 
 export default function RootLayout({
   children,
@@ -67,7 +71,6 @@ export default function RootLayout({
 
     // 1. Nếu đang ở domain khách hàng (phanta.id.vn):
     if (isCustomerDomain) {
-      // Nếu cố tình truy cập vào các trang quản trị nội bộ -> chuyển về /home
       if (!isCustomerRoute && pathname !== '/login' && pathname !== '/register') {
         router.replace('/home');
         return;
@@ -76,7 +79,6 @@ export default function RootLayout({
     }
 
     // 2. Nếu đang ở domain quản trị (admin.phanta.id.vn):
-    // Khách hàng vãng lai chưa đăng nhập -> bắt buộc về /login
     if (!currentUser && pathname !== '/login') {
       router.replace('/login');
       return;
@@ -90,8 +92,7 @@ export default function RootLayout({
       }
     }
 
-    // Phân quyền chi tiết cho nhân viên quầy (STAFF / CASHIER):
-    // Chỉ được phép vào các trang vận hành quầy: /walk-in, /checkin, /canteen, /rentals
+    // Phân quyền cho nhân viên quầy (STAFF):
     if (currentUser?.role === 'STAFF') {
       const allowedStaffRoutes = ['/walk-in', '/checkin', '/canteen', '/rentals'];
       const isAllowed = allowedStaffRoutes.some(
@@ -106,20 +107,21 @@ export default function RootLayout({
 
   const handleLogout = () => {
     api.logout();
+    setUser(null);
   };
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about'];
   const isCustomerPortal =
-    user?.role === 'CUSTOMER' ||
+    pathname === '/' ||
     customerRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
 
   const customerNavLinks = [
-    { href: '/home', label: 'Trang chính', icon: Home },
-    { href: '/booking', label: 'Đặt sân', icon: CalendarPlus },
-    { href: '/my-tickets', label: 'Vé của tôi', icon: Ticket },
-    { href: '/support', label: 'Hỗ trợ', icon: HelpCircle },
-    { href: '/about', label: 'Giới thiệu', icon: Info },
+    { href: '/home', label: 'Trang chính' },
+    { href: '/booking', label: 'Đặt sân' },
+    { href: '/my-tickets', label: 'Vé của tôi' },
+    { href: '/support', label: 'Hỗ trợ' },
+    { href: '/about', label: 'Giới thiệu' },
   ];
 
   interface NavSubItem {
@@ -303,7 +305,6 @@ export default function RootLayout({
   const filteredNavGroups = navGroups
     .map((group) => {
       const validItems = group.items.filter((item) => {
-        // Ẩn Quản Lý Sân Bãi đối với Nhân viên quầy (STAFF)
         if (user?.role === 'STAFF' && item.href === '/facilities') {
           return false;
         }
@@ -319,7 +320,6 @@ export default function RootLayout({
     })
     .filter((group) => group.items.length > 0);
 
-  // Tự động mở nhóm chứa trang hiện tại khi pathname hoặc vai trò thay đổi
   useEffect(() => {
     const activeGroup = filteredNavGroups.find((group) =>
       group.items.some((item) => pathname.startsWith(item.href))
@@ -330,416 +330,492 @@ export default function RootLayout({
   }, [pathname, user?.role]);
 
   return (
-    <html lang="vi">
+    <html lang="vi" data-theme="light">
       <head>
         <title>
           {isCustomerPortal
-            ? 'Phanta Sports • Đặt Sân Thể Thao Trực Tuyến'
+            ? 'Phanta Sports - Đặt Sân Thể Thao Trực Tuyến'
             : isAuthPage
-            ? 'Sports & Esports Booking • Đăng nhập'
-            : 'Hệ Thống Quản Trị Sân Thể Thao & Esports • Neo-Athletic'}
+            ? 'Sports & Esports Booking - Đăng nhập'
+            : 'Hệ Thống Quản Trị Sân Thể Thao & Esports'}
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Lexend:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('phanta_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+          }}
+        />
       </head>
       <body
         className={
           isAuthPage
-            ? 'bg-slate-900 text-slate-100 min-h-screen'
+            ? 'bg-slate-900 text-slate-100 min-h-screen font-body'
             : isCustomerPortal
-            ? 'bg-[#090D16] text-slate-100 flex flex-col min-h-screen relative selection:bg-cyan-500 selection:text-black'
-            : 'bg-[#090D16] text-slate-100 flex min-h-screen relative selection:bg-cyan-500 selection:text-black'
+            ? 'bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col min-h-screen relative font-body transition-colors duration-200'
+            : 'bg-[#0C0F0C] text-[#F3F4F6] flex min-h-screen relative font-body'
         }
       >
         {isAuthPage ? (
           children
         ) : isCustomerPortal ? (
           <>
-            {/* Top glow */}
-            <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            {/* Customer Top Header */}
-            <header className="sticky top-0 z-50 bg-[#0d121f]/95 border-b border-slate-800/80 backdrop-blur-xl">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <Link href="/home" className="flex items-center space-x-3 shrink-0">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-                    ⚡
-                  </div>
-                  <div>
-                    <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
-                      PHANTA SPORTS
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                        {user ? 'Member' : 'Sports Hub'}
+            {/* Playo-Style Customer Header */}
+            <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0C0F0C]/95 border-b border-[#E3E8E6] dark:border-white/10 backdrop-blur-md transition-colors">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
+                {/* Brand Logo & Geolocation */}
+                <div className="flex items-center space-x-3 sm:space-x-4 shrink-0">
+                  <Link href="/home" className="flex items-center space-x-2.5">
+                    <div className="w-10 h-10 relative shrink-0">
+                      <Image
+                        src="/Phanta Sports Booking Emblem.png"
+                        alt="Phanta Sports Logo"
+                        width={40}
+                        height={40}
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="leading-none">
+                      <span className="font-heading font-black text-xl tracking-tight text-[#171C1A] dark:text-white uppercase">
+                        PHANTA
                       </span>
-                    </h1>
-                    <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Hệ Sinh Thái Thể Thao & Đặt Sân Trực Tuyến</p>
-                  </div>
-                </Link>
+                      <span className="font-heading font-bold text-xs tracking-wider text-[#00B562] dark:text-[#9CFF93] block">
+                        SPORTS
+                      </span>
+                    </div>
+                  </Link>
 
-                {/* Desktop Customer Navigation */}
-                <nav className="hidden md:flex items-center space-x-1">
+                  {/* Geolocation pill (Playo style) */}
+                  <div className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-[#E3E8E6] dark:border-white/10 text-xs text-[#3B4540] dark:text-[#D1D5DB] bg-[#F8F9FA] dark:bg-[#191C14]">
+                    <MapPin className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
+                    <span className="font-medium">TP. Hồ Chí Minh</span>
+                  </div>
+                </div>
+
+                {/* Desktop Navigation Links */}
+                <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
                   {customerNavLinks.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
-                    const Icon = item.icon;
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/home' && pathname.startsWith(item.href));
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                        className={`text-sm tracking-tight transition-colors py-1 relative ${
                           isActive
-                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-[0_0_15px_rgba(6,182,212,0.2)] font-bold'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                            ? 'text-[#00B562] dark:text-[#9CFF93] font-semibold'
+                            : 'text-[#3B4540] dark:text-[#D1D5DB] hover:text-[#171C1A] dark:hover:text-white font-normal'
                         }`}
                       >
-                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
-                        <span>{item.label}</span>
+                        {item.label}
+                        {isActive && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00B562] dark:bg-[#9CFF93] rounded-full" />
+                        )}
                       </Link>
                     );
                   })}
                 </nav>
 
+                {/* Right Controls: Theme Toggle + Auth */}
                 <div className="flex items-center space-x-3">
-                  {user ? (
-                    <>
-                      <div className="hidden sm:flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800">
-                        <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-xs font-bold">
-                          <UserIcon className="w-4 h-4" />
-                        </div>
-                        <div className="text-left">
-                          <p className="text-xs font-bold text-white leading-tight">{user.fullName || user.phone}</p>
-                          <span className="text-[10px] text-emerald-400 font-mono">Thành viên</span>
-                        </div>
+                  <ThemeToggle />
+
+                  <div className="hidden sm:block w-px h-5 bg-[#E3E8E6] dark:bg-white/10" />
+
+                  {mounted && user ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14]">
+                        <UserIcon className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
+                        <span className="text-xs font-semibold text-[#171C1A] dark:text-white">
+                          {user.fullName || user.phone}
+                        </span>
                       </div>
                       <button
+                        type="button"
                         onClick={handleLogout}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-rose-400 bg-slate-900/60 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 rounded-xl transition"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Đăng xuất</span>
-                      </button>
-                    </>
-                  ) : (
-                    <div className="flex items-center space-x-2">
-                      <Link
-                        href="/login"
-                        className="px-3.5 py-1.5 text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-                      >
-                        Đăng nhập
-                      </Link>
-                      <Link
-                        href="/register"
-                        className="hidden sm:inline-flex px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition"
-                      >
-                        Đăng ký
-                      </Link>
-                    </div>
-                  )}
-
-                  {/* Mobile Menu Toggle */}
-                  <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="p-2 md:hidden text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 border border-slate-800"
-                    aria-label="Toggle Menu"
-                  >
-                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Mobile Navigation Drawer */}
-              {mobileMenuOpen && (
-                <div className="md:hidden border-t border-slate-800 bg-[#0d121f] px-4 py-3 space-y-1 backdrop-blur-2xl">
-                  {customerNavLinks.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/home' && pathname.startsWith(item.href));
-                    const Icon = item.icon;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition ${
-                          isActive
-                            ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30'
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                        }`}
-                      >
-                        <Icon className="w-4 h-4 text-cyan-400" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
-                  {user && (
-                    <div className="pt-2 border-t border-slate-800/80 mt-2 flex items-center justify-between text-xs text-slate-400">
-                      <span>Đang đăng nhập: <strong className="text-white">{user.fullName || user.phone}</strong></span>
-                      <button
-                        onClick={handleLogout}
-                        className="text-rose-400 hover:text-rose-300 font-semibold"
+                        title="Đăng xuất"
+                        className="px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors border border-rose-200 dark:border-rose-900/30"
                       >
                         Đăng xuất
                       </button>
                     </div>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="font-heading font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:hover:bg-[#1ED760] dark:text-[#0C0F0C] transition-colors"
+                    >
+                      Đăng nhập
+                    </Link>
                   )}
                 </div>
-              )}
+              </div>
             </header>
 
             {/* Customer Page Body */}
-            <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10">
+            <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10 pb-20 md:pb-8">
               {children}
             </main>
+
+            {/* Mobile Bottom Navigation (Sticky 5 Tabs) */}
+            <MobileBottomNav user={user} />
+
+            {/* Customer Footer (Unslop & Humanizer) */}
+            <footer className="border-t border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#0C0F0C] text-[#3B4540] dark:text-[#A1A79F] transition-colors py-10 px-4 sm:px-6 lg:px-8 pb-24 md:pb-10">
+              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
+                {/* Brand info */}
+                <div className="md:col-span-1 space-y-3">
+                  <div className="flex items-center space-x-2.5">
+                    <Image
+                      src="/Phanta Sports Booking Emblem.png"
+                      alt="Phanta Sports Logo"
+                      width={32}
+                      height={32}
+                      className="object-contain"
+                    />
+                    <span className="font-heading font-black text-lg text-[#171C1A] dark:text-white uppercase tracking-tight">
+                      PHANTA SPORTS
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#758A80] dark:text-[#A1A79F] leading-relaxed">
+                    Nền tảng đặt sân thể thao và giải đấu trực tuyến tại TP. Hồ Chí Minh. Hỗ trợ giữ chỗ 10 phút và nhận mã QR check-in vào sân tự động.
+                  </p>
+                </div>
+
+                {/* Quick links */}
+                <div className="space-y-2">
+                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
+                    Dịch vụ
+                  </h3>
+                  <ul className="space-y-1.5 text-xs">
+                    <li>
+                      <Link href="/booking" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Đặt sân trực tuyến
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/my-tickets" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Tra cứu vé đã đặt
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/home#sports" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Danh mục các bộ môn
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Policies & Support */}
+                <div className="space-y-2">
+                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
+                    Chính sách & Hỗ trợ
+                  </h3>
+                  <ul className="space-y-1.5 text-xs">
+                    <li>
+                      <Link href="/support" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Trung tâm trợ giúp
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/support#refund" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Chính sách hoàn tiền
+                      </Link>
+                    </li>
+                    <li>
+                      <Link href="/about#standards" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Quy định sân bãi
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Facilities & Contact */}
+                <div className="space-y-2">
+                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
+                    Liên hệ
+                  </h3>
+                  <div className="text-xs space-y-1 text-[#758A80] dark:text-[#A1A79F]">
+                    <p>Hotline: <strong className="text-[#171C1A] dark:text-white">0988 240 106</strong></p>
+                    <p>Giờ hoạt động: 06:00 - 23:00</p>
+                    <p>Địa điểm: Quận 7 và TP. Thủ Đức, TP. Hồ Chí Minh</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Copyright (Hyphen only, no floating dot) */}
+              <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-[#E3E8E6] dark:border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#758A80] dark:text-[#A1A79F]">
+                <p>© 2026 Phanta Sports - Bản quyền thuộc về Phanta Sports.</p>
+                <p className="mt-2 sm:mt-0">Tiêu chuẩn kỹ thuật BWF - FIFA - FIBA</p>
+              </div>
+            </footer>
           </>
         ) : (
           <>
-            {/* Ambient Top Glow Orbs */}
-            <div className="fixed top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-            <div className="fixed bottom-0 left-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-72 bg-[#0d121f]/95 border-r border-slate-800/80 backdrop-blur-xl shrink-0 z-20">
-          {/* Brand Header */}
-          <div className="p-6 border-b border-slate-800/80 flex items-center space-x-3.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              ⚡
-            </div>
-            <div>
-              <h1 className="font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
-                SPORTS ARENA
-                <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  v2.0
-                </span>
-              </h1>
-              <p className="text-[11px] text-slate-400 font-medium tracking-wide">
-                Tactical Command & POS
-              </p>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex-1 p-3.5 space-y-1.5 overflow-y-auto">
-            <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500">
-              DANH MỤC QUẢN TRỊ
-            </div>
-            {filteredNavGroups.map((group) => {
-              const GroupIcon = group.icon;
-              const isExpanded = expandedGroupId === group.id;
-              const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
-
-              return (
-                <div key={group.id} className="space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-2xl transition-all duration-200 text-left ${
-                      isGroupActive
-                        ? 'bg-slate-800/90 text-white font-bold border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]'
-                        : isExpanded
-                        ? 'bg-slate-800/50 text-slate-200 border border-slate-700/60'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border border-transparent'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2.5 min-w-0">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                        isGroupActive
-                          ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-black shadow-md shadow-cyan-500/30'
-                          : isExpanded
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        <GroupIcon className="w-4 h-4" />
-                      </div>
-                      <div className="truncate">
-                        <div className="text-xs font-bold tracking-tight truncate flex items-center gap-1.5">
-                          {group.label}
-                          {isGroupActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                          )}
-                        </div>
-                        <div className="text-[10px] text-slate-500 truncate font-normal">
-                          {group.items.length} mục chức năng
-                        </div>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                        isExpanded ? 'rotate-180 text-cyan-400' : 'text-slate-500'
-                      }`}
-                    />
-                  </button>
-
-                  {/* Sub-items with smooth accordion dropdown */}
-                  {isExpanded && (
-                    <div className="ml-3.5 pl-3 border-l-2 border-slate-800/80 space-y-1 py-1">
-                      {group.items.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = pathname.startsWith(item.href);
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`flex items-start space-x-2.5 px-3 py-2 rounded-xl transition-all duration-200 ${
-                              isActive
-                                ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-cyan-300 border-l-2 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] font-bold'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                            }`}
-                          >
-                            <Icon className={`w-4 h-4 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-cyan-400 drop-shadow-[0_0_8px_rgba(6,182,212,0.6)]' : 'text-slate-500'}`} />
-                            <div className="min-w-0">
-                              <div className="text-xs tracking-tight truncate leading-tight">{item.label}</div>
-                              <div className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-cyan-200/70' : 'text-slate-500'}`}>
-                                {item.description}
-                              </div>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
+            {/* Desktop Sidebar (Admin Operations) */}
+            <aside className="hidden md:flex flex-col w-72 bg-[#121512] border-r border-white/10 shrink-0 z-20">
+              {/* Brand Header */}
+              <div className="p-6 border-b border-white/10 flex items-center space-x-3.5">
+                <div className="w-10 h-10 relative shrink-0">
+                  <Image
+                    src="/Phanta Sports Booking Emblem.png"
+                    alt="Phanta Sports Logo"
+                    width={40}
+                    height={40}
+                    className="object-contain"
+                  />
                 </div>
-              );
-            })}
-          </nav>
-
-          {/* User info & logout */}
-          <div className="p-4 border-t border-slate-800/80 bg-slate-950/80">
-            {mounted && user ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 overflow-hidden">
-                  <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 border border-slate-700/80 shrink-0 shadow-inner">
-                    <UserIcon className="w-4 h-4" />
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-bold truncate text-white">{user.fullName || user.phone}</p>
-                    <span className="inline-block px-2 py-0.5 text-[9px] font-mono font-black tracking-wider uppercase bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
-                      [{user.role}]
+                <div>
+                  <h1 className="font-heading font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
+                    PHANTA SPORTS
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#9CFF93]/20 text-[#9CFF93] border border-[#9CFF93]/30">
+                      OPS
                     </span>
-                  </div>
+                  </h1>
+                  <p className="text-[11px] text-slate-400 font-medium tracking-wide">
+                    Quản Trị Vận Hành & POS
+                  </p>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  title="Đăng xuất"
-                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
               </div>
-            ) : (
-              <div className="text-xs text-slate-400">Đang tải tài khoản...</div>
-            )}
-          </div>
-        </aside>
 
-        {/* Mobile menu header */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0d121f]/95 backdrop-blur-md text-white p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center space-x-2.5">
-            <span className="p-1.5 rounded-lg bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-black text-sm">⚡</span>
-            <span className="font-black text-sm tracking-tight">SPORTS ARENA</span>
-          </div>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 text-slate-300 hover:text-white"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
+              {/* Navigation Links */}
+              <nav className="flex-1 p-3.5 space-y-1.5 overflow-y-auto">
+                <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 font-heading">
+                  DANH MỤC QUẢN TRỊ
+                </div>
+                {filteredNavGroups.map((group) => {
+                  const GroupIcon = group.icon;
+                  const isExpanded = expandedGroupId === group.id;
+                  const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
 
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 z-40 bg-[#090D16]/98 pt-20 p-6 flex flex-col justify-between overflow-y-auto">
-            <nav className="space-y-2 overflow-y-auto pb-4">
-              {filteredNavGroups.map((group) => {
-                const GroupIcon = group.icon;
-                const isExpanded = expandedGroupId === group.id;
-                const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
+                  return (
+                    <div key={group.id} className="space-y-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleGroup(group.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-left ${
+                          isGroupActive
+                            ? 'bg-[#191C14] text-white font-bold border border-[#9CFF93]/30'
+                            : isExpanded
+                            ? 'bg-[#191C14]/60 text-slate-200 border border-white/10'
+                            : 'text-slate-400 hover:text-slate-200 hover:bg-[#191C14]/40 border border-transparent'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2.5 min-w-0">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                            isGroupActive
+                              ? 'bg-[#9CFF93] text-black font-black'
+                              : isExpanded
+                              ? 'bg-[#9CFF93]/20 text-[#9CFF93] border border-[#9CFF93]/30'
+                              : 'bg-white/5 text-slate-400'
+                          }`}>
+                            <GroupIcon className="w-4 h-4" />
+                          </div>
+                          <div className="truncate">
+                            <div className="text-xs font-bold tracking-tight truncate">
+                              {group.label}
+                            </div>
+                            <div className="text-[10px] text-slate-500 truncate font-normal">
+                              {group.items.length} mục chức năng
+                            </div>
+                          </div>
+                        </div>
+                        <ChevronDown
+                          className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180 text-[#9CFF93]' : 'text-slate-500'
+                          }`}
+                        />
+                      </button>
 
-                return (
-                  <div key={group.id} className="space-y-1">
+                      {isExpanded && (
+                        <div className="ml-3.5 pl-3 border-l-2 border-white/10 space-y-1 py-1">
+                          {group.items.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = pathname.startsWith(item.href);
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-start space-x-2.5 px-3 py-2 rounded-lg transition-colors ${
+                                  isActive
+                                    ? 'bg-[#9CFF93]/15 text-[#9CFF93] font-bold border-l-2 border-[#9CFF93]'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                }`}
+                              >
+                                <Icon className={`w-4 h-4 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-[#9CFF93]' : 'text-slate-500'}`} />
+                                <div className="min-w-0">
+                                  <div className="text-xs tracking-tight truncate leading-tight">{item.label}</div>
+                                  <div className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-[#9CFF93]/70' : 'text-slate-500'}`}>
+                                    {item.description}
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </nav>
+
+              {/* User info & logout */}
+              <div className="p-4 border-t border-white/10 bg-[#0C0F0C]">
+                {mounted && user ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 overflow-hidden">
+                      <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#9CFF93] border border-white/10 shrink-0">
+                        <UserIcon className="w-4 h-4" />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-sm font-bold truncate text-white">{user.fullName || user.phone}</p>
+                        <span className="inline-block px-2 py-0.5 text-[9px] font-mono font-black tracking-wider uppercase bg-[#9CFF93]/20 text-[#9CFF93] rounded-md border border-[#9CFF93]/30">
+                          [{user.role}]
+                        </span>
+                      </div>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => toggleGroup(group.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all duration-200 text-left ${
-                        isGroupActive
-                          ? 'bg-slate-800/90 text-white font-bold border border-cyan-500/40'
-                          : isExpanded
-                          ? 'bg-slate-800/60 text-slate-200 border border-slate-700/60'
-                          : 'text-slate-300 bg-slate-900/80 border border-slate-800'
-                      }`}
+                      onClick={handleLogout}
+                      title="Đăng xuất"
+                      className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                     >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                          isGroupActive
-                            ? 'bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-black'
-                            : 'bg-slate-800 text-cyan-400'
-                        }`}>
-                          <GroupIcon className="w-4 h-4" />
-                        </div>
-                        <div className="truncate">
-                          <div className="text-sm font-semibold tracking-tight truncate">
-                            {group.label}
-                          </div>
-                          <div className="text-[10px] text-slate-400 truncate">
-                            {group.items.length} mục chức năng
-                          </div>
-                        </div>
-                      </div>
-                      <ChevronDown
-                        className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180 text-cyan-400' : 'text-slate-500'
-                        }`}
-                      />
+                      <LogOut className="w-4 h-4" />
                     </button>
-
-                    {isExpanded && (
-                      <div className="ml-4 pl-3 border-l-2 border-slate-800 space-y-1.5 py-1">
-                        {group.items.map((item) => {
-                          const Icon = item.icon;
-                          const isActive = pathname.startsWith(item.href);
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={() => setMobileMenuOpen(false)}
-                              className={`flex items-center space-x-3 p-3 rounded-xl ${
-                                isActive
-                                  ? 'bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-bold'
-                                  : 'text-slate-300 bg-slate-900/60 border border-slate-800/60'
-                              }`}
-                            >
-                              <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
-                              <div className="min-w-0">
-                                <div className="text-xs font-semibold truncate">{item.label}</div>
-                                <div className="text-[10px] text-slate-500 truncate">{item.description}</div>
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-            </nav>
-            <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
-              <div>
-                <p className="font-bold text-white text-sm">{user?.fullName || user?.phone}</p>
-                <p className="text-[10px] text-cyan-400 font-mono">[{user?.role}]</p>
+                ) : (
+                  <div className="text-xs text-slate-400">Đang tải tài khoản...</div>
+                )}
+              </div>
+            </aside>
+
+            {/* Mobile menu header */}
+            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121512]/95 backdrop-blur-md text-white p-4 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <Image
+                  src="/Phanta Sports Booking Emblem.png"
+                  alt="Phanta Sports Logo"
+                  width={28}
+                  height={28}
+                  className="object-contain"
+                />
+                <span className="font-heading font-black text-sm tracking-tight">PHANTA OPS</span>
               </div>
               <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold"
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-slate-300 hover:text-white"
+                aria-label="Mở menu quản trị"
               >
-                Đăng xuất
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
-          </div>
-        )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto w-full relative z-10">
-          {children}
-        </main>
-      </>
-    )}
-  </body>
-</html>
+            {/* Mobile Navigation Drawer */}
+            {mobileMenuOpen && (
+              <div className="md:hidden fixed inset-0 z-40 bg-[#0C0F0C]/98 pt-20 p-6 flex flex-col justify-between overflow-y-auto">
+                <nav className="space-y-2 overflow-y-auto pb-4">
+                  {filteredNavGroups.map((group) => {
+                    const GroupIcon = group.icon;
+                    const isExpanded = expandedGroupId === group.id;
+                    const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
+
+                    return (
+                      <div key={group.id} className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(group.id)}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors text-left ${
+                            isGroupActive
+                              ? 'bg-[#191C14] text-white font-bold border border-[#9CFF93]/40'
+                              : isExpanded
+                              ? 'bg-[#191C14]/60 text-slate-200 border border-white/10'
+                              : 'text-slate-300 bg-[#191C14]/40 border border-white/5'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                              isGroupActive
+                                ? 'bg-[#9CFF93] text-black font-black'
+                                : 'bg-white/10 text-[#9CFF93]'
+                            }`}>
+                              <GroupIcon className="w-4 h-4" />
+                            </div>
+                            <div className="truncate">
+                              <div className="text-sm font-semibold tracking-tight truncate">
+                                {group.label}
+                              </div>
+                              <div className="text-[10px] text-slate-400 truncate">
+                                {group.items.length} mục chức năng
+                              </div>
+                            </div>
+                          </div>
+                          <ChevronDown
+                            className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
+                              isExpanded ? 'rotate-180 text-[#9CFF93]' : 'text-slate-500'
+                            }`}
+                          />
+                        </button>
+
+                        {isExpanded && (
+                          <div className="ml-4 pl-3 border-l-2 border-white/10 space-y-1.5 py-1">
+                            {group.items.map((item) => {
+                              const Icon = item.icon;
+                              const isActive = pathname.startsWith(item.href);
+                              return (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  onClick={() => setMobileMenuOpen(false)}
+                                  className={`flex items-center space-x-3 p-3 rounded-lg ${
+                                    isActive
+                                      ? 'bg-[#9CFF93]/15 border border-[#9CFF93]/40 text-[#9CFF93] font-bold'
+                                      : 'text-slate-300 bg-white/5 border border-white/5'
+                                  }`}
+                                >
+                                  <Icon className="w-4 h-4 text-[#9CFF93] shrink-0" />
+                                  <div className="min-w-0">
+                                    <div className="text-xs font-semibold truncate">{item.label}</div>
+                                    <div className="text-[10px] text-slate-500 truncate">{item.description}</div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </nav>
+                <div className="pt-6 border-t border-white/10 flex items-center justify-between">
+                  <div>
+                    <p className="font-bold text-white text-sm">{user?.fullName || user?.phone}</p>
+                    <p className="text-[10px] text-[#9CFF93] font-mono">[{user?.role}]</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-bold"
+                  >
+                    Đăng xuất
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto w-full relative z-10">
+              {children}
+            </main>
+          </>
+        )}
+      </body>
+    </html>
   );
 }

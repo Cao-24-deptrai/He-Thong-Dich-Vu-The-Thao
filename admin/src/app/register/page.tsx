@@ -4,21 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  ShieldCheck,
-  UserPlus,
-  Phone,
-  User,
-  Mail,
-  Lock,
-  AlertCircle,
-  CheckCircle2,
-  Sparkles,
-  ArrowRight,
-  Zap,
-  CalendarCheck,
-  QrCode
-} from 'lucide-react';
+import Image from 'next/image';
 import { api } from '@/lib/api';
 
 export default function RegisterPage() {
@@ -39,7 +25,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
-    // Form validations
     const cleanPhone = phone.trim();
     if (!cleanPhone || !/^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(cleanPhone)) {
       setError('Vui lòng nhập số điện thoại hợp lệ (10 chữ số, bắt đầu bằng 03, 05, 07, 08, 09).');
@@ -62,7 +47,7 @@ export default function RegisterPage() {
     }
 
     if (!agreedTerms) {
-      setError('Bạn cần đồng ý với Điều khoản dịch vụ và Chính sách đặt sân.');
+      setError('Bạn cần đồng ý với Điều khoản dịch vụ và Quy định sân bãi.');
       return;
     }
 
@@ -77,10 +62,14 @@ export default function RegisterPage() {
     } catch (err: any) {
       console.error('Register error:', err);
       const msg = err.message || err.data?.message || 'Đăng ký không thành công. Vui lòng thử lại.';
-      if (typeof msg === 'string' && msg.includes('E11000') || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('đã tồn tại')) {
-        setError('Số điện thoại này đã được đăng ký trong hệ thống. Vui lòng đăng nhập hoặc sử dụng số khác.');
+      if (
+        (typeof msg === 'string' && msg.includes('E11000')) ||
+        msg.toLowerCase().includes('already exists') ||
+        msg.toLowerCase().includes('đã tồn tại')
+      ) {
+        setError('Số điện thoại này đã được đăng ký trên hệ thống. Vui lòng chuyển sang đăng nhập.');
       } else {
-        setError(typeof msg === 'string' ? msg : 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
+        setError(typeof msg === 'string' ? msg : 'Đăng ký thất bại. Vui lòng thử lại.');
       }
     } finally {
       setLoading(false);
@@ -88,240 +77,185 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Glow Orbs background */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
+      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (ẨN TRÊN MOBILE, HIỂN THỊ TỪ LG) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=80')`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0F0C] via-[#0C0F0C]/60 to-transparent" />
 
-      <div className="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10 my-8">
-        {/* Left Side: Brand & Feature Highlights */}
-        <div className="lg:col-span-5 flex flex-col justify-between p-6 sm:p-8 rounded-3xl bg-slate-900/40 border border-slate-800/80 backdrop-blur-xl">
-          <div>
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 via-cyan-500 to-blue-600 flex items-center justify-center font-black text-2xl text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.4)]">
-                ⚡
-              </div>
-              <div>
-                <h1 className="font-black text-xl text-white tracking-tight leading-tight flex items-center gap-1.5">
-                  PHANTA SPORTS
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                    Online
-                  </span>
-                </h1>
-                <p className="text-xs text-slate-400 font-medium">Hệ thống Đặt Lịch & Dịch Vụ Thể Thao</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 my-8">
-              <div className="flex items-start space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-                  <CalendarCheck className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-200">Đặt Sân Ma Trận 30 Phút</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Xem slot trống thời gian thực, giữ chỗ 10 phút chống trùng lịch tự động.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-200">Thanh Toán VietQR Tiện Lợi</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Tích hợp cổng PayOS & MoMo, tạo mã QR chuyển khoản chính xác 100%.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
-                  <QrCode className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-200">Vé Điện Tử Dynamic QR 60s</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Mã QR xoay vòng chống chia sẻ lậu, quét vào sân qua cổng nhanh chóng.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-slate-800/80">
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Tổ hợp sân thể thao cao cấp: Bóng đá 5-7-11, Cầu lông, Pickleball, Tennis, Bể bơi & Khu Cyber Gaming.
-            </p>
-          </div>
+        <div className="relative z-10">
+          <span className="font-heading font-bold text-xs uppercase tracking-widest text-[#00B562] dark:text-[#9CFF93]">
+            Tài Khoản Hội Viên Thể Thao
+          </span>
         </div>
 
-        {/* Right Side: Registration Form */}
-        <div className="lg:col-span-7 bg-slate-900/80 border border-slate-800/80 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col justify-center">
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              Đăng ký thành viên mới
+        <div className="relative z-10 space-y-4 max-w-md">
+          <h2 className="text-3xl sm:text-4xl font-heading font-black uppercase text-white leading-tight tracking-tight">
+            Gia Nhập Cộng Đồng Phanta Sports
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Đăng ký tài khoản để giữ chỗ trực tuyến trong 10 phút, tích lũy điểm thi đấu và nhận vé điện tử QR vào sân tức thì.
+          </p>
+          <div className="pt-2 text-xs text-slate-400 font-medium">
+            Thao tác nhanh gọn - Bảo mật thông tin cá nhân - Hỗ trợ 24/7
+          </div>
+        </div>
+      </div>
+
+      {/* CỘT PHẢI: FORM ĐĂNG KÝ TINH GỌN VỚI LOGO 2 (PHANTA.png) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+        <div className="w-full max-w-md space-y-6 my-auto">
+          {/* Header Form & Logo 2 */}
+          <div className="space-y-3 text-center sm:text-left">
+            <Link href="/home" className="inline-block">
+              <Image
+                src="/PHANTA.png"
+                alt="Phanta Sports Logo"
+                width={150}
+                height={50}
+                className="h-10 w-auto object-contain mx-auto sm:mx-0 dark:brightness-110"
+                priority
+              />
+            </Link>
+
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+                Tạo Tài Khoản Mới
+              </h1>
+              <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1">
+                Điền thông tin bên dưới để bắt đầu đặt sân thi đấu.
+              </p>
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Tạo Tài Khoản Khách Hàng</h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Đăng ký nhanh chỉ trong 30 giây để bắt đầu đặt sân và nhận ưu đãi
-            </p>
           </div>
 
-          {/* Success Banner */}
           {success && (
-            <div className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center space-x-3">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0" />
-              <div>
-                <p className="text-sm font-semibold text-emerald-300">Đăng ký thành công!</p>
-                <p className="text-xs text-emerald-400/80">Đang tự động chuyển hướng đến trang Đặt Sân...</p>
-              </div>
+            <div className="p-4 rounded-xl border border-[#00B562]/30 bg-[#00B562]/10 text-[#00B562] dark:text-[#9CFF93] text-xs">
+              Đăng ký tài khoản thành công! Đang chuyển hướng đến trang đặt sân...
             </div>
           )}
 
-          {/* Error Banner */}
           {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center space-x-3">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-              <p className="text-xs text-rose-300 font-medium leading-relaxed">{error}</p>
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs">
+              {error}
             </div>
           )}
 
+          {/* Form đăng ký - Không dùng icon rườm rà */}
           <form onSubmit={handleRegister} className="space-y-4">
-            {/* Phone & Full Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Số điện thoại <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="VD: 0911223344"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Họ và tên <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="VD: Nguyễn Văn A"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                  />
-                </div>
-              </div>
+            <div>
+              <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
+                Số điện thoại liên hệ *
+              </label>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="vd: 0988 240 106"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+              />
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                Địa chỉ Email <span className="text-slate-500 font-normal">(không bắt buộc)</span>
+              <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
+                Họ và tên người chơi *
               </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="vd: Nguyễn Văn A"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
+                Địa chỉ email (nhận hóa đơn điện tử)
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="vd: nguyenvana@gmail.com"
+                className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
+                  Mật khẩu *
+                </label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="VD: nguyenvana@gmail.com"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Ít nhất 6 ký tự"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
+                  Xác nhận lại mật khẩu *
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Nhập lại mật khẩu"
+                  className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                 />
               </div>
             </div>
 
-            {/* Password & Confirm */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Mật khẩu <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Tối thiểu 6 ký tự"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Xác nhận mật khẩu <span className="text-rose-400">*</span>
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Nhập lại mật khẩu"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Terms checkbox */}
-            <div className="flex items-center space-x-2 pt-1">
+            <div className="flex items-start space-x-2.5 pt-1">
               <input
                 type="checkbox"
                 id="terms"
                 checked={agreedTerms}
                 onChange={(e) => setAgreedTerms(e.target.checked)}
-                className="w-4 h-4 rounded bg-slate-950 border-slate-700 text-cyan-500 focus:ring-cyan-500/20"
+                className="mt-1 rounded border-[#E3E8E6] text-[#00B562] focus:ring-[#00B562]"
               />
-              <label htmlFor="terms" className="text-xs text-slate-400">
-                Tôi đồng ý với <span className="text-cyan-400 hover:underline cursor-pointer">Điều khoản dịch vụ</span> và chính sách giữ chỗ 10 phút.
+              <label htmlFor="terms" className="text-xs text-[#3B4540] dark:text-[#D1D5DB] leading-relaxed">
+                Tôi đồng ý với{' '}
+                <Link href="/about" className="text-[#00B562] dark:text-[#9CFF93] underline">
+                  Quy định sân bãi
+                </Link>{' '}
+                và{' '}
+                <Link href="/support" className="text-[#00B562] dark:text-[#9CFF93] underline">
+                  Chính sách hoàn tiền
+                </Link>{' '}
+                của Phanta Sports.
               </label>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading || success}
-              className="w-full mt-2 py-3 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-slate-950 flex items-center justify-center space-x-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
             >
-              {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                  <span>Đang khởi tạo tài khoản...</span>
-                </>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4" />
-                  <span>Đăng Ký & Vào Đặt Sân Ngay</span>
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </>
-              )}
+              {loading ? 'Đang khởi tạo tài khoản...' : 'Tạo Tài Khoản'}
             </button>
           </form>
 
-          {/* Switch to Login */}
-          <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
-            <p className="text-xs text-slate-400">
-              Đã có tài khoản thành viên?{' '}
-              <Link
-                href="/login"
-                className="font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors ml-1"
-              >
-                Đăng nhập ngay
-              </Link>
-            </p>
+          <div className="pt-4 border-t border-[#E3E8E6] dark:border-white/10 text-center text-xs text-[#3B4540] dark:text-[#D1D5DB]">
+            Đã có tài khoản trước đó?{' '}
+            <Link
+              href="/login"
+              className="font-heading font-bold uppercase text-[#00B562] dark:text-[#9CFF93] hover:underline"
+            >
+              Đăng nhập tại đây
+            </Link>
           </div>
         </div>
       </div>

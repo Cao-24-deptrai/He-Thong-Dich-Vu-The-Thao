@@ -3,23 +3,23 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   CalendarPlus,
   Ticket,
   RotateCcw,
   Headphones,
-  Info,
-  Sparkles,
   MapPin,
   Clock,
-  ShieldCheck,
   ChevronRight,
-  Flame,
-  Award,
+  ChevronDown,
   ArrowRight,
   QrCode,
+  ShieldCheck,
   CheckCircle2,
-  AlertTriangle
+  Calendar,
+  Building2,
+  Phone
 } from 'lucide-react';
 import { api, User, Booking } from '@/lib/api';
 
@@ -27,62 +27,56 @@ const FEATURED_SPORTS = [
   {
     id: 'FOOTBALL',
     name: 'Bóng Đá Sân Cỏ Nhân Tạo',
-    types: 'Sân 5 Futsal • Sân 7 Mini • Sân 11 Tiêu chuẩn',
-    badge: 'HOT NHẤT',
-    badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    icon: '⚽',
-    desc: 'Cỏ nhân tạo đạt chuẩn FIFA Quality Pro, hệ thống chiếu sáng LED chống lóa 500 Lux thi đấu ban đêm cực rõ.',
-    priceFrom: '200.000 đ/h',
+    types: 'Sân 5 Futsal - Sân 7 Mini - Sân 11 Tiêu chuẩn',
+    badge: 'Phổ biến nhất',
+    image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=80',
+    desc: 'Mặt cỏ nhân tạo đạt chứng chỉ FIFA Quality Pro, dàn đèn LED chiếu sáng 500 Lux chống chói thi đấu buổi tối.',
+    priceFrom: '200.000 đ/giờ',
   },
   {
     id: 'BADMINTON',
     name: 'Cầu Lông Thảm Chuyên Nghiệp',
-    types: 'Thảm BWF 5 lớp • Sân đơn & Sân đôi',
-    badge: 'TIÊU CHUẨN BWF',
-    badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-    icon: '🏸',
-    desc: 'Mặt thảm vinyl chống trơn trượt, độ nảy và bám sàn hoàn hảo, trần cao 9m thông thoáng tiêu chuẩn quốc gia.',
-    priceFrom: '90.000 đ/h',
+    types: 'Thảm BWF 5 lớp - Sân đơn - Sân đôi',
+    badge: 'Tiêu chuẩn BWF',
+    image: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80',
+    desc: 'Thảm vinyl giảm chấn thương, độ bám sân cao, chiều cao trần nhà 9m thông thoáng đúng tiêu chuẩn thi đấu.',
+    priceFrom: '90.000 đ/giờ',
   },
   {
     id: 'PICKLEBALL',
-    name: 'Pickleball Quốc Tế',
-    types: 'Sơn phủ Acrylic 8 lớp • Tiêu chuẩn USA Pickleball',
-    badge: 'XU HƯỚNG 2026',
-    badgeColor: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-    icon: '🏓',
-    desc: 'Bộ môn thời thượng kết hợp tennis và bóng bàn, mặt sân sơn nhám giảm chấn thương đầu gối và mắt cá.',
-    priceFrom: '140.000 đ/h',
+    name: 'Pickleball Thi Đấu',
+    types: 'Sơn phủ Acrylic 8 lớp - Tiêu chuẩn QT',
+    badge: 'Bộ môn mới',
+    image: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80',
+    desc: 'Mặt sân nhám ma sát cao chống trơn trượt, khu vực vạch kẻ rõ ràng theo quy định Liên đoàn Pickleball.',
+    priceFrom: '140.000 đ/giờ',
   },
   {
     id: 'TENNIS',
     name: 'Quần Vợt Tennis Chuyên Nghiệp',
-    types: 'Mặt cứng Hardcourt & Đất nện Clay',
-    badge: 'CAO CẤP',
-    badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    icon: '🎾',
-    desc: 'Khu vực khán đài có mái che, giàn đèn tiêu chuẩn giải Grand Slam, dịch vụ nhặt bóng và căng cước tại chỗ.',
-    priceFrom: '250.000 đ/h',
+    types: 'Mặt sân cứng Hardcourt - Đất nện',
+    badge: 'Cao cấp',
+    image: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=600&q=80',
+    desc: 'Khu khán đài có mái che, giàn đèn chuẩn thi đấu, hỗ trợ dịch vụ nhặt bóng và căng vợt tại cụm sân.',
+    priceFrom: '250.000 đ/giờ',
   },
   {
     id: 'BASKETBALL',
     name: 'Bóng Rổ Thi Đấu',
-    types: 'Sân bóng rổ Indoor sàn gỗ & Outdoor cao cấp',
-    badge: 'TIÊU CHUẨN FIBA',
-    badgeColor: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-    icon: '🏀',
-    desc: 'Trụ bóng rổ nâng hạ điện lực tử, bảng rổ kính cường lực 12mm chịu lực va đập và dunk bóng an toàn.',
-    priceFrom: '180.000 đ/h',
+    types: 'Sàn gỗ trong nhà - Sân ngoài trời',
+    badge: 'Tiêu chuẩn FIBA',
+    image: 'https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=600&q=80',
+    desc: 'Trụ bóng rổ thủy lực tiêu chuẩn, bảng rổ kính cường lực 12mm chịu lực va đập cao, an toàn khi tranh chấp bóng.',
+    priceFrom: '180.000 đ/giờ',
   },
   {
     id: 'ESPORTS',
-    name: 'Gaming Stadium 100 Máy',
-    types: 'Core i7 Gen 14 • RTX 4070 • Màn hình 240Hz',
-    badge: 'ESPORTS VIP',
-    badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
-    icon: '🎮',
-    desc: 'Phòng thi đấu cách âm, đường truyền cáp quang chuyên dụng chống giật lag, ghế gaming bọc da công thái học.',
-    priceFrom: '15.000 đ/h',
+    name: 'Khu Gaming Thể Thao Điện Tử',
+    types: 'Cấu hình i7 Gen 14 - RTX 4070 - Màn hình 240Hz',
+    badge: 'Esports Stadium',
+    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=600&q=80',
+    desc: 'Phòng máy cách âm, đường truyền cáp quang nội bộ ổn định, trang bị ghế gaming công thái học cao cấp.',
+    priceFrom: '15.000 đ/giờ',
   },
 ];
 
@@ -90,20 +84,43 @@ const FACILITIES = [
   {
     name: 'Phanta Sports Complex - Cơ sở Quận 7',
     address: 'Số 480 Huỳnh Tấn Phát, Phường Tân Phú, Quận 7, TP.HCM',
-    courts: '12 Sân bóng đá, 8 Sân cầu lông, 4 Sân Pickleball',
+    courts: '12 Sân bóng đá - 8 Sân cầu lông - 4 Sân Pickleball',
     hotline: '0988 240 106',
   },
   {
     name: 'Phanta Sports Arena - Cơ sở Thủ Đức',
     address: 'Khu Công Nghệ Cao, Xa lộ Hà Nội, TP. Thủ Đức, TP.HCM',
-    courts: '10 Sân bóng đá, 6 Sân tennis, Khu Gaming 100 máy',
+    courts: '10 Sân bóng đá - 6 Sân tennis - Khu Gaming 100 máy',
     hotline: '0988 280 906',
   },
   {
     name: 'Phanta Athletic Park - Cơ sở Tân Bình',
     address: 'Số 152 Cộng Hòa, Phường 12, Quận Tân Bình, TP.HCM',
-    courts: '8 Sân Pickleball, 6 Sân cầu lông, Canteen & GYM Fitness',
+    courts: '8 Sân Pickleball - 6 Sân cầu lông - Canteen & Gym Fitness',
     hotline: '0988 190 705',
+  },
+];
+
+const FAQS = [
+  {
+    question: 'Quy chế giữ chỗ 10 phút khi đặt sân hoạt động như thế nào?',
+    answer:
+      'Khi bạn chọn sân và giờ trên lịch, hệ thống sẽ tạm khóa khung giờ đó trong vòng 10 phút để bạn hoàn tất thanh toán VietQR. Trong thời gian này, không khách hàng nào khác có thể đặt trùng slot của bạn. Nếu quá 10 phút chưa thanh toán, slot sẽ tự động mở lại cho người khác.',
+  },
+  {
+    question: 'Tôi nhận vé và làm thủ tục vào sân (check-in) ra sao?',
+    answer:
+      'Ngay sau khi giao dịch chuyển khoản thành công, hệ thống gửi vé điện tử vào mục "Vé của tôi". Khi đến sân, bạn mở mã QR động (mã tự làm mới mỗi 60 giây) đưa qua đầu đọc quét tại quầy lễ tân hoặc cổng xoay để vào sân.',
+  },
+  {
+    question: 'Chính sách hoàn tiền khi hủy lịch áp dụng như thế nào?',
+    answer:
+      'Bạn được hoàn 100% tiền nếu hủy trước giờ bắt đầu từ 24 tiếng trở lên. Nếu hủy trong khoảng từ 2 tiếng đến 24 tiếng trước giờ chơi, hệ thống hỗ trợ hoàn 50%. Bạn có thể gửi yêu cầu hoàn tiền trực tiếp trên trang Vé của tôi.',
+  },
+  {
+    question: 'Hệ thống có hỗ trợ đặt lịch cố định hàng tuần hoặc theo tháng không?',
+    answer:
+      'Có. Bạn có thể liên hệ trực tiếp số hotline của từng cơ sở hoặc gửi tin nhắn tại Trung tâm Hỗ trợ để đăng ký hợp đồng khung giờ vàng cố định theo tháng với mức giá chiết khấu hội viên.',
   },
 ];
 
@@ -111,7 +128,7 @@ export default function CustomerHomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
   const [refundPendingCount, setRefundPendingCount] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   useEffect(() => {
     const currentUser = api.getUser();
@@ -120,306 +137,444 @@ export default function CustomerHomePage() {
     if (currentUser) {
       api.getMyBookings()
         .then((bookings) => {
-          // Lấy đơn CONFIRMED gần nhất
           const activeBookings = bookings.filter((b) => b.status === 'CONFIRMED');
           if (activeBookings.length > 0) {
             setUpcomingBooking(activeBookings[0]);
           }
-          // Đếm đơn chờ hoàn tiền
           const pendingRefunds = bookings.filter((b) => b.status === 'REFUND_PENDING');
           setRefundPendingCount(pendingRefunds.length);
         })
-        .catch((err) => console.error('Error fetching bookings:', err))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+        .catch((err) => console.error('Error fetching bookings:', err));
     }
   }, []);
 
   return (
-    <div className="space-y-10 pb-16">
-      {/* 1. HERO BANNER */}
-      <div className="relative rounded-3xl overflow-hidden border border-slate-800 bg-gradient-to-br from-slate-900 via-[#0d1527] to-[#07131e] p-6 sm:p-10 lg:p-12 shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="space-y-12 pb-12">
+      {/* 1. HERO SECTION (MIRRORED PLAYO LAYOUT) */}
+      <section className="bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-sm transition-colors">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* CỘT TRÁI (55%): CỤM ẢNH THỂ THAO 4 MÔN VỚI LOGO EMBLEM Ở TRUNG TÂM */}
+          <div className="lg:col-span-7 relative order-2 lg:order-1">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 relative rounded-2xl overflow-hidden p-2 bg-[#F8F9FA] dark:bg-[#121512] border border-[#E3E8E6] dark:border-white/5">
+              {/* Ảnh 1: Bóng đá */}
+              <div className="relative h-44 sm:h-52 rounded-xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=600&q=80"
+                  alt="Sân bóng đá Phanta"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 30vw"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
+                  Bóng đá
+                </span>
+              </div>
 
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Hệ Thống Đặt Sân Thể Thao Tự Động 24/7</span>
+              {/* Ảnh 2: Cầu lông */}
+              <div className="relative h-44 sm:h-52 rounded-xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=600&q=80"
+                  alt="Sân cầu lông Phanta"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 30vw"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
+                  Cầu lông
+                </span>
+              </div>
+
+              {/* Ảnh 3: Tennis / Pickleball */}
+              <div className="relative h-44 sm:h-52 rounded-xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=600&q=80"
+                  alt="Sân Pickleball Phanta"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 30vw"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
+                  Pickleball
+                </span>
+              </div>
+
+              {/* Ảnh 4: Bóng rổ */}
+              <div className="relative h-44 sm:h-52 rounded-xl overflow-hidden">
+                <Image
+                  src="https://images.unsplash.com/photo-1519861531473-9200262188bf?auto=format&fit=crop&w=600&q=80"
+                  alt="Sân bóng rổ Phanta"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 30vw"
+                />
+                <div className="absolute inset-0 bg-black/20" />
+                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
+                  Bóng rổ
+                </span>
+              </div>
+
+              {/* HUY HIỆU TRUNG TÂM MANG LOGO 1 PHANTA EMBLEM */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-[#191C14] border-4 border-[#00B562] dark:border-[#9CFF93] shadow-lg flex items-center justify-center p-2">
+                  <div className="w-full h-full relative">
+                    <Image
+                      src="/Phanta Sports Booking Emblem.png"
+                      alt="Phanta Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-            Nâng Tầm Trải Nghiệm{' '}
-            <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
-              Thể Thao Đỉnh Cao
-            </span>
-          </h1>
+          {/* CỘT PHẢI (45%): TIÊU ĐỀ LỚN, VỊ TRÍ, MÔ TẢ VÀ NÚT HÀNH ĐỘNG */}
+          <div className="lg:col-span-5 space-y-5 order-1 lg:order-2">
+            {/* Geolocation Pill (Playo Style) */}
+            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#E3E8E6] dark:border-white/10 text-xs text-[#3B4540] dark:text-[#D1D5DB] bg-[#F8F9FA] dark:bg-[#121512]">
+              <MapPin className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
+              <span className="font-medium">Khu vực: TP. Hồ Chí Minh</span>
+            </div>
 
-          <p className="mt-4 text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-            Chào mừng {user ? <strong className="text-cyan-300 font-bold">{user.fullName || user.phone}</strong> : 'bạn'} đến với Phanta Sports. 
-            Đặt sân nhanh chóng, giữ chỗ thời gian thực, quét mã VietQR tự động và vào sân tức thì với vé QR thông minh.
-          </p>
+            {/* Tiêu đề lớn Barlow */}
+            <h1 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl text-[#171C1A] dark:text-white uppercase tracking-tight leading-[1.1]">
+              ĐẶT SÂN THỂ THAO.<br />
+              THAM GIA TRẬN ĐẤU.<br />
+              <span className="text-[#00B562] dark:text-[#9CFF93]">TÌM BẠN CHƠI CÙNG.</span>
+            </h1>
 
-          {/* Quick CTAs */}
-          <div className="mt-8 flex flex-wrap gap-3 sm:gap-4">
-            <Link
-              href="/booking"
-              className="inline-flex items-center space-x-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-sm transition-all shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <CalendarPlus className="w-4 h-4" />
-              <span>Đặt Sân Ngay</span>
-              <ArrowRight className="w-4 h-4 ml-1" />
-            </Link>
+            {/* Mô tả tự nhiên (Humanizer) */}
+            <p className="text-sm sm:text-base text-[#758A80] dark:text-[#A1A79F] leading-relaxed">
+              Nền tảng kết nối sân tập, lịch thi đấu và dịch vụ thể thao trực tuyến tại TP. Hồ Chí Minh. Giữ chỗ tức thì trong 10 phút, tự động xác nhận qua VietQR và check-in vào sân bằng mã QR.
+            </p>
 
-            <Link
-              href="/my-tickets"
-              className="inline-flex items-center space-x-2 px-5 py-3.5 rounded-2xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 font-bold text-sm transition hover:text-white"
-            >
-              <Ticket className="w-4 h-4 text-cyan-400" />
-              <span>Vé Của Tôi</span>
-            </Link>
+            {/* Cặp nút hành động */}
+            <div className="pt-2 flex flex-wrap gap-3 sm:gap-4 items-center">
+              <Link
+                href="/booking"
+                className="font-heading font-bold text-sm uppercase tracking-wide inline-flex items-center space-x-2 px-6 py-3.5 rounded-xl bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:hover:bg-[#1ED760] dark:text-[#0C0F0C] transition-colors shadow-sm"
+              >
+                <CalendarPlus className="w-4 h-4" />
+                <span>Đặt Sân Ngay</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Link>
 
-            <Link
-              href="/support"
-              className="inline-flex items-center space-x-2 px-4 py-3.5 rounded-2xl bg-slate-900/60 hover:bg-slate-800/60 border border-slate-800 text-slate-400 hover:text-slate-200 font-semibold text-sm transition"
-            >
-              <Headphones className="w-4 h-4 text-emerald-400" />
-              <span>Trung Tâm Hỗ Trợ</span>
-            </Link>
+              <a
+                href="#facilities"
+                className="font-heading font-semibold text-sm tracking-wide inline-flex items-center space-x-2 px-5 py-3.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 text-[#171C1A] dark:text-white hover:bg-[#F2F2F4] dark:hover:bg-[#22261E] transition-colors"
+              >
+                <Building2 className="w-4 h-4 text-[#758A80] dark:text-[#A1A79F]" />
+                <span>Xem danh sách cơ sở</span>
+              </a>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* 2. UPCOMING TICKET / REFUND ALERT WIDGET */}
+      {/* 2. THÔNG BÁO VÉ SẮP TỚI & YÊU CẦU HOÀN TIỀN (KHÔNG CHẤM CHỚP) */}
       {user && (upcomingBooking || refundPendingCount > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {upcomingBooking && (
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-slate-900 border border-cyan-500/30 flex items-center justify-between shadow-lg">
+            <div className="p-5 rounded-2xl bg-[#F8F9FA] dark:bg-[#191C14] border border-[#00B562]/30 dark:border-[#9CFF93]/30 flex items-center justify-between">
               <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">Vé Sắp Diễn Ra</span>
+                <div className="flex items-center space-x-2 text-xs font-semibold text-[#00B562] dark:text-[#9CFF93]">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span className="font-heading font-bold uppercase tracking-wider">Vé sắp diễn ra</span>
                 </div>
-                <h4 className="text-base font-bold text-white">{upcomingBooking.venueId?.name || 'Sân thể thao'}</h4>
-                <p className="text-xs text-slate-300 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-cyan-400" />
-                  {upcomingBooking.bookingDate} ({upcomingBooking.startTime} - {upcomingBooking.endTime})
+                <h4 className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
+                  {upcomingBooking.venueId?.name || 'Sân thể thao'}
+                </h4>
+                <p className="text-xs text-[#758A80] dark:text-[#A1A79F]">
+                  Ngày {upcomingBooking.bookingDate} ({upcomingBooking.startTime} - {upcomingBooking.endTime})
                 </p>
               </div>
 
               <Link
                 href="/my-tickets"
-                className="px-4 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-bold flex items-center space-x-1.5 transition shrink-0"
+                className="px-4 py-2 rounded-lg bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:hover:bg-[#1ED760] dark:text-[#0C0F0C] text-xs font-heading font-bold tracking-wider flex items-center space-x-1.5 transition-colors shrink-0"
               >
-                <QrCode className="w-4 h-4" />
-                <span>Xem Mã QR</span>
+                <QrCode className="w-3.5 h-3.5" />
+                <span>Xem mã QR</span>
               </Link>
             </div>
           )}
 
           {refundPendingCount > 0 && (
-            <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 flex items-center justify-between shadow-lg">
+            <div className="p-5 rounded-2xl bg-[#F8F9FA] dark:bg-[#191C14] border border-amber-300 dark:border-amber-600/30 flex items-center justify-between">
               <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <RotateCcw className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Yêu Cầu Hoàn Tiền</span>
+                <div className="flex items-center space-x-2 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span className="font-heading font-bold uppercase tracking-wider">Yêu cầu hoàn tiền</span>
                 </div>
-                <h4 className="text-base font-bold text-white">Bạn có {refundPendingCount} đơn chờ đối soát</h4>
-                <p className="text-xs text-slate-400">Ban quản lý đang tiến hành chuyển tiền hoàn theo tài khoản của bạn</p>
+                <h4 className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
+                  Bạn có {refundPendingCount} đơn chờ đối soát
+                </h4>
+                <p className="text-xs text-[#758A80] dark:text-[#A1A79F]">
+                  Ban quản lý đang tiến hành chuyển tiền hoàn theo tài khoản của bạn
+                </p>
               </div>
 
               <Link
                 href="/my-tickets"
-                className="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center space-x-1.5 transition shrink-0"
+                className="px-4 py-2 rounded-lg border border-amber-400 dark:border-amber-500 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20 text-xs font-heading font-bold tracking-wider flex items-center space-x-1.5 transition-colors shrink-0"
               >
-                <span>Xem Trạng Thái</span>
-                <ChevronRight className="w-4 h-4" />
+                <span>Xem trạng thái</span>
+                <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           )}
-        </div>
+        </section>
       )}
 
-      {/* 3. FOUR CORE MODULES QUICK ACCESS */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* 3. BỐN LỐI TẮT TRỌNG TÂM (UNSLOP - NO ARBITRARY HOVER JUMPS) */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
           href="/booking"
-          className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 hover:border-cyan-500/40 transition-all duration-200 group flex flex-col justify-between space-y-3"
+          className="p-5 rounded-2xl bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 hover:border-[#00B562] dark:hover:border-[#9CFF93] transition-colors flex flex-col justify-between space-y-3"
         >
-          <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#00B562]/10 dark:bg-[#9CFF93]/10 flex items-center justify-center text-[#00B562] dark:text-[#9CFF93]">
             <CalendarPlus className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white group-hover:text-cyan-300 transition">Đặt Sân Trực Tuyến</h3>
-            <p className="text-[11px] text-slate-400 mt-1">48 slot 30 phút, giữ chỗ và thanh toán VietQR tự động</p>
+            <h3 className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">Đặt Sân Trực Tuyến</h3>
+            <p className="text-xs text-[#758A80] dark:text-[#A1A79F] mt-1 leading-relaxed">
+              Khung giờ 30 phút, thanh toán VietQR tự động
+            </p>
           </div>
-          <div className="text-[11px] text-cyan-400 font-bold flex items-center gap-1">
-            <span>Chọn sân ngay</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          <div className="text-xs text-[#00B562] dark:text-[#9CFF93] font-semibold flex items-center gap-1">
+            <span>Chọn sân</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </Link>
 
         <Link
           href="/my-tickets"
-          className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 hover:border-emerald-500/40 transition-all duration-200 group flex flex-col justify-between space-y-3"
+          className="p-5 rounded-2xl bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 hover:border-[#00B562] dark:hover:border-[#9CFF93] transition-colors flex flex-col justify-between space-y-3"
         >
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#00B562]/10 dark:bg-[#9CFF93]/10 flex items-center justify-center text-[#00B562] dark:text-[#9CFF93]">
             <Ticket className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition">Vé & Mã QR Check-in</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Lịch sử đặt sân, mã QR vào cổng và quản lý vé</p>
+            <h3 className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">Vé & Mã Check-in</h3>
+            <p className="text-xs text-[#758A80] dark:text-[#A1A79F] mt-1 leading-relaxed">
+              Mã QR động 60 giây và lịch sử đặt sân
+            </p>
           </div>
-          <div className="text-[11px] text-emerald-400 font-bold flex items-center gap-1">
-            <span>Xem vé của bạn</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          <div className="text-xs text-[#00B562] dark:text-[#9CFF93] font-semibold flex items-center gap-1">
+            <span>Xem vé</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </Link>
 
         <Link
           href="/my-tickets"
-          className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 hover:border-amber-500/40 transition-all duration-200 group flex flex-col justify-between space-y-3"
+          className="p-5 rounded-2xl bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 hover:border-[#00B562] dark:hover:border-[#9CFF93] transition-colors flex flex-col justify-between space-y-3"
         >
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#00B562]/10 dark:bg-[#9CFF93]/10 flex items-center justify-center text-[#00B562] dark:text-[#9CFF93]">
             <RotateCcw className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white group-hover:text-amber-300 transition">Chính Sách Hoàn Tiền</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Hủy sân trước 24h hoàn 100%, hủy từ 2h - 24h hoàn 50%</p>
+            <h3 className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">Chính Sách Hoàn Tiền</h3>
+            <p className="text-xs text-[#758A80] dark:text-[#A1A79F] mt-1 leading-relaxed">
+              Hủy trước 24 giờ hoàn 100%, hủy từ 2-24 giờ hoàn 50%
+            </p>
           </div>
-          <div className="text-[11px] text-amber-400 font-bold flex items-center gap-1">
-            <span>Yêu cầu hoàn tiền</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          <div className="text-xs text-[#00B562] dark:text-[#9CFF93] font-semibold flex items-center gap-1">
+            <span>Chi tiết</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </Link>
 
         <Link
           href="/support"
-          className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 hover:border-blue-500/40 transition-all duration-200 group flex flex-col justify-between space-y-3"
+          className="p-5 rounded-2xl bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 hover:border-[#00B562] dark:hover:border-[#9CFF93] transition-colors flex flex-col justify-between space-y-3"
         >
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-[#00B562]/10 dark:bg-[#9CFF93]/10 flex items-center justify-center text-[#00B562] dark:text-[#9CFF93]">
             <Headphones className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white group-hover:text-blue-300 transition">Hỗ Trợ & Khiếu Nại</h3>
-            <p className="text-[11px] text-slate-400 mt-1">Hotline trực tiếp, FAQ giải đáp thắc mắc và liên hệ</p>
+            <h3 className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">Trung Tâm Hỗ Trợ</h3>
+            <p className="text-xs text-[#758A80] dark:text-[#A1A79F] mt-1 leading-relaxed">
+              Hotline cơ sở, tra cứu giao dịch và gửi phản hồi
+            </p>
           </div>
-          <div className="text-[11px] text-blue-400 font-bold flex items-center gap-1">
-            <span>Gửi phản hồi</span>
-            <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+          <div className="text-xs text-[#00B562] dark:text-[#9CFF93] font-semibold flex items-center gap-1">
+            <span>Liên hệ</span>
+            <ChevronRight className="w-3.5 h-3.5" />
           </div>
         </Link>
-      </div>
+      </section>
 
-      {/* 4. FEATURED SPORTS SECTION */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* 4. CÁC BỘ MÔN PHỔ BIẾN (POPULAR SPORTS - PLAYO STYLE) */}
+      <section id="sports" className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-[#E3E8E6] dark:border-white/10 pb-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Flame className="w-6 h-6 text-rose-500" />
-              Các Bộ Môn Thể Thao Tiêu Chuẩn
+            <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#00B562] dark:text-[#9CFF93]">
+              Danh mục bộ môn
+            </span>
+            <h2 className="font-heading font-black text-2xl sm:text-3xl text-[#171C1A] dark:text-white uppercase tracking-tight mt-1">
+              Các Môn Thể Thao Phổ Biến
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">Sân bãi chất lượng cao, trang thiết bị thi đấu đạt chuẩn quốc tế</p>
           </div>
-
           <Link
             href="/booking"
-            className="text-xs font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+            className="text-xs font-heading font-bold uppercase text-[#00B562] dark:text-[#9CFF93] hover:underline flex items-center gap-1"
           >
             <span>Xem tất cả sân</span>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {FEATURED_SPORTS.map((sport) => (
             <div
               key={sport.id}
-              className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 transition flex flex-col justify-between space-y-4"
+              className="rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] overflow-hidden flex flex-col justify-between transition-colors"
             >
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl">{sport.icon}</span>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${sport.badgeColor}`}>
+                {/* Ảnh môn thể thao */}
+                <div className="relative h-44 w-full overflow-hidden">
+                  <Image
+                    src={sport.image}
+                    alt={sport.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <span className="absolute top-3 right-3 text-[11px] font-heading font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-white/90 text-[#171C1A] dark:bg-black/70 dark:text-white backdrop-blur-sm">
                     {sport.badge}
                   </span>
+                  <div className="absolute bottom-3 left-3 text-white">
+                    <span className="text-xs text-slate-200 block">Giá từ</span>
+                    <span className="font-heading font-bold text-base text-[#9CFF93]">
+                      {sport.priceFrom}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-base font-bold text-white">{sport.name}</h3>
-                <p className="text-xs text-cyan-300/80 font-medium mt-0.5">{sport.types}</p>
-                <p className="text-xs text-slate-400 mt-2 leading-relaxed">{sport.desc}</p>
+
+                {/* Nội dung môn */}
+                <div className="p-5 space-y-2.5">
+                  <h3 className="font-heading font-bold text-lg text-[#171C1A] dark:text-white leading-snug">
+                    {sport.name}
+                  </h3>
+                  <div className="text-xs font-medium text-[#00B562] dark:text-[#9CFF93]">
+                    {sport.types}
+                  </div>
+                  <p className="text-xs text-[#758A80] dark:text-[#A1A79F] leading-relaxed">
+                    {sport.desc}
+                  </p>
+                </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-slate-500 uppercase tracking-wider block">Giá từ</span>
-                  <span className="text-sm font-bold font-mono text-emerald-400">{sport.priceFrom}</span>
-                </div>
+              {/* Nút đặt sân */}
+              <div className="p-5 pt-0">
                 <Link
-                  href={`/booking`}
-                  className="px-3.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-bold transition flex items-center gap-1"
+                  href={`/booking?sport=${sport.id}`}
+                  className="w-full text-center py-2.5 px-4 rounded-xl border border-[#E3E8E6] dark:border-white/15 text-[#171C1A] dark:text-white hover:bg-[#00B562] hover:text-white hover:border-[#00B562] dark:hover:bg-[#9CFF93] dark:hover:text-[#0C0F0C] dark:hover:border-[#9CFF93] font-heading font-bold text-xs uppercase tracking-wider transition-colors inline-block"
                 >
-                  <span>Đặt sân</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  Chọn sân {sport.name.split(' ')[0]}
                 </Link>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* 5. SPORTS COMPLEXES & BRANCHES */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-6">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-emerald-400" />
-            Hệ Thống Tổ Hợp Sân Phanta Sports
+      {/* 5. DANH SÁCH CƠ SỞ (FACILITIES) */}
+      <section id="facilities" className="space-y-6">
+        <div className="border-b border-[#E3E8E6] dark:border-white/10 pb-4">
+          <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#00B562] dark:text-[#9CFF93]">
+            Cơ sở tổ hợp
+          </span>
+          <h2 className="font-heading font-black text-2xl sm:text-3xl text-[#171C1A] dark:text-white uppercase tracking-tight mt-1">
+            Hệ Thống Cụm Sân Tại TP. Hồ Chí Minh
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Các cụm sân thể thao hiện đại tọa lạc tại các vị trí thuận tiện giao thông, bãi đỗ xe rộng rãi
-          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FACILITIES.map((f, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 space-y-2">
-              <h4 className="text-sm font-bold text-white leading-tight">{f.name}</h4>
-              <p className="text-xs text-slate-400 flex items-start gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
-                <span>{f.address}</span>
-              </p>
-              <div className="text-[11px] text-cyan-300 font-medium pt-1">
-                {f.courts}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {FACILITIES.map((facility, idx) => (
+            <div
+              key={facility.name}
+              className="p-6 rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] space-y-4 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="w-8 h-8 rounded-lg bg-[#00B562]/10 dark:bg-[#9CFF93]/10 text-[#00B562] dark:text-[#9CFF93] flex items-center justify-center font-heading font-black text-sm">
+                  0{idx + 1}
+                </div>
+                <h3 className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
+                  {facility.name}
+                </h3>
+                <p className="text-xs text-[#758A80] dark:text-[#A1A79F] flex items-start gap-2">
+                  <MapPin className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93] shrink-0 mt-0.5" />
+                  <span>{facility.address}</span>
+                </p>
+                <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] font-medium">
+                  {facility.courts}
+                </p>
               </div>
-              <div className="text-xs text-emerald-400 font-mono font-bold pt-1">
-                Hotline: {f.hotline}
+
+              <div className="pt-3 border-t border-[#E3E8E6] dark:border-white/5 flex items-center justify-between text-xs">
+                <span className="text-[#758A80] dark:text-[#A1A79F]">Hotline: {facility.hotline}</span>
+                <Link
+                  href="/booking"
+                  className="font-heading font-bold text-[#00B562] dark:text-[#9CFF93] hover:underline uppercase text-[11px]"
+                >
+                  Đặt tại cơ sở này
+                </Link>
               </div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* 6. TRANSPARENT REFUND COMMITMENT BANNER */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-slate-900 to-emerald-950/40 border border-cyan-500/30 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-2 max-w-xl">
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[11px] font-bold">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Cam Kết Minh Bạch 100%</span>
-          </div>
-          <h3 className="text-xl font-bold text-white">Chính Sách Hủy Đơn & Hoàn Tiền Linh Hoạt</h3>
-          <p className="text-xs text-slate-300 leading-relaxed">
-            Bạn có việc bận đột xuất? Chỉ cần hủy vé trước 24h để nhận hoàn 100% học phí hoặc cọc sân. 
-            Mọi quy trình được xử lý trực tiếp ngay tại trang <strong className="text-cyan-300">Vé của tôi</strong> mà không cần thủ tục rườm rà.
-          </p>
+      {/* 6. CÂU HỎI THƯỜNG GẶP (FAQS - PLAYO STYLE ACCORDION) */}
+      <section className="space-y-6">
+        <div className="border-b border-[#E3E8E6] dark:border-white/10 pb-4">
+          <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#00B562] dark:text-[#9CFF93]">
+            Giải đáp thắc mắc
+          </span>
+          <h2 className="font-heading font-black text-2xl sm:text-3xl text-[#171C1A] dark:text-white uppercase tracking-tight mt-1">
+            Câu Hỏi Thường Gặp (FAQs)
+          </h2>
         </div>
 
-        <Link
-          href="/my-tickets"
-          className="px-6 py-3 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs transition shadow-[0_0_20px_rgba(6,182,212,0.3)] shrink-0"
-        >
-          Quản Lý Vé & Hoàn Tiền
-        </Link>
-      </div>
+        <div className="space-y-3">
+          {FAQS.map((faq, index) => {
+            const isOpen = openFaqIndex === index;
+            return (
+              <div
+                key={faq.question}
+                className="rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] overflow-hidden transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
+                  className="w-full p-5 text-left flex items-center justify-between gap-4"
+                >
+                  <span className="font-heading font-bold text-sm sm:text-base text-[#171C1A] dark:text-white">
+                    {faq.question}
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-[#758A80] dark:text-[#A1A79F] shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180 text-[#00B562] dark:text-[#9CFF93]' : ''
+                    }`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-[#758A80] dark:text-[#A1A79F] leading-relaxed border-t border-[#E3E8E6]/60 dark:border-white/5 pt-3">
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }

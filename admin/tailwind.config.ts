@@ -6,15 +6,21 @@ const config: Config = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  darkMode: ["selector", '[data-theme="dark"]'],
   theme: {
     extend: {
+      fontFamily: {
+        heading: ["var(--font-barlow)", "Barlow", "sans-serif"],
+        body: ["var(--font-lexend)", "Lexend", "sans-serif"],
+      },
       colors: {
-        primary: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
+        brand: {
+          50: "#e6f8f0",
+          100: "#ccf0e0",
+          200: "#a3e5c7",
+          500: "#00b562",
+          600: "#00914e",
+          neon: "#9cff93",
         },
       },
     },

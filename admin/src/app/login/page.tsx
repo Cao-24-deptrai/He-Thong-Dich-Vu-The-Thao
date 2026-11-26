@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogIn, Lock, Phone, AlertCircle, Clock, AlertTriangle } from 'lucide-react';
+import Image from 'next/image';
 import { api } from '@/lib/api';
 
 export default function LoginPage() {
@@ -26,7 +26,6 @@ export default function LoginPage() {
     try {
       const res = await api.login(phone, password);
 
-      // Điều hướng thông minh theo vai trò và domain
       const isCustomerDomain =
         typeof window !== 'undefined' &&
         !window.location.hostname.startsWith('admin.');
@@ -51,13 +50,13 @@ export default function LoginPage() {
           remainingMinutes: errData.remainingMinutes || 15,
           lockedUntil: errData.lockedUntil,
         });
-        setError(`Tài khoản đã bị tạm khóa do nhập sai mật khẩu 5 lần liên tiếp. Vui lòng thử lại sau ${errData.remainingMinutes || 15} phút.`);
+        setError(`Tài khoản tạm thời bị khóa do nhập sai mật khẩu 5 lần. Vui lòng thử lại sau ${errData.remainingMinutes || 15} phút.`);
       } else {
         if (typeof errData.attemptsLeft === 'number') {
           setAttemptsLeft(errData.attemptsLeft);
-          setError(`Số điện thoại hoặc mật khẩu không chính xác. Bạn còn ${errData.attemptsLeft} lần thử trước khi bị tạm khóa 15 phút.`);
+          setError(`Số điện thoại hoặc mật khẩu không chính xác. Bạn còn ${errData.attemptsLeft} lần thử trước khi tài khoản bị khóa 15 phút.`);
         } else {
-          setError(err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+          setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại số điện thoại hoặc mật khẩu.');
         }
       }
     } finally {
@@ -66,126 +65,147 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-xl shadow-blue-500/25 mb-4">
-          ⚡
+    <div className="min-h-screen bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
+      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (ẨN TRÊN MOBILE, HIỂN THỊ TỪ LG) */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden">
+        {/* Ảnh nền thể thao độ nét cao */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1600&q=80')`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0F0C] via-[#0C0F0C]/60 to-transparent" />
+
+        {/* Nội dung trên cột ảnh - Không dùng icon rườm rà */}
+        <div className="relative z-10">
+          <span className="font-heading font-bold text-xs uppercase tracking-widest text-[#00B562] dark:text-[#9CFF93]">
+            Phanta Sports Network
+          </span>
         </div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-white">
-          Sports & Esports Booking
-        </h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Cổng điều hành & quản lý tổ hợp thể thao (Admin & Staff Desk)
-        </p>
+
+        <div className="relative z-10 space-y-4 max-w-md">
+          <h2 className="text-3xl sm:text-4xl font-heading font-black uppercase text-white leading-tight tracking-tight">
+            Nền Tảng Đặt Sân & Quản Lý Trận Đấu
+          </h2>
+          <p className="text-sm text-slate-300 leading-relaxed">
+            Kết nối hơn 40 sân thi đấu đạt chuẩn quốc tế tại TP. Hồ Chí Minh. Xác thực mã vào cổng tự động qua cửa xoay và minh bạch hoàn tiền.
+          </p>
+          <div className="pt-2 text-xs text-slate-400 font-medium">
+            Bóng đá - Cầu lông - Pickleball - Tennis - Bóng rổ - Cyber Arena
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-800 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-700">
-          {/* Cảnh báo khóa tài khoản Brute-force */}
+      {/* CỘT PHẢI: FORM ĐĂNG NHẬP TINH GỌN VỚI LOGO 2 (PHANTA.png) */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md space-y-8">
+          {/* Header Form & Logo 2 */}
+          <div className="space-y-4 text-center sm:text-left">
+            <Link href="/home" className="inline-block">
+              <Image
+                src="/PHANTA.png"
+                alt="Phanta Sports Logo"
+                width={150}
+                height={50}
+                className="h-10 w-auto object-contain mx-auto sm:mx-0 dark:brightness-110"
+                priority
+              />
+            </Link>
+
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+                Đăng Nhập
+              </h1>
+              <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1">
+                Nhập số điện thoại của bạn để quản lý lịch đặt sân và vé thi đấu.
+              </p>
+            </div>
+          </div>
+
+          {/* Cảnh báo khóa tài khoản do Brute-force */}
           {lockedInfo && (
-            <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start space-x-3 text-amber-300">
-              <Clock className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
-              <div>
-                <div className="text-sm font-semibold">Tài khoản đang bị tạm khóa bảo vệ!</div>
-                <div className="text-xs text-amber-300/80 mt-1">
-                  Do nhập sai mật khẩu 5 lần, tài khoản được bảo vệ chống xâm nhập trong{' '}
-                  <span className="font-bold text-white">{lockedInfo.remainingMinutes} phút</span>.
-                </div>
+            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs space-y-1">
+              <div className="font-heading font-bold uppercase tracking-wider">
+                Tài khoản tạm thời bị khóa bảo vệ
               </div>
+              <p className="leading-relaxed">
+                Hệ thống tạm khóa tài khoản trong {lockedInfo.remainingMinutes} phút để bảo mật chống đăng nhập trái phép.
+              </p>
             </div>
           )}
 
           {/* Cảnh báo số lần thử còn lại */}
           {!lockedInfo && attemptsLeft !== null && (
-            <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start space-x-3 text-amber-300">
-              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
-              <div>
-                <div className="text-sm font-semibold">Cảnh báo nhập sai mật khẩu</div>
-                <div className="text-xs text-amber-300/80 mt-1">
-                  Bạn còn <span className="font-bold text-rose-300">{attemptsLeft} lần thử</span> trước khi tài khoản bị khóa 15 phút.
-                </div>
-              </div>
+            <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs">
+              Mật khẩu chưa chính xác. Bạn còn <strong>{attemptsLeft} lần thử</strong> trước khi tài khoản bị khóa tạm thời.
             </div>
           )}
 
-          {/* Lỗi thông thường */}
+          {/* Thông báo lỗi */}
           {error && !lockedInfo && attemptsLeft === null && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start space-x-3 text-rose-300">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-              <div className="text-sm font-medium">{error}</div>
+            <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs">
+              {error}
             </div>
           )}
 
+          {/* Form đăng nhập - Tinh gọn, không icon rườm rà trong ô input */}
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Tài khoản / Số điện thoại
+              <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-2">
+                Số điện thoại hoặc tài khoản
               </label>
-              <div className="relative rounded-lg shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="h-5 w-5" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Nhập tài khoản (vd: 240106)"
-                  className="block w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
+              <input
+                type="text"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Nhập số điện thoại (vd: 0988240106 hoặc 240106)"
+                className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Mật khẩu
-              </label>
-              <div className="relative rounded-lg shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <Lock className="h-5 w-5" />
-                </div>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="block w-full pl-10 pr-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white">
+                  Mật khẩu
+                </label>
+                <Link
+                  href="/support"
+                  className="text-xs text-[#3B4540] dark:text-[#D1D5DB] hover:text-[#00B562] transition"
+                >
+                  Quên mật khẩu?
+                </Link>
               </div>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Nhập mật khẩu của bạn"
+                className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
+              />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
             >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                  <span>Đang xác thực...</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <LogIn className="w-4 h-4" />
-                  <span>Đăng nhập hệ thống</span>
-                </div>
-              )}
+              {loading ? 'Đang xác thực...' : 'Đăng Nhập'}
             </button>
-
-            {/* Link to Register */}
-            <div className="pt-3 text-center">
-              <p className="text-xs text-slate-400">
-                Chưa có tài khoản thành viên?{' '}
-                <Link
-                  href="/register"
-                  className="font-bold text-cyan-400 hover:text-cyan-300 hover:underline transition-colors ml-1"
-                >
-                  Đăng ký tài khoản mới ngay
-                </Link>
-              </p>
-            </div>
           </form>
+
+          {/* Điều hướng đăng ký */}
+          <div className="pt-4 border-t border-[#E3E8E6] dark:border-white/10 text-center text-xs text-[#3B4540] dark:text-[#D1D5DB]">
+            Chưa có tài khoản thành viên?{' '}
+            <Link
+              href="/register"
+              className="font-heading font-bold uppercase text-[#00B562] dark:text-[#9CFF93] hover:underline"
+            >
+              Đăng ký ngay
+            </Link>
+          </div>
         </div>
       </div>
     </div>
