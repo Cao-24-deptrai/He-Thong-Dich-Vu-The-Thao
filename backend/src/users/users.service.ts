@@ -232,6 +232,15 @@ export class UsersService implements OnModuleInit {
     if (dto.avatarUrl !== undefined) {
       user.avatarUrl = dto.avatarUrl;
     }
+    if (dto.coverUrl !== undefined) {
+      user.coverUrl = dto.coverUrl;
+    }
+    if (dto.bio !== undefined) {
+      user.bio = dto.bio;
+    }
+    if (dto.favoriteSports !== undefined) {
+      user.favoriteSports = dto.favoriteSports;
+    }
     return user.save();
   }
 

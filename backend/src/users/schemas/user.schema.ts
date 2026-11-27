@@ -31,6 +31,18 @@ export class User {
   @Prop({ type: String })
   avatarUrl?: string;
 
+  @ApiProperty({ description: 'Profile cover background image URL', required: false })
+  @Prop({ type: String })
+  coverUrl?: string;
+
+  @ApiProperty({ description: 'Short bio / introduction', required: false })
+  @Prop({ type: String })
+  bio?: string;
+
+  @ApiProperty({ description: 'List of favorite sports', required: false, default: [] })
+  @Prop({ type: [String], default: [] })
+  favoriteSports?: string[];
+
   @ApiProperty({ description: 'Full name of the user', example: 'Nguyễn Văn A' })
   @Prop({ type: String, required: true })
   fullName: string;

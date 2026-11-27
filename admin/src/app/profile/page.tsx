@@ -130,18 +130,29 @@ export default function CustomerProfilePage() {
     setEmail(stored.email || '');
     setPhone(stored.phone || '');
     setAvatarUrl(stored.avatarUrl || '');
-
-    try {
-      const savedExtra = localStorage.getItem(`phanta_profile_extra_${stored.id}`);
-      if (savedExtra) {
-        const parsed = JSON.parse(savedExtra);
-        if (typeof parsed.bio === 'string') setBio(parsed.bio);
-        if (typeof parsed.coverUrl === 'string') setCoverUrl(parsed.coverUrl);
-        if (Array.isArray(parsed.favoriteSports)) setFavoriteSports(parsed.favoriteSports);
-      }
-    } catch {
-      // ignore storage error
+    setCoverUrl(stored.coverUrl || '');
+    setBio(stored.bio || '');
+    if (Array.isArray(stored.favoriteSports) && stored.favoriteSports.length > 0) {
+      setFavoriteSports(stored.favoriteSports);
     }
+
+    // Luôn fetch profile mới nhất từ server MongoDB để đồng bộ chéo giữa các thiết bị
+    api
+      .getMyProfile()
+      .then((fresh) => {
+        if (!fresh) return;
+        setUser(fresh);
+        setFullName(fresh.fullName || '');
+        setEmail(fresh.email || '');
+        setPhone(fresh.phone || '');
+        setAvatarUrl(fresh.avatarUrl || '');
+        setCoverUrl(fresh.coverUrl || '');
+        setBio(fresh.bio || '');
+        if (Array.isArray(fresh.favoriteSports) && fresh.favoriteSports.length > 0) {
+          setFavoriteSports(fresh.favoriteSports);
+        }
+      })
+      .catch(() => {});
 
     api
       .getMyBookings()
@@ -204,20 +215,14 @@ export default function CustomerProfilePage() {
         fullName: fullName.trim() || undefined,
         email: email.trim() || undefined,
         avatarUrl: avatarUrl || undefined,
+        coverUrl: coverUrl || undefined,
+        bio: bio.trim(),
+        favoriteSports,
       });
 
       const cleanPhone = phone.replace(/[\s.\-()]/g, '');
       if (cleanPhone && cleanPhone !== (user.phone || '')) {
         updated = await api.updateMyPhone(cleanPhone);
-      }
-
-      try {
-        localStorage.setItem(
-          `phanta_profile_extra_${user.id}`,
-          JSON.stringify({ bio: bio.trim(), coverUrl, favoriteSports }),
-        );
-      } catch {
-        // ignore storage error
       }
 
       setUser(updated);

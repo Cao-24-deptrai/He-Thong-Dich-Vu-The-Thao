@@ -39,10 +39,10 @@ export default function MobileBottomNav({ user }: MobileBottomNavProps) {
       isActive: pathname.startsWith('/support'),
     },
     {
-      href: user ? '/my-tickets' : '/login',
+      href: user ? '/profile' : '/login',
       label: user ? 'Tài khoản' : 'Đăng nhập',
       icon: UserIcon,
-      isActive: pathname === '/login' || pathname === '/register',
+      isActive: pathname.startsWith('/profile') || pathname === '/login' || pathname === '/register',
     },
   ];
 

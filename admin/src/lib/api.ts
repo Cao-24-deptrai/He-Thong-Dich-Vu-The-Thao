@@ -8,6 +8,9 @@ export interface User {
   fullName: string;
   email?: string;
   avatarUrl?: string;
+  coverUrl?: string;
+  bio?: string;
+  favoriteSports?: string[];
   authProviders?: string[];
   role: 'CUSTOMER' | 'STAFF' | 'MANAGER' | 'OWNER' | 'ADMIN' | 'PT';
   permissions?: string[];
@@ -517,10 +520,24 @@ class ApiService {
     return merged;
   }
 
+  async getMyProfile(): Promise<User> {
+    const user = await this.request<User>('/users/me');
+    if (user) {
+      const current = this.getUser();
+      const merged = { ...(current || {}), ...user } as User;
+      this.setUser(merged);
+      return merged;
+    }
+    return user;
+  }
+
   async updateMyProfile(payload: {
     fullName?: string;
     email?: string;
     avatarUrl?: string;
+    coverUrl?: string;
+    bio?: string;
+    favoriteSports?: string[];
   }): Promise<User> {
     const updatedUser = await this.request<User>('/users/me', {
       method: 'PATCH',

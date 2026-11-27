@@ -62,6 +62,16 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
+    // Đồng bộ thông tin mới nhất từ database về thiết bị
+    if (api.getToken()) {
+      api
+        .getMyProfile()
+        .then((fresh) => {
+          if (fresh) setUser(fresh);
+        })
+        .catch(() => {});
+    }
+
     const handleUserUpdated = () => {
       setUser(api.getUser());
     };

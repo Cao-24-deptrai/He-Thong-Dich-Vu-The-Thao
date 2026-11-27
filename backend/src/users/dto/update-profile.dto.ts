@@ -35,6 +35,20 @@ export class UpdateProfileDto {
   @IsString()
   avatarUrl?: string;
 
+  @ApiProperty({ description: 'Ảnh bìa (URL hoặc base64)', required: false })
+  @IsOptional()
+  @IsString()
+  coverUrl?: string;
+
+  @ApiProperty({ description: 'Tiểu sử cá nhân', required: false })
+  @IsOptional()
+  @IsString()
+  bio?: string;
+
+  @ApiProperty({ description: 'Danh sách môn thể thao yêu thích', required: false })
+  @IsOptional()
+  favoriteSports?: string[];
+
   @ApiProperty({ description: 'Thông tin xuất hóa đơn VAT', type: InvoiceInfoDto, required: false })
   @IsOptional()
   @ValidateNested()
