@@ -30,6 +30,11 @@ export class UpdateProfileDto {
   @IsEmail({}, { message: 'Email không đúng định dạng' })
   email?: string;
 
+  @ApiProperty({ description: 'Ảnh đại diện (URL hoặc base64)', required: false })
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
+
   @ApiProperty({ description: 'Thông tin xuất hóa đơn VAT', type: InvoiceInfoDto, required: false })
   @IsOptional()
   @ValidateNested()

@@ -1,4 +1,4 @@
-// admin/src/app/about/page.tsx
+﻿// admin/src/app/about/page.tsx
 'use client';
 
 import React from 'react';
@@ -57,7 +57,7 @@ export default function AboutPage() {
           <span className="font-heading font-semibold uppercase tracking-wider text-[11px]">Hệ Thống Thể Thao Phanta Sports</span>
         </div>
 
-        <h1 className="text-3xl sm:text-5xl font-heading font-black tracking-tight text-[#171C1A] dark:text-white uppercase leading-tight max-w-3xl mx-auto">
+        <h1 className="text-3xl sm:text-5xl font-heading font-bold tracking-tight text-[#171C1A] dark:text-white uppercase leading-tight max-w-3xl mx-auto">
           Tổ Hợp Thể Thao & Đặt Sân Trực Tuyến Hiện Đại
         </h1>
 
@@ -68,7 +68,7 @@ export default function AboutPage() {
         <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/booking"
-            className="px-6 py-3 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-xs uppercase tracking-wider transition"
+            className="px-6 py-3 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-xs uppercase tracking-wider transition"
           >
             Đặt Sân Thi Đấu Ngay
           </Link>
@@ -89,7 +89,7 @@ export default function AboutPage() {
             key={idx}
             className="p-5 rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] text-center space-y-1 shadow-sm"
           >
-            <div className="text-2xl sm:text-3xl font-heading font-black text-[#00B562] dark:text-[#9CFF93]">{s.value}</div>
+            <div className="text-2xl sm:text-3xl font-heading font-bold text-[#00B562] dark:text-[#9CFF93]">{s.value}</div>
             <div className="text-xs text-[#3B4540] dark:text-[#D1D5DB] leading-tight mt-1">{s.label}</div>
           </div>
         ))}
@@ -98,7 +98,7 @@ export default function AboutPage() {
       {/* 3. HIGHLIGHTS & TIÊU CHUẨN KỸ THUẬT */}
       <div className="space-y-6">
         <div className="border-b border-[#E3E8E6] dark:border-white/10 pb-3">
-          <h2 className="text-xl sm:text-2xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#171C1A] dark:text-white uppercase tracking-tight">
             Tiêu Chuẩn Cơ Sở Vật Chất & Vận Hành
           </h2>
           <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1">
@@ -127,7 +127,7 @@ export default function AboutPage() {
       <div className="p-6 sm:p-8 rounded-3xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E3E8E6] dark:border-white/10 pb-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#171C1A] dark:text-white uppercase tracking-tight">
               Địa Điểm Tổ Hợp Phanta Sports
             </h2>
             <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-0.5">

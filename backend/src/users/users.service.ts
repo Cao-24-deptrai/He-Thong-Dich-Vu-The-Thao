@@ -80,6 +80,19 @@ export class UsersService implements OnModuleInit {
         );
         this.logger.log(`✅ Đã đồng bộ tài khoản [${acc.role}]: Tài khoản: ${acc.phone} | Mật khẩu: ${acc.password}`);
       }
+
+      // 3. Đảm bảo index phone_1 có thuộc tính sparse: true để người dùng Google chưa có SĐT không bị lỗi E11000 dup key { phone: null }
+      try {
+        const indexes = await this.userModel.collection.indexes();
+        const phoneIndex = indexes.find((idx: any) => idx.name === 'phone_1');
+        if (phoneIndex && !phoneIndex.sparse) {
+          await this.userModel.collection.dropIndex('phone_1');
+          await this.userModel.collection.createIndex({ phone: 1 }, { unique: true, sparse: true });
+          this.logger.log('✅ Đã cấu hình lại index phone_1 với sparse: true cho đăng nhập Google');
+        }
+      } catch (idxErr: any) {
+        this.logger.warn(`Không thể đồng bộ index phone_1: ${idxErr.message}`);
+      }
     } catch (err: any) {
       this.logger.error(`Lỗi khi đồng bộ tài khoản hệ thống: ${err.message}`);
     }
@@ -215,6 +228,9 @@ export class UsersService implements OnModuleInit {
     }
     if (dto.invoiceInfo !== undefined) {
       user.invoiceInfo = dto.invoiceInfo;
+    }
+    if (dto.avatarUrl !== undefined) {
+      user.avatarUrl = dto.avatarUrl;
     }
     return user.save();
   }

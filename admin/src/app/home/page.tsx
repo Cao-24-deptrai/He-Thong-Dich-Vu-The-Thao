@@ -80,57 +80,20 @@ const FEATURED_SPORTS = [
   },
 ];
 
-const FACILITIES = [
-  {
-    name: 'Phanta Sports Complex - Cơ sở Quận 7',
-    address: 'Số 480 Huỳnh Tấn Phát, Phường Tân Phú, Quận 7, TP.HCM',
-    courts: '12 Sân bóng đá - 8 Sân cầu lông - 4 Sân Pickleball',
-    hotline: '0988 240 106',
-  },
-  {
-    name: 'Phanta Sports Arena - Cơ sở Thủ Đức',
-    address: 'Khu Công Nghệ Cao, Xa lộ Hà Nội, TP. Thủ Đức, TP.HCM',
-    courts: '10 Sân bóng đá - 6 Sân tennis - Khu Gaming 100 máy',
-    hotline: '0988 280 906',
-  },
-  {
-    name: 'Phanta Athletic Park - Cơ sở Tân Bình',
-    address: 'Số 152 Cộng Hòa, Phường 12, Quận Tân Bình, TP.HCM',
-    courts: '8 Sân Pickleball - 6 Sân cầu lông - Canteen & Gym Fitness',
-    hotline: '0988 190 705',
-  },
-];
-
-const FAQS = [
-  {
-    question: 'Quy chế giữ chỗ 10 phút khi đặt sân hoạt động như thế nào?',
-    answer:
-      'Khi bạn chọn sân và giờ trên lịch, hệ thống sẽ tạm khóa khung giờ đó trong vòng 10 phút để bạn hoàn tất thanh toán VietQR. Trong thời gian này, không khách hàng nào khác có thể đặt trùng slot của bạn. Nếu quá 10 phút chưa thanh toán, slot sẽ tự động mở lại cho người khác.',
-  },
-  {
-    question: 'Tôi nhận vé và làm thủ tục vào sân (check-in) ra sao?',
-    answer:
-      'Ngay sau khi giao dịch chuyển khoản thành công, hệ thống gửi vé điện tử vào mục "Vé của tôi". Khi đến sân, bạn mở mã QR động (mã tự làm mới mỗi 60 giây) đưa qua đầu đọc quét tại quầy lễ tân hoặc cổng xoay để vào sân.',
-  },
-  {
-    question: 'Chính sách hoàn tiền khi hủy lịch áp dụng như thế nào?',
-    answer:
-      'Bạn được hoàn 100% tiền nếu hủy trước giờ bắt đầu từ 24 tiếng trở lên. Nếu hủy trong khoảng từ 2 tiếng đến 24 tiếng trước giờ chơi, hệ thống hỗ trợ hoàn 50%. Bạn có thể gửi yêu cầu hoàn tiền trực tiếp trên trang Vé của tôi.',
-  },
-  {
-    question: 'Hệ thống có hỗ trợ đặt lịch cố định hàng tuần hoặc theo tháng không?',
-    answer:
-      'Có. Bạn có thể liên hệ trực tiếp số hotline của từng cơ sở hoặc gửi tin nhắn tại Trung tâm Hỗ trợ để đăng ký hợp đồng khung giờ vàng cố định theo tháng với mức giá chiết khấu hội viên.',
-  },
-];
-
 export default function CustomerHomePage() {
   const [user, setUser] = useState<User | null>(null);
   const [upcomingBooking, setUpcomingBooking] = useState<Booking | null>(null);
   const [refundPendingCount, setRefundPendingCount] = useState<number>(0);
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [facilities, setFacilities] = useState<any[]>([]);
 
   useEffect(() => {
+    api
+      .getFacilities()
+      .then((list) => {
+        if (Array.isArray(list)) setFacilities(list);
+      })
+      .catch(() => {});
+
     const currentUser = api.getUser();
     setUser(currentUser);
 
@@ -166,9 +129,6 @@ export default function CustomerHomePage() {
                   sizes="(max-width: 768px) 50vw, 30vw"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
-                  Bóng đá
-                </span>
               </div>
 
               {/* Ảnh 2: Cầu lông */}
@@ -181,9 +141,6 @@ export default function CustomerHomePage() {
                   sizes="(max-width: 768px) 50vw, 30vw"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
-                  Cầu lông
-                </span>
               </div>
 
               {/* Ảnh 3: Tennis / Pickleball */}
@@ -196,9 +153,6 @@ export default function CustomerHomePage() {
                   sizes="(max-width: 768px) 50vw, 30vw"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
-                  Pickleball
-                </span>
               </div>
 
               {/* Ảnh 4: Bóng rổ */}
@@ -211,17 +165,14 @@ export default function CustomerHomePage() {
                   sizes="(max-width: 768px) 50vw, 30vw"
                 />
                 <div className="absolute inset-0 bg-black/20" />
-                <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">
-                  Bóng rổ
-                </span>
               </div>
 
-              {/* HUY HIỆU TRUNG TÂM MANG LOGO 1 PHANTA EMBLEM */}
+              {/* HUY HIỆU TRUNG TÂM MANG LOGO PHANTA */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-[#191C14] border-4 border-[#00B562] dark:border-[#9CFF93] shadow-lg flex items-center justify-center p-2">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white dark:bg-[#F3F4F6] border-4 border-[#00B562] dark:border-[#9CFF93] shadow-lg flex items-center justify-center p-2.5">
                   <div className="w-full h-full relative">
                     <Image
-                      src="/Phanta Sports Booking Emblem.png"
+                      src="/PHANTAtransparent.png"
                       alt="Phanta Logo"
                       fill
                       className="object-contain"
@@ -232,14 +183,8 @@ export default function CustomerHomePage() {
             </div>
           </div>
 
-          {/* CỘT PHẢI (45%): TIÊU ĐỀ LỚN, VỊ TRÍ, MÔ TẢ VÀ NÚT HÀNH ĐỘNG */}
+          {/* CỘT PHẢI (45%): TIÊU ĐỀ LỚN, MÔ TẢ VÀ NÚT HÀNH ĐỘNG */}
           <div className="lg:col-span-5 space-y-5 order-1 lg:order-2">
-            {/* Geolocation Pill (Playo Style) */}
-            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-full border border-[#E3E8E6] dark:border-white/10 text-xs text-[#3B4540] dark:text-[#D1D5DB] bg-[#F8F9FA] dark:bg-[#121512]">
-              <MapPin className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
-              <span className="font-medium">Khu vực: TP. Hồ Chí Minh</span>
-            </div>
-
             {/* Tiêu đề lớn Barlow */}
             <h1 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl text-[#171C1A] dark:text-white uppercase tracking-tight leading-[1.1]">
               ĐẶT SÂN THỂ THAO.<br />
@@ -247,9 +192,9 @@ export default function CustomerHomePage() {
               <span className="text-[#00B562] dark:text-[#9CFF93]">TÌM BẠN CHƠI CÙNG.</span>
             </h1>
 
-            {/* Mô tả tự nhiên (Humanizer) */}
+            {/* Mô tả sứ mạng & giá trị mang lại (Humanizer) */}
             <p className="text-sm sm:text-base text-[#758A80] dark:text-[#A1A79F] leading-relaxed">
-              Nền tảng kết nối sân tập, lịch thi đấu và dịch vụ thể thao trực tuyến tại TP. Hồ Chí Minh. Giữ chỗ tức thì trong 10 phút, tự động xác nhận qua VietQR và check-in vào sân bằng mã QR.
+              Phanta ra đời để việc ra sân mỗi ngày trở nên nhẹ nhàng hơn: không còn cảnh gọi điện dò hỏi giờ trống hay chờ đợi xác nhận thủ công. Chúng tôi kết nối bạn với cộng đồng cùng đam mê, giúp bạn giữ trọn nhịp vận động và tận hưởng từng trận đấu.
             </p>
 
             {/* Cặp nút hành động */}
@@ -497,84 +442,51 @@ export default function CustomerHomePage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {FACILITIES.map((facility, idx) => (
-            <div
-              key={facility.name}
-              className="p-6 rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] space-y-4 flex flex-col justify-between"
-            >
-              <div className="space-y-3">
-                <div className="w-8 h-8 rounded-lg bg-[#00B562]/10 dark:bg-[#9CFF93]/10 text-[#00B562] dark:text-[#9CFF93] flex items-center justify-center font-heading font-black text-sm">
-                  0{idx + 1}
-                </div>
-                <h3 className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
-                  {facility.name}
-                </h3>
-                <p className="text-xs text-[#758A80] dark:text-[#A1A79F] flex items-start gap-2">
-                  <MapPin className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93] shrink-0 mt-0.5" />
-                  <span>{facility.address}</span>
-                </p>
-                <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] font-medium">
-                  {facility.courts}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-[#E3E8E6] dark:border-white/5 flex items-center justify-between text-xs">
-                <span className="text-[#758A80] dark:text-[#A1A79F]">Hotline: {facility.hotline}</span>
-                <Link
-                  href="/booking"
-                  className="font-heading font-bold text-[#00B562] dark:text-[#9CFF93] hover:underline uppercase text-[11px]"
-                >
-                  Đặt tại cơ sở này
-                </Link>
-              </div>
+          {facilities.length === 0 ? (
+            <div className="col-span-full p-8 rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] text-center text-xs text-[#758A80] dark:text-[#A1A79F]">
+              Đang tải danh sách cơ sở từ hệ thống...
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 6. CÂU HỎI THƯỜNG GẶP (FAQS - PLAYO STYLE ACCORDION) */}
-      <section className="space-y-6">
-        <div className="border-b border-[#E3E8E6] dark:border-white/10 pb-4">
-          <span className="text-xs font-heading font-bold uppercase tracking-wider text-[#00B562] dark:text-[#9CFF93]">
-            Giải đáp thắc mắc
-          </span>
-          <h2 className="font-heading font-black text-2xl sm:text-3xl text-[#171C1A] dark:text-white uppercase tracking-tight mt-1">
-            Câu Hỏi Thường Gặp (FAQs)
-          </h2>
-        </div>
-
-        <div className="space-y-3">
-          {FAQS.map((faq, index) => {
-            const isOpen = openFaqIndex === index;
-            return (
+          ) : (
+            facilities.map((facility, idx) => (
               <div
-                key={faq.question}
-                className="rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] overflow-hidden transition-colors"
+                key={facility._id || facility.name}
+                className="p-6 rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] space-y-4 flex flex-col justify-between"
               >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                  className="w-full p-5 text-left flex items-center justify-between gap-4"
-                >
-                  <span className="font-heading font-bold text-sm sm:text-base text-[#171C1A] dark:text-white">
-                    {faq.question}
-                  </span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-[#758A80] dark:text-[#A1A79F] shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-[#00B562] dark:text-[#9CFF93]' : ''
-                    }`}
-                  />
-                </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-[#758A80] dark:text-[#A1A79F] leading-relaxed border-t border-[#E3E8E6]/60 dark:border-white/5 pt-3">
-                    {faq.answer}
+                <div className="space-y-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#00B562]/10 dark:bg-[#9CFF93]/10 text-[#00B562] dark:text-[#9CFF93] flex items-center justify-center font-heading font-black text-sm">
+                    {idx + 1 < 10 ? `0${idx + 1}` : idx + 1}
                   </div>
-                )}
+                  <h3 className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
+                    {facility.name}
+                  </h3>
+                  <p className="text-xs text-[#758A80] dark:text-[#A1A79F] flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93] shrink-0 mt-0.5" />
+                    <span>{facility.address || 'TP. Hồ Chí Minh'}</span>
+                  </p>
+                  {facility.description && (
+                    <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] font-medium">
+                      {facility.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-[#E3E8E6] dark:border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-[#758A80] dark:text-[#A1A79F]">
+                    Hotline: {facility.phone || facility.hotline || '0988 240 106'}
+                  </span>
+                  <Link
+                    href={`/booking${facility._id ? `?facilityId=${facility._id}` : ''}`}
+                    className="font-heading font-bold text-[#00B562] dark:text-[#9CFF93] hover:underline uppercase text-[11px]"
+                  >
+                    Đặt tại cơ sở này
+                  </Link>
+                </div>
               </div>
-            );
-          })}
+            ))
+          )}
         </div>
       </section>
+
     </div>
   );
 }

@@ -43,8 +43,8 @@ export default function GoogleSignInButton({
     } catch (err: any) {
       const message = err?.code
         ? translateFirebaseError(err)
-        : err?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
-      onError(message);
+        : err?.data?.message || err?.message || 'Đăng nhập Google thất bại. Vui lòng thử lại.';
+      onError(typeof message === 'string' ? message : JSON.stringify(message));
     } finally {
       setLoading(false);
     }

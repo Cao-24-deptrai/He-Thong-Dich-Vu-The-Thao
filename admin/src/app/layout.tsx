@@ -39,6 +39,7 @@ import { api, User } from '@/lib/api';
 import ThemeToggle from '@/components/ThemeToggle';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
+import CustomerAccountMenu from '@/components/CustomerAccountMenu';
 
 export default function RootLayout({
   children,
@@ -61,11 +62,22 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
+    const handleUserUpdated = () => {
+      setUser(api.getUser());
+    };
+    window.addEventListener('phanta_user_updated', handleUserUpdated);
+    return () => window.removeEventListener('phanta_user_updated', handleUserUpdated);
+  }, []);
+
+  useEffect(() => {
+    const currentUser = api.getUser();
+    setUser(currentUser);
+
     const isCustomerDomain =
       typeof window !== 'undefined' &&
       !window.location.hostname.startsWith('admin.');
 
-    const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about'];
+    const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
     const isCustomerRoute = customerRoutesList.some(
       (route) => pathname === route || pathname.startsWith(route + '/')
     );
@@ -118,7 +130,7 @@ export default function RootLayout({
     pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
-  const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about'];
+  const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
   const isCustomerPortal =
     pathname === '/' ||
     customerRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
@@ -347,6 +359,7 @@ export default function RootLayout({
             : 'Hệ Thống Quản Trị Sân Thể Thao & Esports'}
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/Phanta Sports Booking Emblem.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -378,9 +391,9 @@ export default function RootLayout({
                 {/* Brand Logo & Geolocation */}
                 <div className="flex items-center space-x-3 sm:space-x-4 shrink-0">
                   <Link href="/home" className="flex items-center space-x-2.5">
-                    <div className="w-10 h-10 relative shrink-0">
+                    <div className="w-10 h-10 relative shrink-0 dark:bg-[#F3F4F6] dark:rounded-lg dark:p-1 flex items-center justify-center">
                       <Image
-                        src="/Phanta Sports Booking Emblem.png"
+                        src="/PHANTAtransparent.png"
                         alt="Phanta Sports Logo"
                         width={40}
                         height={40}
@@ -437,22 +450,7 @@ export default function RootLayout({
                   <div className="hidden sm:block w-px h-5 bg-[#E3E8E6] dark:bg-white/10" />
 
                   {mounted && user ? (
-                    <div className="flex items-center space-x-2">
-                      <div className="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14]">
-                        <UserIcon className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
-                        <span className="text-xs font-semibold text-[#171C1A] dark:text-white">
-                          {user.fullName || user.phone}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        title="Đăng xuất"
-                        className="px-3 py-1.5 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors border border-rose-200 dark:border-rose-900/30"
-                      >
-                        Đăng xuất
-                      </button>
-                    </div>
+                    <CustomerAccountMenu user={user} onLogout={handleLogout} />
                   ) : (
                     <Link
                       href="/login"
@@ -485,20 +483,18 @@ export default function RootLayout({
                 {/* Brand info */}
                 <div className="md:col-span-1 space-y-3">
                   <div className="flex items-center space-x-2.5">
-                    <Image
-                      src="/Phanta Sports Booking Emblem.png"
-                      alt="Phanta Sports Logo"
-                      width={32}
-                      height={32}
-                      className="object-contain"
-                    />
+                    <div className="w-8 h-8 relative shrink-0 dark:bg-[#F3F4F6] dark:rounded-lg dark:p-1">
+                      <Image
+                        src="/PHANTAtransparent.png"
+                        alt="Phanta Sports Logo"
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
                     <span className="font-heading font-black text-lg text-[#171C1A] dark:text-white uppercase tracking-tight">
                       PHANTA SPORTS
                     </span>
                   </div>
-                  <p className="text-xs text-[#758A80] dark:text-[#A1A79F] leading-relaxed">
-                    Nền tảng đặt sân thể thao và giải đấu trực tuyến tại TP. Hồ Chí Minh. Hỗ trợ giữ chỗ 10 phút và nhận mã QR check-in vào sân tự động.
-                  </p>
                 </div>
 
                 {/* Quick links */}
@@ -537,12 +533,12 @@ export default function RootLayout({
                       </Link>
                     </li>
                     <li>
-                      <Link href="/support#refund" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Chính sách hoàn tiền
+                      <Link href="/policies" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                        Chính sách của Phanta
                       </Link>
                     </li>
                     <li>
-                      <Link href="/about#standards" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
+                      <Link href="/rules" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
                         Quy định sân bãi
                       </Link>
                     </li>

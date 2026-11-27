@@ -4,6 +4,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Logger,
+  Optional,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -16,7 +17,8 @@ import { BookingSlot, BookingSlotDocument } from '../bookings/schemas/booking-sl
 import { EventsGateway } from '../events/events.gateway';
 import { CreatePaymentLinkDto } from './dto/create-payment-link.dto';
 import { WebhookPayloadDto } from './dto/webhook-payload.dto';
-import { PaymentProvider, PaymentStatus, BookingStatus } from '../common/enums';
+import { PaymentProvider, PaymentStatus, BookingStatus, NotificationType, NotificationChannel } from '../common/enums';
+import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class PaymentsService {
@@ -30,6 +32,7 @@ export class PaymentsService {
     private configService: ConfigService,
     private jwtService: JwtService,
     private eventsGateway: EventsGateway,
+    @Optional() private readonly notificationService?: NotificationService,
   ) {
     const clientId = this.configService.get<string>('payos.clientId');
     const apiKey = this.configService.get<string>('payos.apiKey');
@@ -310,6 +313,19 @@ export class PaymentsService {
     });
 
     this.logger.log(`✅ Thanh toán thành công cho booking ${booking._id}. Trạng thái CONFIRMED.`);
+
+    if (booking.userId && this.notificationService) {
+      this.notificationService
+        .sendDirect({
+          userId: booking.userId.toString(),
+          title: 'Thanh toán thành công — Vé đã được xác nhận',
+          body: `Vé ${booking.ticketCode || booking.bookingCode || booking._id} (${booking.startTime} - ${booking.endTime} ngày ${dateStr}) đã thanh toán thành công qua VietQR.`,
+          type: NotificationType.PAYMENT,
+          channel: NotificationChannel.IN_APP,
+          data: { bookingId: booking._id.toString() },
+        })
+        .catch((err) => this.logger.warn(`Không thể gửi thông báo thanh toán: ${err.message}`));
+    }
 
     return {
       statusCode: 200,

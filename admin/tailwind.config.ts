@@ -10,8 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["var(--font-barlow)", "Barlow", "sans-serif"],
-        body: ["var(--font-lexend)", "Lexend", "sans-serif"],
+        sans: ["Lexend", "sans-serif"],
+        heading: ["Barlow", "sans-serif"],
+        body: ["Lexend", "sans-serif"],
       },
       colors: {
         brand: {

@@ -1,4 +1,4 @@
-// admin/src/app/my-tickets/page.tsx
+﻿// admin/src/app/my-tickets/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -78,6 +78,67 @@ export default function MyTicketsPage() {
   const [qrModalBooking, setQrModalBooking] = useState<Booking | null>(null);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [qrTimeLeft, setQrTimeLeft] = useState<number>(60);
+
+  // Pay Held Booking Modal State
+  const [payModalBooking, setPayModalBooking] = useState<Booking | null>(null);
+  const [payQrDataUrl, setPayQrDataUrl] = useState<string>('');
+  const [payCheckoutUrl, setPayCheckoutUrl] = useState<string>('');
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [checkingPay, setCheckingPay] = useState(false);
+
+  const handleOpenPayModal = async (booking: Booking) => {
+    setPayModalBooking(booking);
+    setPayQrDataUrl('');
+    setPayCheckoutUrl('');
+    setPayError(null);
+    setPayLoading(true);
+    try {
+      const res = await api.createPaymentLink(booking._id);
+      const url = res.checkoutUrl || res.paymentUrl || res.payUrl || '';
+      setPayCheckoutUrl(url);
+      if (res.qrCode) {
+        if (res.qrCode.startsWith('data:image') || res.qrCode.startsWith('http')) {
+          setPayQrDataUrl(res.qrCode);
+        } else {
+          const qrImg = await QRCode.toDataURL(res.qrCode, {
+            width: 240,
+            margin: 1,
+            color: { dark: '#0B0E0B', light: '#FFFFFF' },
+          });
+          setPayQrDataUrl(qrImg);
+        }
+      } else if (url) {
+        const qrImg = await QRCode.toDataURL(url, { width: 240, margin: 1 });
+        setPayQrDataUrl(qrImg);
+      } else {
+        setPayError('Không thể tạo mã QR thanh toán cho vé này.');
+      }
+    } catch (err: any) {
+      setPayError(err?.data?.message || err?.message || 'Không thể lấy mã QR thanh toán.');
+    } finally {
+      setPayLoading(false);
+    }
+  };
+
+  const handleCheckHeldPayment = async () => {
+    if (!payModalBooking) return;
+    setCheckingPay(true);
+    setPayError(null);
+    try {
+      const res = await api.checkPaymentStatus(payModalBooking._id);
+      if (res?.isPaid || res?.status === 'CONFIRMED') {
+        setPayModalBooking(null);
+        await fetchBookings();
+      } else {
+        setPayError('Chưa ghi nhận thanh toán thành công. Vui lòng thử lại sau ít giây.');
+      }
+    } catch (err: any) {
+      setPayError(err?.data?.message || err?.message || 'Không thể kiểm tra trạng thái thanh toán.');
+    } finally {
+      setCheckingPay(false);
+    }
+  };
 
   // Refund Modal State
   const [refundBooking, setRefundBooking] = useState<Booking | null>(null);
@@ -221,7 +282,7 @@ export default function MyTicketsPage() {
             <Ticket className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
             <span className="font-heading font-semibold uppercase tracking-wider text-[11px]">Vé Thể Thao & Mã Vào Sân</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-heading font-black tracking-tight text-[#171C1A] dark:text-white uppercase">
+          <h1 className="text-3xl sm:text-4xl font-heading font-bold tracking-tight text-[#171C1A] dark:text-white uppercase">
             Vé Của Tôi
           </h1>
           <p className="text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1 max-w-xl">
@@ -241,7 +302,7 @@ export default function MyTicketsPage() {
 
           <Link
             href="/booking"
-            className="px-5 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-xs uppercase tracking-wider transition"
+            className="px-5 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-xs uppercase tracking-wider transition"
           >
             + Đặt Sân Mới
           </Link>
@@ -266,7 +327,7 @@ export default function MyTicketsPage() {
           <div className="p-4 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#121512] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-heading font-bold text-sm text-[#00B562] dark:text-[#9CFF93]">Trước hơn 24 giờ</span>
-              <span className="font-heading font-black text-xs px-2 py-0.5 rounded bg-[#00B562]/10 text-[#00B562] dark:text-[#9CFF93]">
+              <span className="font-heading font-bold text-xs px-2 py-0.5 rounded bg-[#00B562]/10 text-[#00B562] dark:text-[#9CFF93]">
                 100%
               </span>
             </div>
@@ -278,7 +339,7 @@ export default function MyTicketsPage() {
           <div className="p-4 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#121512] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-heading font-bold text-sm text-amber-600 dark:text-amber-400">Từ 2 đến 24 giờ</span>
-              <span className="font-heading font-black text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400">
+              <span className="font-heading font-bold text-xs px-2 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400">
                 50%
               </span>
             </div>
@@ -290,7 +351,7 @@ export default function MyTicketsPage() {
           <div className="p-4 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#121512] space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="font-heading font-bold text-sm text-rose-600 dark:text-rose-400">Dưới 2 giờ thi đấu</span>
-              <span className="font-heading font-black text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-400">
+              <span className="font-heading font-bold text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-700 dark:text-rose-400">
                 0%
               </span>
             </div>
@@ -393,7 +454,7 @@ export default function MyTicketsPage() {
           </div>
           <Link
             href="/booking"
-            className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-xs uppercase tracking-wider transition"
+            className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-xs uppercase tracking-wider transition"
           >
             <span>Khám Phá Sân Trống</span>
             <ChevronRight className="w-4 h-4" />
@@ -418,7 +479,7 @@ export default function MyTicketsPage() {
                 <div className="p-5 space-y-4">
                   {/* Mã vé và nhãn trạng thái */}
                   <div className="flex items-center justify-between">
-                    <span className="font-heading font-black text-sm tracking-wider text-[#00B562] dark:text-[#9CFF93]">
+                    <span className="font-heading font-bold text-sm tracking-wider text-[#00B562] dark:text-[#9CFF93]">
                       #{b.bookingCode || b._id.slice(-6).toUpperCase()}
                     </span>
 
@@ -472,21 +533,23 @@ export default function MyTicketsPage() {
                       <span className="text-[#3B4540] dark:text-[#D1D5DB] flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" /> Ngày:
                       </span>
-                      <span className="font-heading font-bold text-[#171C1A] dark:text-white">{b.bookingDate}</span>
+                      <span className="font-heading font-bold text-[#171C1A] dark:text-white">
+                        {b.bookingDate ? new Date(b.bookingDate).toLocaleDateString('vi-VN') : ''}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-[#3B4540] dark:text-[#D1D5DB] flex items-center gap-1.5">
                         <Clock className="w-3.5 h-3.5" /> Khung giờ:
                       </span>
-                      <span className="font-heading font-black text-[#00B562] dark:text-[#9CFF93]">
+                      <span className="font-heading font-bold text-[#00B562] dark:text-[#9CFF93]">
                         {b.startTime} - {b.endTime}
                       </span>
                     </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-[#E3E8E6] dark:border-white/10">
                       <span className="text-[#3B4540] dark:text-[#D1D5DB]">Tổng thanh toán:</span>
-                      <span className="font-heading font-black text-sm text-[#171C1A] dark:text-white">
+                      <span className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">
                         {(b.totalPrice || 0).toLocaleString('vi-VN')} đ
                       </span>
                     </div>
@@ -552,12 +615,23 @@ export default function MyTicketsPage() {
                   )}
 
                   {isHeld && (
-                    <button
-                      onClick={() => handleOpenRefundModal(b)}
-                      className="w-full py-2.5 px-3 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 transition"
-                    >
-                      <span>Hủy Giữ Chỗ Này</span>
-                    </button>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPayModal(b)}
+                        className="w-full py-2.5 px-3 rounded-xl bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:hover:bg-[#1ED760] dark:text-[#0C0F0C] text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 transition"
+                      >
+                        <QrCode className="w-4 h-4" />
+                        <span>Mở QR Thanh Toán</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenRefundModal(b)}
+                        className="w-full py-2 px-3 rounded-xl border border-rose-500/40 text-rose-600 dark:text-rose-400 text-xs font-heading font-bold uppercase tracking-wider flex items-center justify-center space-x-1.5 transition"
+                      >
+                        <span>Hủy Giữ Chỗ Này</span>
+                      </button>
+                    </div>
                   )}
 
                   {isRefundPending && (
@@ -576,6 +650,67 @@ export default function MyTicketsPage() {
       )}
 
       {/* 5. MODAL 1: MÃ QR CHECK-IN VÀO CỔNG TỰ ĐỘNG */}
+      {payModalBooking && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-bold text-base uppercase text-[#171C1A] dark:text-white">
+                Thanh toán VietQR
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPayModalBooking(null)}
+                className="p-1 rounded-lg text-[#758A80] hover:bg-[#F2F2F4] dark:hover:bg-[#22261E]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-center space-y-3">
+              <p className="text-xs text-[#758A80] dark:text-[#A1A79F]">
+                Số tiền:{' '}
+                <strong className="text-[#171C1A] dark:text-white">
+                  {(Number(payModalBooking.totalPrice) || 0).toLocaleString('vi-VN')} đ
+                </strong>
+              </p>
+
+              {payLoading ? (
+                <div className="py-10 text-xs text-[#758A80]">Đang tạo mã QR thanh toán...</div>
+              ) : payQrDataUrl ? (
+                <div className="inline-block p-3 rounded-xl bg-white border border-[#E3E8E6]">
+                  <img src={payQrDataUrl} alt="VietQR Payment" className="w-52 h-52 object-contain" />
+                </div>
+              ) : null}
+
+              {payError && (
+                <p className="text-xs text-rose-600 dark:text-rose-400">{payError}</p>
+              )}
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={handleCheckHeldPayment}
+                disabled={checkingPay || payLoading}
+                className="w-full py-2.5 rounded-xl bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:text-[#0C0F0C] text-xs font-heading font-bold uppercase tracking-wider transition disabled:opacity-50"
+              >
+                {checkingPay ? 'Đang kiểm tra...' : 'Tôi đã thanh toán'}
+              </button>
+              {payCheckoutUrl && (
+                <a
+                  href={payCheckoutUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block w-full text-center py-2 rounded-xl border border-[#E3E8E6] dark:border-white/10 text-xs font-medium text-[#3B4540] dark:text-[#D1D5DB] hover:bg-[#F2F2F4] dark:hover:bg-[#22261E]"
+                >
+                  Mở trang thanh toán PayOS
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {qrModalBooking && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#191C14] border border-[#E3E8E6] dark:border-white/10 rounded-3xl p-6 sm:p-8 max-w-sm w-full relative shadow-2xl text-center space-y-4">
@@ -590,7 +725,7 @@ export default function MyTicketsPage() {
               <span className="text-[10px] font-heading font-bold px-2.5 py-0.5 rounded-full border border-[#00B562]/30 text-[#00B562] dark:text-[#9CFF93] uppercase tracking-wider">
                 Phanta Sports - Thẻ Vào Cổng
               </span>
-              <h3 className="text-xl font-heading font-black text-[#171C1A] dark:text-white uppercase mt-2">
+              <h3 className="text-xl font-heading font-bold text-[#171C1A] dark:text-white uppercase mt-2">
                 Mã QR Qua Cửa
               </h3>
               <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] mt-0.5">
@@ -638,11 +773,15 @@ export default function MyTicketsPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#3B4540] dark:text-[#D1D5DB]">Ngày thi đấu:</span>
-                <span className="font-medium text-[#171C1A] dark:text-white">{qrModalBooking.bookingDate}</span>
+                <span className="font-medium text-[#171C1A] dark:text-white">
+                  {qrModalBooking.bookingDate
+                    ? new Date(qrModalBooking.bookingDate).toLocaleDateString('vi-VN')
+                    : ''}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#3B4540] dark:text-[#D1D5DB]">Mã đơn:</span>
-                <span className="font-heading font-black text-[#171C1A] dark:text-white">
+                <span className="font-heading font-bold text-[#171C1A] dark:text-white">
                   #{qrModalBooking.bookingCode || qrModalBooking._id.slice(-6).toUpperCase()}
                 </span>
               </div>
@@ -669,7 +808,7 @@ export default function MyTicketsPage() {
             <div>
               <div className="flex items-center space-x-2">
                 <RotateCcw className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                <h3 className="font-heading font-black text-lg sm:text-xl uppercase tracking-tight text-[#171C1A] dark:text-white">
+                <h3 className="font-heading font-bold text-lg sm:text-xl uppercase tracking-tight text-[#171C1A] dark:text-white">
                   Yêu Cầu Hủy Vé & Hoàn Tiền
                 </h3>
               </div>
@@ -701,7 +840,7 @@ export default function MyTicketsPage() {
                     <span className="font-heading font-bold text-xs text-[#171C1A] dark:text-white">
                       Tiền dự kiến hoàn trả:
                     </span>
-                    <span className="font-heading font-black text-base text-[#00B562] dark:text-[#9CFF93]">
+                    <span className="font-heading font-bold text-base text-[#00B562] dark:text-[#9CFF93]">
                       {calc.refundAmount.toLocaleString('vi-VN')} đ
                     </span>
                   </div>

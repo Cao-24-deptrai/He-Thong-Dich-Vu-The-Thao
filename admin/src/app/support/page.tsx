@@ -1,4 +1,4 @@
-// admin/src/app/support/page.tsx
+﻿// admin/src/app/support/page.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -83,7 +83,7 @@ export default function CustomerSupportPage() {
         <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-[#E3E8E6] dark:border-white/10 text-xs text-[#3B4540] dark:text-[#D1D5DB] bg-[#F8F9FA] dark:bg-[#191C14]">
           <span className="font-heading font-semibold uppercase tracking-wider text-[11px]">Trung Tâm Hỗ Trợ Khách Hàng</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-heading font-black tracking-tight text-[#171C1A] dark:text-white uppercase">
+        <h1 className="text-3xl sm:text-4xl font-heading font-bold tracking-tight text-[#171C1A] dark:text-white uppercase">
           Chúng Tôi Luôn Đồng Hành Cùng Bạn
         </h1>
         <p className="text-sm text-[#3B4540] dark:text-[#D1D5DB] max-w-xl mx-auto">
@@ -104,7 +104,7 @@ export default function CustomerSupportPage() {
           <div className="pt-2 border-t border-[#E3E8E6] dark:border-white/10">
             <a
               href="tel:0988240106"
-              className="text-lg font-heading font-black text-[#00B562] dark:text-[#9CFF93]"
+              className="text-lg font-heading font-bold text-[#00B562] dark:text-[#9CFF93]"
             >
               0988 240 106
             </a>
@@ -149,7 +149,7 @@ export default function CustomerSupportPage() {
       {/* 3. FAQS ACCORDION */}
       <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-[#E3E8E6] dark:border-white/10 pb-3">
-          <h2 className="text-xl sm:text-2xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#171C1A] dark:text-white uppercase tracking-tight">
             Câu Hỏi Thường Gặp
           </h2>
           <span className="text-xs font-heading font-bold uppercase text-[#00B562] dark:text-[#9CFF93]">
@@ -199,7 +199,7 @@ export default function CustomerSupportPage() {
       {/* 4. FORM TIẾP NHẬN YÊU CẦU */}
       <div className="p-6 sm:p-8 rounded-3xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] space-y-6">
         <div>
-          <h2 className="text-xl sm:text-2xl font-heading font-black text-[#171C1A] dark:text-white uppercase tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-heading font-bold text-[#171C1A] dark:text-white uppercase tracking-tight">
             Gửi Yêu Cầu Hỗ Trợ
           </h2>
           <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1">
@@ -210,7 +210,7 @@ export default function CustomerSupportPage() {
         {submitted ? (
           <div className="p-6 rounded-2xl border border-[#00B562]/30 bg-[#00B562]/10 text-center space-y-2">
             <CheckCircle2 className="w-10 h-10 text-[#00B562] dark:text-[#9CFF93] mx-auto" />
-            <h3 className="font-heading font-black text-base text-[#171C1A] dark:text-white uppercase">
+            <h3 className="font-heading font-bold text-base text-[#171C1A] dark:text-white uppercase">
               Đã Tiếp Nhận Yêu Cầu Của Bạn
             </h3>
             <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] max-w-md mx-auto">
@@ -305,7 +305,7 @@ export default function CustomerSupportPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-xs uppercase tracking-wider transition flex items-center space-x-2 disabled:opacity-50"
+                className="px-6 py-2.5 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-xs uppercase tracking-wider transition flex items-center space-x-2 disabled:opacity-50"
               >
                 <Send className="w-4 h-4" />
                 <span>{submitting ? 'Đang gửi...' : 'Gửi Yêu Cầu Hỗ Trợ'}</span>

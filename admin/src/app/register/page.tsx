@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { api, User } from '@/lib/api';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -64,11 +65,15 @@ export default function RegisterPage() {
       }, 1500);
     } catch (err: any) {
       console.error('Register error:', err);
-      const msg = err.message || err.data?.message || 'Đăng ký không thành công. Vui lòng thử lại.';
-      if (
-        (typeof msg === 'string' && msg.includes('E11000')) ||
-        msg.toLowerCase().includes('already exists') ||
-        msg.toLowerCase().includes('đã tồn tại')
+      const msg = err.data?.message || err.message || 'Đăng ký không thành công. Vui lòng thử lại.';
+      if (typeof msg === 'string' && (msg.toLowerCase().includes('email') || msg.includes('email_1'))) {
+        setError('Địa chỉ email này đã được sử dụng cho tài khoản khác. Vui lòng đăng nhập hoặc sử dụng email khác.');
+      } else if (
+        typeof msg === 'string' &&
+        (msg.toLowerCase().includes('phone') ||
+          msg.toLowerCase().includes('số điện thoại') ||
+          msg.includes('phone_1') ||
+          msg.includes('E11000'))
       ) {
         setError('Số điện thoại này đã được đăng ký trên hệ thống. Vui lòng chuyển sang đăng nhập.');
       } else {
@@ -80,9 +85,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
-      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (ẨN TRÊN MOBILE, HIỂN THỊ TỪ LG) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden">
+    <div className="h-screen w-full overflow-hidden bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
+      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (CỐ ĐỊNH CHIỀU CAO THEO TRÌNH DUYỆT, KHÔNG CUỘN) */}
+      <div className="hidden lg:flex lg:w-1/2 h-screen sticky top-0 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden shrink-0 select-none">
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
           style={{
@@ -110,9 +115,14 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: FORM ĐĂNG KÝ TINH GỌN VỚI LOGO 2 (PHANTA.png) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
-        <div className="w-full max-w-md space-y-6 my-auto">
+      {/* CỘT PHẢI: FORM ĐĂNG KÝ (CHỈ CUỘN PHẦN NỘI DUNG BÊN PHẢI) */}
+      <div className="w-full lg:w-1/2 h-screen overflow-y-auto flex flex-col justify-between p-6 sm:p-12 relative">
+        {/* Nút chuyển đổi Light / Dark mode ở góc phải */}
+        <div className="absolute top-6 right-6 z-20">
+          <ThemeToggle />
+        </div>
+
+        <div className="my-auto py-8 w-full max-w-md mx-auto space-y-6">
           {/* Header Form & Logo 2 */}
           <div className="space-y-3 text-center sm:text-left">
             <Link href="/home" className="inline-block">
@@ -177,12 +187,12 @@ export default function RegisterPage() {
                 onError={(msg) => setError(msg)}
               />
 
-              <div className="relative flex items-center justify-center">
-                <span className="w-full border-t border-[#E3E8E6] dark:border-white/10" />
-                <span className="px-3 text-[11px] uppercase tracking-wider font-semibold text-[#758A80] dark:text-[#A1A79F] bg-white dark:bg-[#0C0F0C]">
+              <div className="relative flex items-center justify-center gap-3">
+                <span className="flex-1 min-w-[16px] border-t border-[#E3E8E6] dark:border-white/10" />
+                <span className="text-center text-[11px] uppercase tracking-wider font-semibold text-[#758A80] dark:text-[#A1A79F] bg-white dark:bg-[#0C0F0C] sm:whitespace-nowrap">
                   Hoặc điền thông tin
                 </span>
-                <span className="w-full border-t border-[#E3E8E6] dark:border-white/10" />
+                <span className="flex-1 min-w-[16px] border-t border-[#E3E8E6] dark:border-white/10" />
               </div>
 
               {/* Form đăng ký - Không dùng icon rườm rà */}

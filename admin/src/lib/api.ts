@@ -517,6 +517,45 @@ class ApiService {
     return merged;
   }
 
+  async updateMyProfile(payload: {
+    fullName?: string;
+    email?: string;
+    avatarUrl?: string;
+  }): Promise<User> {
+    const updatedUser = await this.request<User>('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    const current = this.getUser();
+    const merged = { ...(current || {}), ...updatedUser } as User;
+    this.setUser(merged);
+    return merged;
+  }
+
+  async getMyNotifications(page = 1, limit = 30): Promise<{
+    items: Array<{
+      _id: string;
+      title: string;
+      body: string;
+      type: string;
+      isRead: boolean;
+      createdAt: string;
+      data?: Record<string, any>;
+    }>;
+    total: number;
+    unreadCount: number;
+  }> {
+    return this.request(`/notifications/me?page=${page}&limit=${limit}`);
+  }
+
+  async markNotificationRead(id: string): Promise<{ success: boolean }> {
+    return this.request(`/notifications/me/${id}/read`, { method: 'PATCH' });
+  }
+
+  async markAllNotificationsRead(): Promise<{ success: boolean }> {
+    return this.request('/notifications/me/read-all', { method: 'POST' });
+  }
+
   // --- CUSTOMER BOOKING METHODS ---
   async holdSlot(payload: {
     venueId: string;

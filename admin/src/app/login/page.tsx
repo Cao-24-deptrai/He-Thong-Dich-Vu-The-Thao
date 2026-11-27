@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { api, User } from '@/lib/api';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('');
@@ -76,9 +77,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
-      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (ẨN TRÊN MOBILE, HIỂN THỊ TỪ LG) */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden">
+    <div className="h-screen w-full overflow-hidden bg-white dark:bg-[#0C0F0C] text-[#171C1A] dark:text-[#F3F4F6] flex font-sans">
+      {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (CỐ ĐỊNH CHIỀU CAO THEO TRÌNH DUYỆT, KHÔNG CUỘN) */}
+      <div className="hidden lg:flex lg:w-1/2 h-screen sticky top-0 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden shrink-0 select-none">
         {/* Ảnh nền thể thao độ nét cao */}
         <div
           className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
@@ -107,9 +108,14 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* CỘT PHẢI: FORM ĐĂNG NHẬP TINH GỌN VỚI LOGO 2 (PHANTA.png) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
-        <div className="w-full max-w-md space-y-8">
+      {/* CỘT PHẢI: FORM ĐĂNG NHẬP (CHỈ CUỘN PHẦN NỘI DUNG BÊN PHẢI) */}
+      <div className="w-full lg:w-1/2 h-screen overflow-y-auto flex flex-col justify-between p-6 sm:p-12 relative">
+        {/* Nút chuyển đổi Light / Dark mode ở góc phải */}
+        <div className="absolute top-6 right-6 z-20">
+          <ThemeToggle />
+        </div>
+
+        <div className="my-auto py-8 w-full max-w-md mx-auto space-y-8">
           {/* Header Form & Logo 2 */}
           <div className="space-y-4 text-center sm:text-left">
             <Link href="/home" className="inline-block">

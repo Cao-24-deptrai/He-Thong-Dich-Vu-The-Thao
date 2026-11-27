@@ -48,14 +48,25 @@
   --color-primary-soft: rgba(156, 255, 147, 0.08);
 }
 
+@layer base {
+  html,
+  body {
+    font-family: 'Lexend', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Barlow', sans-serif;
+  }
+}
+
 body {
-  font-family: var(--font-lexend), 'Lexend', sans-serif;
+  font-family: 'Lexend', sans-serif;
   min-height: 100vh;
   letter-spacing: -0.01em;
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: var(--font-barlow), 'Barlow', sans-serif;
+  font-family: 'Barlow', sans-serif;
 }
 
 /* Custom Scrollbars */
