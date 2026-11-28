@@ -26,18 +26,34 @@ export default function LoginPage() {
   }, []);
 
   const redirectAfterLogin = (user?: User) => {
+    const isDomainAdmin =
+      typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
+
     if (user?.role === 'CUSTOMER') {
-      window.location.href = '/home';
+      if (isDomainAdmin) {
+        window.location.href = 'https://phanta.id.vn/home';
+      } else {
+        window.location.href = '/home';
+      }
     } else {
-      // Tài khoản STAFF / ADMIN đăng nhập tại web khách -> xóa token và chuyển hướng sang Cổng Quản trị & POS
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('admin_user');
-        const adminLoginUrl = window.location.hostname.includes('phanta.id.vn')
-          ? 'https://admin.phanta.id.vn/login?notice=staff_redirect'
-          : 'http://localhost:3002/login?notice=staff_redirect';
-        window.location.href = adminLoginUrl;
+      // Tài khoản STAFF / ADMIN / OWNER / MANAGER
+      if (isDomainAdmin) {
+        if (user?.role === 'STAFF') {
+          window.location.href = '/pos/checkin-walkin';
+        } else {
+          window.location.href = '/facilities';
+        }
+      } else {
+        // Nếu đăng nhập ở web khách -> xóa token và điều hướng sang domain admin
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('admin_user');
+          const adminLoginUrl = window.location.hostname.includes('phanta.id.vn')
+            ? 'https://admin.phanta.id.vn/login?notice=staff_redirect'
+            : 'http://localhost:3002/login?notice=staff_redirect';
+          window.location.href = adminLoginUrl;
+        }
       }
     }
   };

@@ -83,25 +83,58 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    if (currentUser && currentUser.role !== 'CUSTOMER') {
-      api.logout();
-      const adminUrl =
-        typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')
-          ? 'https://admin.phanta.id.vn/login?notice=staff_redirect'
-          : 'http://localhost:3002/login?notice=staff_redirect';
-      window.location.href = adminUrl;
-      return;
-    }
+    const isStaffOrAdmin = currentUser && currentUser.role !== 'CUSTOMER';
+    const isCustomerDomain =
+      typeof window !== 'undefined' &&
+      !window.location.hostname.startsWith('admin.');
 
-    const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
-    const isCustomerRoute = customerRoutesList.some(
-      (route) => pathname === route || pathname.startsWith(route + '/')
-    );
-    const authPublicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
-    const isPublicAuthPath = authPublicRoutes.includes(pathname);
+    // 1. Nếu đang ở domain admin.phanta.id.vn nhưng web client lại đang phục vụ domain này:
+    if (typeof window !== 'undefined' && window.location.hostname.startsWith('admin.')) {
+      // Nếu chưa đăng nhập và không ở trang auth -> Chuyển về /login nội bộ của admin
+      const authPublicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+      const isPublicAuthPath = authPublicRoutes.includes(pathname);
+      if (!currentUser && !isPublicAuthPath) {
+        router.replace('/login');
+        return;
+      }
+      // Nếu là khách hàng đăng nhập ở domain admin -> đá sang web khách
+      if (currentUser?.role === 'CUSTOMER') {
+        window.location.href = 'https://phanta.id.vn/home';
+        return;
+      }
+      // Nếu là staff/admin -> chuyển về đúng dashboard của họ
+      if (isStaffOrAdmin) {
+        if (pathname === '/home' || pathname === '/' || pathname === '/login') {
+          if (currentUser.role === 'STAFF') {
+            router.replace('/pos/checkin-walkin');
+          } else {
+            router.replace('/facilities');
+          }
+          return;
+        }
+      }
+    } else {
+      // Đang ở domain khách hàng (phanta.id.vn hoặc localhost:3001)
+      if (isStaffOrAdmin) {
+        api.logout();
+        const adminUrl =
+          typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')
+            ? 'https://admin.phanta.id.vn/login?notice=staff_redirect'
+            : 'http://localhost:3002/login?notice=staff_redirect';
+        window.location.href = adminUrl;
+        return;
+      }
 
-    if (!isCustomerRoute && !isPublicAuthPath) {
-      router.replace('/home');
+      const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
+      const isCustomerRoute = customerRoutesList.some(
+        (route) => pathname === route || pathname.startsWith(route + '/')
+      );
+      const authPublicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
+      const isPublicAuthPath = authPublicRoutes.includes(pathname);
+
+      if (!isCustomerRoute && !isPublicAuthPath) {
+        router.replace('/home');
+      }
     }
   }, [pathname, router]);
 
@@ -115,6 +148,9 @@ export default function RootLayout({
     pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
+
+  const isDomainAdmin =
+    typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
 
   const customerNavLinks = [
     { href: '/home', label: 'Trang chính' },
@@ -144,12 +180,12 @@ export default function RootLayout({
       </head>
       <body
         className={
-          isAuthPage
+          isAuthPage || isDomainAdmin
             ? 'bg-slate-900 text-slate-100 min-h-screen font-body'
             : 'bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col min-h-screen relative font-body transition-colors duration-200'
         }
       >
-        {isAuthPage ? (
+        {isAuthPage || isDomainAdmin ? (
           children
         ) : (
           <>

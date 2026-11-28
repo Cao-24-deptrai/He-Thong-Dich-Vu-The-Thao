@@ -3,12 +3,29 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/home');
+    const isDomainAdmin =
+      typeof window !== 'undefined' && window.location.hostname.startsWith('admin.');
+
+    if (isDomainAdmin) {
+      const user = api.getUser();
+      if (!user) {
+        router.replace('/login');
+      } else if (user.role === 'STAFF') {
+        router.replace('/pos/checkin-walkin');
+      } else if (user.role === 'CUSTOMER') {
+        window.location.href = 'https://phanta.id.vn/home';
+      } else {
+        router.replace('/facilities');
+      }
+    } else {
+      router.replace('/home');
+    }
   }, [router]);
 
   return (
@@ -17,4 +34,5 @@ export default function HomePage() {
     </div>
   );
 }
+
 
