@@ -1,12 +1,7 @@
-// mobile/src/components/PitchMap2D.tsx
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
-import { colors } from '../theme/colors';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Check } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { Venue } from '../types';
 
 interface PitchMap2DProps {
@@ -22,265 +17,442 @@ export const PitchMap2D: React.FC<PitchMap2DProps> = ({
   onSelectVenue,
   sportTypes = [],
 }) => {
-  // Determine sport category
-  const isEsports = sportTypes.some((s) => s.toLowerCase().includes('esport') || s.toLowerCase().includes('pc') || s.toLowerCase().includes('gaming')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('esport') || v.name?.toLowerCase().includes('pc') || v.name?.toLowerCase().includes('vip'));
+  const theme = useTheme();
 
-  const isBasketball = sportTypes.some((s) => s.toLowerCase().includes('bóng rổ') || s.toLowerCase().includes('basketball')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('basketball') || v.name?.toLowerCase().includes('bóng rổ'));
+  const isEsports =
+    sportTypes.some(
+      (s) =>
+        s.toLowerCase().includes('esport') ||
+        s.toLowerCase().includes('pc') ||
+        s.toLowerCase().includes('gaming')
+    ) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('esport') ||
+        v.name?.toLowerCase().includes('pc') ||
+        v.name?.toLowerCase().includes('vip')
+    );
 
-  const isBadminton = sportTypes.some((s) => s.toLowerCase().includes('cầu lông') || s.toLowerCase().includes('badminton')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('badminton') || v.name?.toLowerCase().includes('cầu lông'));
+  const isBasketball =
+    sportTypes.some(
+      (s) =>
+        s.toLowerCase().includes('bóng rổ') ||
+        s.toLowerCase().includes('basketball')
+    ) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('basketball') ||
+        v.name?.toLowerCase().includes('bóng rổ')
+    );
 
-  const isPickleball = sportTypes.some((s) => s.toLowerCase().includes('pickleball')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('pickleball') || v.name?.toLowerCase().includes('pickleball'));
+  const isBadminton =
+    sportTypes.some(
+      (s) =>
+        s.toLowerCase().includes('cầu lông') ||
+        s.toLowerCase().includes('badminton')
+    ) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('badminton') ||
+        v.name?.toLowerCase().includes('cầu lông')
+    );
 
-  const isTennis = sportTypes.some((s) => s.toLowerCase().includes('tennis') || s.toLowerCase().includes('quần vợt')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('tennis') || v.name?.toLowerCase().includes('tennis') || v.name?.toLowerCase().includes('quần vợt'));
+  const isPickleball =
+    sportTypes.some((s) => s.toLowerCase().includes('pickleball')) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('pickleball') ||
+        v.name?.toLowerCase().includes('pickleball')
+    );
 
-  const isVolleyball = sportTypes.some((s) => s.toLowerCase().includes('bóng chuyền') || s.toLowerCase().includes('volleyball')) ||
-    venues.some((v) => v.type?.toLowerCase().includes('volleyball') || v.name?.toLowerCase().includes('bóng chuyền'));
+  const isTennis =
+    sportTypes.some(
+      (s) =>
+        s.toLowerCase().includes('tennis') ||
+        s.toLowerCase().includes('quần vợt')
+    ) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('tennis') ||
+        v.name?.toLowerCase().includes('tennis') ||
+        v.name?.toLowerCase().includes('quần vợt')
+    );
+
+  const isVolleyball =
+    sportTypes.some(
+      (s) =>
+        s.toLowerCase().includes('bóng chuyền') ||
+        s.toLowerCase().includes('volleyball')
+    ) ||
+    venues.some(
+      (v) =>
+        v.type?.toLowerCase().includes('volleyball') ||
+        v.name?.toLowerCase().includes('bóng chuyền')
+    );
+
+  const mapTitle = isEsports
+    ? 'Sơ đồ phòng máy Cyber VIP'
+    : isBasketball
+      ? 'Sơ đồ sân bóng rổ tiêu chuẩn'
+      : isBadminton
+        ? 'Sơ đồ cụm sân cầu lông'
+        : isPickleball
+          ? 'Sơ đồ sân Pickleball'
+          : isTennis
+            ? 'Sơ đồ sân quần vợt Tennis'
+            : isVolleyball
+              ? 'Sơ đồ sân bóng chuyền'
+              : 'Sơ đồ mặt sân cỏ 2D';
 
   return (
     <View style={styles.container}>
-      {/* Header Info */}
       <View style={styles.mapHeader}>
         <View style={styles.mapHeaderLeft}>
-          <Text style={styles.mapTitle}>
-            {isEsports ? '🎮 SƠ ĐỒ PHÒNG MÁY CYBER VIP' :
-             isBasketball ? '🏀 SƠ ĐỒ SÂN BÓNG RỔ TIÊU CHUẨN' :
-             isBadminton ? '🏸 SƠ ĐỒ CỤM SÂN CẦU LÔNG' :
-             isPickleball ? '🏓 SƠ ĐỒ SÂN PICKLEBALL TIÊU CHUẨN' :
-             isTennis ? '🎾 SƠ ĐỒ SÂN QUẦN VỢT TENNIS' :
-             isVolleyball ? '🏐 SƠ ĐỒ SÂN BÓNG CHUYỀN THI ĐẤU' :
-             '⚽ SƠ ĐỒ MẶT SÂN CỎ NHÂN TẠO 2D'}
+          <Text
+            style={[
+              styles.mapTitle,
+              { color: theme.textHeading, fontFamily: fonts.headingBold },
+            ]}
+          >
+            {mapTitle}
           </Text>
-          <Text style={styles.mapSubtitle}>Chạm trực tiếp vào vị trí sân để chọn khung giờ đặt sân</Text>
+          <Text
+            style={[
+              styles.mapSubtitle,
+              { color: theme.textSecondary, fontFamily: fonts.body },
+            ]}
+          >
+            Chạm vào vị trí sân để chọn khung giờ
+          </Text>
         </View>
-        <View style={styles.activeCourtBadge}>
-          <Text style={styles.activeCourtBadgeText}>
-            {venues.length} Sân hoạt động
+        <View
+          style={[
+            styles.activeCourtBadge,
+            {
+              backgroundColor: theme.accentSoft,
+              borderColor: theme.borderAccent,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.activeCourtBadgeText,
+              { color: theme.accent, fontFamily: fonts.bodySemiBold },
+            ]}
+          >
+            {venues.length} sân hoạt động
           </Text>
         </View>
       </View>
 
-      {/* 2D Stadium / Field Container */}
-      <View style={[
-        styles.fieldContainer,
-        isEsports && styles.fieldEsports,
-        isBadminton && styles.fieldBadminton,
-        isPickleball && styles.fieldPickleball,
-      ]}>
-        {/* Pitch Lines & Markings (Soccer) */}
-        {!isEsports && !isBadminton && !isPickleball && (
+      <View
+        style={[
+          styles.fieldContainer,
+          {
+            backgroundColor: isEsports
+              ? theme.esportsDark
+              : isBadminton
+                ? theme.courtBadminton
+                : isPickleball
+                  ? theme.courtPickleball
+                  : theme.pitchGrassDark,
+            borderColor: theme.border,
+          },
+        ]}
+      >
+        {!isEsports && !isBadminton && !isPickleball ? (
           <View style={styles.soccerFieldOverlay} pointerEvents="none">
-            {/* Alternating grass stripes */}
             <View style={styles.grassStripes}>
-              <View style={[styles.stripe, { backgroundColor: colors.pitchGrassDark }]} />
-              <View style={[styles.stripe, { backgroundColor: colors.pitchGrassLight }]} />
-              <View style={[styles.stripe, { backgroundColor: colors.pitchGrassDark }]} />
-              <View style={[styles.stripe, { backgroundColor: colors.pitchGrassLight }]} />
-              <View style={[styles.stripe, { backgroundColor: colors.pitchGrassDark }]} />
+              <View style={[styles.stripe, { backgroundColor: theme.pitchGrassDark }]} />
+              <View style={[styles.stripe, { backgroundColor: theme.pitchGrassLight }]} />
+              <View style={[styles.stripe, { backgroundColor: theme.pitchGrassDark }]} />
+              <View style={[styles.stripe, { backgroundColor: theme.pitchGrassLight }]} />
+              <View style={[styles.stripe, { backgroundColor: theme.pitchGrassDark }]} />
             </View>
-            {/* Center Circle & Line */}
-            <View style={styles.centerLine} />
-            <View style={styles.centerCircle}>
-              <View style={styles.centerSpot} />
-            </View>
-            {/* Goal Boxes */}
-            <View style={styles.topGoalBox} />
-            <View style={styles.bottomGoalBox} />
+            <View style={[styles.centerLine, { backgroundColor: theme.pitchLine }]} />
+            <View style={[styles.centerCircle, { borderColor: theme.pitchLine }]} />
+            <View style={[styles.topGoalBox, { borderColor: theme.pitchLine }]} />
+            <View style={[styles.bottomGoalBox, { borderColor: theme.pitchLine }]} />
           </View>
-        )}
+        ) : null}
 
-        {/* Court Lines (Badminton / Pickleball) */}
-        {(isBadminton || isPickleball) && (
+        {(isBadminton || isPickleball) ? (
           <View style={styles.badmintonFieldOverlay} pointerEvents="none">
-            {/* Center Net */}
             <View style={styles.badmintonNet}>
-              <Text style={styles.netLabel}>════ LƯỚI THI ĐẤU ════</Text>
+              <Text style={[styles.netLabel, { fontFamily: fonts.bodySemiBold }]}>
+                Lưới thi đấu
+              </Text>
             </View>
-            <View style={styles.badmintonKitchenTop} />
-            <View style={styles.badmintonKitchenBottom} />
             <View style={styles.courtCenterVerticalLine} />
           </View>
-        )}
+        ) : null}
 
-        {/* Esports Gaming Stations Layout */}
-        {isEsports && (
+        {isEsports ? (
           <View style={styles.esportsOverlay} pointerEvents="none">
             <View style={styles.esportsStage}>
-              <Text style={styles.esportsStageText}>★ ARENA MAIN STAGE & SPECTATOR SCREEN ★</Text>
+              <Text style={[styles.esportsStageText, { fontFamily: fonts.heading }]}>
+                Khu vực sân khấu chính
+              </Text>
             </View>
-            <View style={styles.rgbUnderglow} />
           </View>
-        )}
+        ) : null}
 
-        {/* Interactive Courts Grid / Stations */}
         <View style={styles.courtsLayer}>
           {venues.map((venue, index) => {
             const isSelected = selectedVenue?._id === venue._id;
-            const price = (venue as any).defaultPrice ?? venue.basePricePerHour ?? 200000;
+            const price =
+              (venue as { defaultPrice?: number }).defaultPrice ??
+              venue.basePricePerHour ??
+              200000;
 
             return (
-              <TouchableOpacity
+              <Pressable
                 key={venue._id || index}
-                activeOpacity={0.85}
-                style={[
+                style={({ pressed }) => [
                   styles.courtCard,
-                  venue.isComposite && styles.compositeCard,
-                  isEsports && styles.esportsCard,
-                  isSelected && styles.courtCardSelected,
-                  isSelected && isEsports && styles.esportsCardSelected,
+                  {
+                    backgroundColor: isSelected
+                      ? theme.surface
+                      : 'rgba(15, 17, 16, 0.86)',
+                    borderColor: isSelected ? theme.accent : 'rgba(255,255,255,0.2)',
+                    opacity: pressed ? 0.85 : 1,
+                  },
                 ]}
                 onPress={() => onSelectVenue(venue)}
               >
-                {/* Court Number / Tag */}
                 <View style={styles.courtBadgeRow}>
-                  <View style={[
-                    styles.courtNumberCircle,
-                    venue.isComposite && styles.courtNumberComposite,
-                    isSelected && styles.courtNumberCircleSelected,
-                  ]}>
-                    <Text style={[styles.courtNumberText, isSelected && styles.courtNumberTextSelected]}>
+                  <View
+                    style={[
+                      styles.courtNumberCircle,
+                      {
+                        backgroundColor: isSelected
+                          ? theme.accent
+                          : 'rgba(255,255,255,0.12)',
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.courtNumberText,
+                        {
+                          color: isSelected ? theme.onAccent : '#FFFFFF',
+                          fontFamily: fonts.headingBold,
+                        },
+                      ]}
+                    >
                       {venue.courtCode || index + 1}
                     </Text>
                   </View>
-                  <View style={[styles.liveStatusDot, isSelected ? styles.liveStatusSelected : styles.liveStatusAvailable]} />
                 </View>
 
-                {/* Court Name */}
-                <Text style={[styles.courtName, isSelected && styles.courtNameSelected]} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.courtName,
+                    {
+                      color: isSelected ? theme.accent : '#FFFFFF',
+                      fontFamily: fonts.heading,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
                   {venue.name}
                 </Text>
 
-                {/* Spec Tag / Composite Tag */}
                 {venue.isComposite ? (
                   <View style={styles.compositeTagBox}>
-                    <Text style={styles.compositeTagText}>
-                      ⚡ Ghép ({venue.baseUnitCodes?.join('+') || 'N/A'})
+                    <Text style={[styles.compositeTagText, { fontFamily: fonts.bodySemiBold }]}>
+                      Ghép ({venue.baseUnitCodes?.join('+') || 'N/A'})
                     </Text>
                   </View>
                 ) : (
-                  <Text style={[styles.courtSpecs, isSelected && styles.courtSpecsSelected]}>
-                    {venue.courtCode ? `Sân chuẩn ${venue.courtCode}` : 'Sân 5 Người'}
+                  <Text style={[styles.courtSpecs, { fontFamily: fonts.body }]}>
+                    {venue.courtCode ? `Sân chuẩn ${venue.courtCode}` : 'Sân 5 người'}
                   </Text>
                 )}
 
-                {/* Price Pill */}
-                <View style={[styles.courtPricePill, isSelected && styles.courtPricePillSelected]}>
-                  <Text style={[styles.courtPriceText, isSelected && styles.courtPriceTextSelected]}>
+                <View style={styles.courtPricePill}>
+                  <Text
+                    style={[
+                      styles.courtPriceText,
+                      {
+                        color: isSelected ? theme.accent : '#E2E8F0',
+                        fontFamily: fonts.heading,
+                      },
+                    ]}
+                  >
                     {price.toLocaleString('vi-VN')} đ
                   </Text>
                 </View>
 
-                {/* Selection Indicator Banner */}
-                {isSelected && (
-                  <View style={styles.selectedBanner}>
-                    <Text style={styles.selectedBannerText}>✓ ĐANG CHỌN</Text>
+                {isSelected ? (
+                  <View
+                    style={[
+                      styles.selectedBanner,
+                      { backgroundColor: theme.accent },
+                    ]}
+                  >
+                    <Check size={10} strokeWidth={2.5} color={theme.onAccent} />
+                    <Text
+                      style={[
+                        styles.selectedBannerText,
+                        { color: theme.onAccent, fontFamily: fonts.bodySemiBold },
+                      ]}
+                    >
+                      Đang chọn
+                    </Text>
                   </View>
-                )}
-              </TouchableOpacity>
+                ) : null}
+              </Pressable>
             );
           })}
         </View>
       </View>
 
-      {/* Selected Venue Quick Summary Bar */}
-      {selectedVenue && (
-        <View style={styles.summaryBar}>
+      {selectedVenue ? (
+        <View
+          style={[
+            styles.summaryBar,
+            {
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+            },
+          ]}
+        >
           <View style={styles.summaryLeft}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <Text style={styles.summaryTitle}>
-                {isEsports ? 'Trạm máy' : 'Sân đang chọn'}: <Text style={styles.summaryHighlight}>{selectedVenue.name}</Text>
+            <View style={styles.summaryTitleRow}>
+              <Text
+                style={[
+                  styles.summaryTitle,
+                  { color: theme.textSecondary, fontFamily: fonts.body },
+                ]}
+              >
+                {isEsports ? 'Trạm máy' : 'Sân đang chọn'}:{' '}
+                <Text
+                  style={{
+                    color: theme.textHeading,
+                    fontFamily: fonts.headingBold,
+                  }}
+                >
+                  {selectedVenue.name}
+                </Text>
               </Text>
-              {selectedVenue.courtCode && (
-                <View style={styles.courtCodeTag}>
-                  <Text style={styles.courtCodeTagText}>#{selectedVenue.courtCode}</Text>
+              {selectedVenue.courtCode ? (
+                <View
+                  style={[
+                    styles.courtCodeTag,
+                    {
+                      backgroundColor: theme.accentSoft,
+                      borderColor: theme.borderAccent,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.courtCodeTagText,
+                      { color: theme.accent, fontFamily: fonts.heading },
+                    ]}
+                  >
+                    #{selectedVenue.courtCode}
+                  </Text>
                 </View>
-              )}
+              ) : null}
             </View>
 
-            {selectedVenue.isComposite && (
-              <Text style={styles.summaryComposite}>
-                ⚡ Sân ghép linh hoạt gồm: {selectedVenue.baseUnitCodes?.join(' + ') || 'Chưa gán'}
+            {selectedVenue.isComposite ? (
+              <Text
+                style={[
+                  styles.summaryComposite,
+                  { color: theme.warning, fontFamily: fonts.bodyMedium },
+                ]}
+              >
+                Sân ghép gồm: {selectedVenue.baseUnitCodes?.join(' + ') || 'Chưa gán'}
               </Text>
-            )}
+            ) : null}
 
-            <Text style={[styles.summarySub, { fontWeight: '700', color: colors.primary, marginTop: 2 }]}>
-              Giá chuẩn: {((selectedVenue as any).defaultPrice ?? selectedVenue.basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ/giờ (Block 30 phút)
+            <Text
+              style={[
+                styles.summarySub,
+                { color: theme.accent, fontFamily: fonts.bodySemiBold, marginTop: 4 },
+              ]}
+            >
+              Giá chuẩn:{' '}
+              {(
+                (selectedVenue as { defaultPrice?: number }).defaultPrice ??
+                selectedVenue.basePricePerHour ??
+                200000
+              ).toLocaleString('vi-VN')}{' '}
+              đ/giờ (Khung 30 phút)
             </Text>
-            <Text style={[styles.summarySub, { marginTop: 1 }]}>
-              Giờ hoạt động: 06:00 - 23:00 (BR-01)
+            <Text
+              style={[
+                styles.summarySub,
+                { color: theme.textMuted, fontFamily: fonts.body, marginTop: 2 },
+              ]}
+            >
+              Giờ hoạt động: 06:00 - 23:00
             </Text>
           </View>
-          <View style={styles.readyIndicator}>
-            <Text style={styles.readyIndicatorText}>Sẵn sàng đặt</Text>
+          <View
+            style={[
+              styles.readyIndicator,
+              {
+                backgroundColor: theme.successSoft,
+                borderColor: theme.borderAccent,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.readyIndicatorText,
+                { color: theme.success, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
+              Sẵn sàng
+            </Text>
           </View>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: spacing.lg,
   },
   mapHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   mapHeaderLeft: {
     flex: 1,
   },
   mapTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: 0.5,
+    fontSize: 15,
   },
   mapSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 12,
     marginTop: 2,
   },
   activeCourtBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   activeCourtBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.success,
+    fontSize: 11,
   },
   fieldContainer: {
-    minHeight: 280,
-    borderRadius: 20,
+    minHeight: 260,
+    borderRadius: radius.xl,
     overflow: 'hidden',
-    backgroundColor: colors.pitchGrassDark,
-    borderWidth: 3,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderWidth: 1,
     position: 'relative',
-    padding: 12,
-  },
-  fieldEsports: {
-    backgroundColor: '#05070e',
-    borderColor: 'rgba(139, 92, 246, 0.3)',
-  },
-  fieldBadminton: {
-    backgroundColor: '#064e3b',
-    borderColor: 'rgba(52, 211, 153, 0.4)',
-  },
-  fieldPickleball: {
-    backgroundColor: '#0f766e',
-    borderColor: 'rgba(45, 212, 191, 0.4)',
+    padding: spacing.md,
   },
   soccerFieldOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -300,7 +472,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: '50%',
     width: 2,
-    backgroundColor: colors.pitchLine,
   },
   centerCircle: {
     position: 'absolute',
@@ -308,15 +479,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     borderWidth: 2,
-    borderColor: colors.pitchLine,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerSpot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.pitchLine,
   },
   topGoalBox: {
     position: 'absolute',
@@ -327,7 +489,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderRightWidth: 2,
     borderBottomWidth: 2,
-    borderColor: colors.pitchLine,
   },
   bottomGoalBox: {
     position: 'absolute',
@@ -338,7 +499,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 2,
     borderLeftWidth: 2,
     borderBottomWidth: 2,
-    borderColor: colors.pitchLine,
   },
   badmintonFieldOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -349,269 +509,156 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    height: 24,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
   netLabel: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#064e3b',
-    letterSpacing: 1,
-  },
-  badmintonKitchenTop: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    top: '25%',
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-  },
-  badmintonKitchenBottom: {
-    position: 'absolute',
-    left: 10,
-    right: 10,
-    bottom: '25%',
-    height: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.85)',
   },
   courtCenterVerticalLine: {
     position: 'absolute',
-    top: 10,
-    bottom: 10,
+    top: 0,
+    bottom: 0,
     left: '50%',
-    width: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    width: 1,
+    backgroundColor: 'rgba(255,255,255,0.35)',
   },
   esportsOverlay: {
     ...StyleSheet.absoluteFillObject,
+    paddingTop: spacing.sm,
     alignItems: 'center',
   },
   esportsStage: {
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 5,
-    backgroundColor: 'rgba(139, 92, 246, 0.25)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#8b5cf6',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   esportsStageText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#c4b5fd',
-    letterSpacing: 1,
-  },
-  rgbUnderglow: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: '#06b6d4',
+    fontSize: 11,
+    color: '#E2E8F0',
   },
   courtsLayer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    justifyContent: 'center',
-    zIndex: 2,
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
   },
   courtCard: {
-    width: '47%',
-    backgroundColor: 'rgba(17, 24, 39, 0.92)',
-    borderRadius: 16,
-    padding: 10,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-  },
-  compositeCard: {
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    backgroundColor: 'rgba(20, 20, 30, 0.94)',
-  },
-  esportsCard: {
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
-    borderColor: 'rgba(139, 92, 246, 0.3)',
-  },
-  courtCardSelected: {
-    borderColor: '#00f2fe',
-    backgroundColor: 'rgba(6, 182, 212, 0.18)',
-    shadowColor: '#00f2fe',
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-  },
-  esportsCardSelected: {
-    borderColor: '#8b5cf6',
-    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    width: '48%',
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: spacing.md,
   },
   courtBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   courtNumberCircle: {
+    minWidth: 28,
+    height: 24,
     paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  courtNumberComposite: {
-    backgroundColor: 'rgba(245, 158, 11, 0.25)',
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.5)',
-  },
-  courtNumberCircleSelected: {
-    backgroundColor: '#00f2fe',
-  },
   courtNumberText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#fff',
-    fontFamily: 'monospace',
-  },
-  courtNumberTextSelected: {
-    color: '#090d16',
-  },
-  liveStatusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  liveStatusAvailable: {
-    backgroundColor: colors.success,
-  },
-  liveStatusSelected: {
-    backgroundColor: '#00f2fe',
+    fontSize: 11,
   },
   courtName: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  courtNameSelected: {
-    color: '#00f2fe',
+    fontSize: 13,
   },
   courtSpecs: {
-    fontSize: 9,
-    color: colors.textMuted,
+    fontSize: 11,
+    color: '#CBD5E1',
     marginTop: 2,
   },
-  courtSpecsSelected: {
-    color: '#e2e8f0',
-  },
   compositeTagBox: {
-    marginTop: 3,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    paddingHorizontal: 4,
+    marginTop: 4,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
   },
   compositeTagText: {
-    fontSize: 8,
-    fontWeight: '900',
-    color: '#fbbf24',
+    fontSize: 10,
+    color: '#FBBF24',
   },
   courtPricePill: {
-    marginTop: 6,
+    marginTop: spacing.sm,
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
   },
-  courtPricePillSelected: {
-    backgroundColor: 'rgba(0, 242, 254, 0.25)',
-  },
   courtPriceText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  courtPriceTextSelected: {
-    color: '#00f2fe',
+    fontSize: 11,
   },
   selectedBanner: {
-    marginTop: 6,
-    backgroundColor: '#00f2fe',
-    borderRadius: 4,
-    paddingVertical: 2,
+    marginTop: spacing.sm,
+    borderRadius: 6,
+    paddingVertical: 3,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   selectedBannerText: {
-    fontSize: 8,
-    fontWeight: '900',
-    color: '#090d16',
-    letterSpacing: 0.5,
+    fontSize: 10,
   },
   summaryBar: {
-    marginTop: 12,
-    backgroundColor: '#111827',
-    borderRadius: 16,
-    padding: 14,
+    marginTop: spacing.md,
+    borderRadius: radius.lg,
+    padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   summaryLeft: {
     flex: 1,
-    marginRight: 10,
+  },
+  summaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
   },
   summaryTitle: {
     fontSize: 13,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  summaryHighlight: {
-    color: '#fff',
-    fontWeight: '800',
   },
   courtCodeTag: {
-    backgroundColor: 'rgba(6, 182, 212, 0.2)',
     borderWidth: 1,
-    borderColor: 'rgba(6, 182, 212, 0.4)',
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 2,
     borderRadius: 6,
   },
   courtCodeTagText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#00f2fe',
-    fontFamily: 'monospace',
+    fontSize: 11,
   },
   summaryComposite: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#fbbf24',
-    marginTop: 2,
+    fontSize: 11,
+    marginTop: 4,
   },
   summarySub: {
     fontSize: 11,
-    color: colors.textMuted,
   },
   readyIndicator: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 10,
+    paddingHorizontal: spacing.sm,
     paddingVertical: 6,
-    borderRadius: 10,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   readyIndicatorText: {
     fontSize: 11,
-    fontWeight: '800',
-    color: colors.success,
   },
 });

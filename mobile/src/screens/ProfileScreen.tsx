@@ -1,690 +1,399 @@
-// mobile/src/screens/ProfileScreen.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  Image,
+  Pressable,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
   SafeAreaView,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-  Modal,
-  TextInput,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
-import { useAuthStore } from '../store/useAuthStore';
+import {
+  Edit3,
+  QrCode,
+  Dumbbell,
+  Wallet,
+  Tag,
+  UserCheck,
+  Users,
+  Star,
+  MessageSquare,
+  Bell,
+  ListChecks,
+  WifiOff,
+  ChevronRight,
+  Crown,
+  type LucideIcon,
+} from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
-import { CustomerTierInfo } from '../types';
+import { useAuthStore } from '../store/useAuthStore';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { EditProfileModal, ProfileFormData } from '../components/EditProfileModal';
+import { AppDialog } from '../components/AppDialog';
+import type { ScreenId } from '../../App';
 
 interface Props {
-  onBack?: () => void;
+  onBack: () => void;
+  onNavigate?: (screen: ScreenId) => void;
   onOpenWallet?: () => void;
   onOpenHistory?: () => void;
   onOpenVouchers?: () => void;
 }
 
-// Fallback Tier Data when guest or backend offline
-const DEFAULT_TIER: CustomerTierInfo = {
-  currentTier: 'GOLD',
-  tierName: 'Hội Viên Vàng (Gold VIP)',
-  rolling12MonthSpend: 18500000,
-  totalLifetimeSpend: 24200000,
-  loyaltyPoints: 1250,
-  discountRate: 5,
-  pointMultiplier: 1.5,
-  nextTier: {
-    tier: 'PLATINUM',
-    name: 'Hội Viên Kim Cương (Platinum VIP)',
-    minSpend: 30000000,
-    remainingSpend: 11500000,
-  },
-  tierExpiresAt: '2027-10-31T00:00:00.000Z',
-};
-
 export const ProfileScreen: React.FC<Props> = ({
   onBack,
+  onNavigate,
   onOpenWallet,
   onOpenHistory,
   onOpenVouchers,
 }) => {
-  const { user, logout } = useAuthStore();
-
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [tierInfo, setTierInfo] = useState<CustomerTierInfo>(DEFAULT_TIER);
-  const [recalculating, setRecalculating] = useState(false);
-
-  // Redeem points modal
-  const [showRedeemModal, setShowRedeemModal] = useState(false);
-  const [redeemAmount, setRedeemAmount] = useState('200');
-  const [redeeming, setRedeeming] = useState(false);
-
-  // Fetch Tier info from backend
-  const fetchTierInfo = async () => {
-    try {
-      const data = await api.getUserTierInfo();
-      if (data && data.currentTier) {
-        setTierInfo(data);
-      }
-    } catch (err) {
-      console.warn('Using default tier info due to offline/unauthenticated state:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  const theme = useTheme();
+  const { user, token, logout, setUser } = useAuthStore();
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [tierInfo, setTierInfo] = useState<any>(null);
+  const [profile, setProfile] = useState<ProfileFormData>({
+    fullName: user?.fullName || 'Khách',
+    phone: user?.phone || 'Chưa đăng nhập',
+    email: user?.email || '',
+    dob: '',
+    gender: 'Nam',
+    sports: ['Bóng đá'],
+  });
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   useEffect(() => {
-    fetchTierInfo();
-  }, []);
+    if (!token) return;
+    api
+      .getMyProfile()
+      .then((res) => {
+        setProfile((p) => ({
+          ...p,
+          fullName: res.fullName || p.fullName,
+          phone: res.phone || p.phone,
+          email: res.email || '',
+          sports: res.favoriteSports || p.sports,
+        }));
+      })
+      .catch(() => null);
 
-  const handleRefresh = () => {
-    setRefreshing(true);
-    fetchTierInfo();
-  };
+    api
+      .getUserTierInfo()
+      .then(setTierInfo)
+      .catch(() => null);
+  }, [token]);
 
-  // Recalculate Tier via Backend Service (BR-18, AC-16, AC-17)
-  const handleRecalculateTier = async () => {
-    setRecalculating(true);
+  const menuItems: {
+    label: string;
+    Icon: LucideIcon;
+    onPress: () => void;
+    accentColor?: string;
+  }[] = [
+    {
+      label: 'Chỉnh sửa hồ sơ và thông tin',
+      Icon: Edit3,
+      onPress: () => setEditModalVisible(true),
+    },
+    {
+      label: 'Đơn đặt sân và vé QR của tôi',
+      Icon: QrCode,
+      onPress: () => (onOpenHistory ? onOpenHistory() : onNavigate?.('TICKET')),
+    },
+    {
+      label: 'Thẻ Gym và dữ liệu Face ID',
+      Icon: Dumbbell,
+      onPress: () => onNavigate?.('GYM_POOL'),
+    },
+    {
+      label: 'Ví Phanta Pay và sổ cái',
+      Icon: Wallet,
+      onPress: () => (onOpenWallet ? onOpenWallet() : onNavigate?.('WALLET')),
+    },
+    {
+      label: 'Kho Voucher và ưu đãi hội viên',
+      Icon: Tag,
+      onPress: () => (onOpenVouchers ? onOpenVouchers() : onNavigate?.('VOUCHERS')),
+    },
+    {
+      label: 'Đội ngũ huấn luyện viên PT 1-1',
+      Icon: UserCheck,
+      onPress: () => onNavigate?.('COACHES'),
+    },
+    {
+      label: 'Sàn cáp kèo giao hữu',
+      Icon: Users,
+      onPress: () => onNavigate?.('MATCHMAKING'),
+    },
+    {
+      label: 'Đánh giá chất lượng dịch vụ',
+      Icon: Star,
+      accentColor: theme.warning,
+      onPress: () => onNavigate?.('RATINGS'),
+    },
+    {
+      label: 'Trung tâm hỗ trợ khách hàng 24/7',
+      Icon: MessageSquare,
+      onPress: () => onNavigate?.('CHAT'),
+    },
+    {
+      label: 'Trung tâm thông báo (FCM và ZNS)',
+      Icon: Bell,
+      onPress: () => onNavigate?.('NOTIFICATIONS'),
+    },
+    {
+      label: 'Quy trình 6 bước đặt sân',
+      Icon: ListChecks,
+      onPress: () => onNavigate?.('PROCESS'),
+    },
+    {
+      label: 'Chế độ ngoại tuyến (Offline Pack)',
+      Icon: WifiOff,
+      accentColor: theme.warning,
+      onPress: () => onNavigate?.('OFFLINE'),
+    },
+  ];
+
+  const handleSaveProfile = async (updated: ProfileFormData) => {
     try {
-      const updated = await api.recalculateUserTier();
-      if (updated && updated.currentTier) {
-        setTierInfo(updated);
-        Alert.alert(
-          'Cập nhật thành công!',
-          `Hạng thành viên hiện tại: ${updated.tierName}\nChi tiêu 12 tháng trượt: ${updated.rolling12MonthSpend.toLocaleString('vi-VN')} đ`
-        );
-      } else {
-        Alert.alert('Hoàn tất', 'Hạng thành viên của bạn đã được đối soát chính xác.');
+      const res = await api.updateMyProfile({
+        fullName: updated.fullName,
+        email: updated.email || undefined,
+        favoriteSports: updated.sports,
+      });
+      setProfile(updated);
+      if (user && token) {
+        setUser({ ...user, fullName: res.fullName, email: res.email }, token);
       }
-    } catch (err: any) {
-      Alert.alert('Thông báo', err.message || 'Hạng thành viên của bạn đã ở trạng thái mới nhất.');
-    } finally {
-      setRecalculating(false);
+      setEditModalVisible(false);
+      setDialog({
+        visible: true,
+        title: 'Đã cập nhật hồ sơ',
+        message: 'Thông tin cá nhân đã được lưu vào hệ thống.',
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Vui lòng đăng nhập để cập nhật hồ sơ.';
+      setDialog({ visible: true, title: 'Không thể cập nhật', message: msg });
     }
   };
 
-  // Redeem points for discount
-  const handleRedeemPoints = async () => {
-    const pts = parseInt(redeemAmount, 10);
-    if (isNaN(pts) || pts <= 0) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số điểm hợp lệ.');
-      return;
-    }
-    if (pts > tierInfo.loyaltyPoints) {
-      Alert.alert('Không đủ điểm', `Bạn hiện chỉ có ${tierInfo.loyaltyPoints.toLocaleString('vi-VN')} điểm.`);
-      return;
-    }
-
-    setRedeeming(true);
-    try {
-      await api.redeemLoyaltyPoints(pts);
-      const vndValue = pts * 100;
-      setTierInfo((prev) => ({
-        ...prev,
-        loyaltyPoints: prev.loyaltyPoints - pts,
-      }));
-      setShowRedeemModal(false);
-      Alert.alert(
-        'Đổi điểm thành công!',
-        `Bạn đã đổi ${pts.toLocaleString('vi-VN')} điểm thành voucher giảm ${vndValue.toLocaleString('vi-VN')} đ!`
-      );
-    } catch (err: any) {
-      // Local fallback
-      const vndValue = pts * 100;
-      setTierInfo((prev) => ({
-        ...prev,
-        loyaltyPoints: Math.max(0, prev.loyaltyPoints - pts),
-      }));
-      setShowRedeemModal(false);
-      Alert.alert(
-        'Đổi điểm thành công!',
-        `Đã quy đổi ${pts.toLocaleString('vi-VN')} điểm thành ưu đãi trị giá ${vndValue.toLocaleString('vi-VN')} đ.`
-      );
-    } finally {
-      setRedeeming(false);
+  const handleAuthAction = async () => {
+    if (token) {
+      await logout();
+      onNavigate?.('AUTH');
+    } else {
+      onNavigate?.('AUTH');
     }
   };
 
-  // Visual style config per Tier
-  const tierStyle = useMemo(() => {
-    switch (tierInfo.currentTier) {
-      case 'PLATINUM':
-        return {
-          cardBg: '#0f172a',
-          borderColor: '#38bdf8',
-          accentColor: '#38bdf8',
-          chipBg: '#0284c7',
-          chipText: '#fff',
-          tierName: 'PLATINUM VIP',
-          };
-      case 'GOLD':
-        return {
-          cardBg: '#451a03',
-          borderColor: '#f59e0b',
-          accentColor: '#fbbf24',
-          chipBg: '#f59e0b',
-          chipText: '#000',
-          tierName: 'GOLD MEMBER VIP',
-          };
-      case 'SILVER':
-        return {
-          cardBg: '#1e293b',
-          borderColor: '#94a3b8',
-          accentColor: '#cbd5e1',
-          chipBg: '#64748b',
-          chipText: '#fff',
-          tierName: 'SILVER MEMBER',
-          };
-      case 'MEMBER':
-      default:
-        return {
-          cardBg: '#064e3b',
-          borderColor: '#10b981',
-          accentColor: '#34d399',
-          chipBg: '#10b981',
-          chipText: '#000',
-          tierName: 'MEMBER PASS',
-          };
-    }
-  }, [tierInfo.currentTier]);
-
-  const progressPercent = useMemo(() => {
-    if (!tierInfo.nextTier) return 100;
-    const current = tierInfo.rolling12MonthSpend;
-    const target = tierInfo.nextTier.minSpend;
-    return Math.min(100, Math.round((current / target) * 100));
-  }, [tierInfo]);
+  const spend = tierInfo?.rolling12MonthSpend ?? 0;
+  const nextSpend = tierInfo?.nextTier?.minSpend ?? 15000000;
+  const progressPct = Math.min(100, Math.round((spend / nextSpend) * 100));
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.header}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-          )}
-          <View style={styles.headerTitleBox}>
-            <Text style={styles.headerTitle}>Hồ Sơ & Hạng Hội Viên</Text>
-            <Text style={styles.headerSubtitle}>Quản lý tài khoản & đặc quyền tích lũy</Text>
-          </View>
-          <View style={[styles.headerBadge, { borderColor: tierStyle.borderColor }]}>
-            <Text style={[styles.headerBadgeText, { color: tierStyle.accentColor }]}>
-              {tierInfo.currentTier}
-            </Text>
-          </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader title="Tài khoản khách hàng" onBack={onBack} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <View style={[styles.profileCard, { backgroundColor: theme.surface, borderColor: theme.borderAccent }]}>
+          <Image
+            source={require('../../assets/logo.jpg')}
+            style={[styles.avatar, { borderColor: theme.accent }]}
+            resizeMode="cover"
+          />
+          <Text style={[styles.name, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            {profile.fullName}
+          </Text>
+          <Text style={[styles.phone, { color: theme.textPrimary, fontFamily: fonts.bodySemiBold }]}>
+            {profile.phone}
+          </Text>
+
+          {token ? (
+            <Pressable
+              onPress={() => setEditModalVisible(true)}
+              style={({ pressed }) => [
+                styles.editBtn,
+                {
+                  backgroundColor: theme.accentSoft,
+                  borderColor: theme.borderAccent,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Edit3 size={14} strokeWidth={1.75} color={theme.accent} />
+              <Text style={[styles.editBtnText, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                Chỉnh sửa thông tin cá nhân
+              </Text>
+            </Pressable>
+          ) : null}
+
+          {tierInfo ? (
+            <View style={[styles.tierBox, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
+              <View style={styles.tierTop}>
+                <View style={styles.tierLabelRow}>
+                  <Crown size={14} strokeWidth={1.75} color={theme.warning} />
+                  <Text style={[styles.tierTitle, { color: theme.warning, fontFamily: fonts.bodySemiBold }]}>
+                    {tierInfo.tierName || `Hạng ${tierInfo.currentTier}`}
+                  </Text>
+                </View>
+                <Text style={[styles.tierBenefit, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                  Giảm {tierInfo.discountRate || 0}%
+                </Text>
+              </View>
+              <Text style={[styles.tierProgressText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Chi tiêu 12 tháng:{' '}
+                <Text style={{ color: theme.textHeading, fontFamily: fonts.bodySemiBold }}>
+                  {spend.toLocaleString('vi-VN')} đ
+                </Text>{' '}
+                / {nextSpend.toLocaleString('vi-VN')} đ
+              </Text>
+              <View style={[styles.progressTrack, { backgroundColor: theme.background }]}>
+                <View style={[styles.progressFill, { width: `${progressPct}%`, backgroundColor: theme.warning }]} />
+              </View>
+            </View>
+          ) : null}
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.scroll}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
-          }
-        >
-          {/* Dynamic VIP Membership Card */}
-          <View style={[styles.vipCard, { backgroundColor: tierStyle.cardBg, borderColor: tierStyle.borderColor }]}>
-            <View style={styles.cardTop}>
-              <View>
-                <Text style={styles.cardBrand}>PHANTA SPORTS NETWORK</Text>
-                <Text style={[styles.cardTier, { color: tierStyle.accentColor }]}>
-                  {tierStyle.tierName}
-                </Text>
-              </View>
-              <View style={[styles.cardChip, { backgroundColor: tierStyle.chipBg }]}>
-                <Text style={[styles.cardChipText, { color: tierStyle.chipText }]}>
-                  {tierInfo.currentTier}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.cardMiddle}>
-              <Text style={styles.cardName}>{user?.fullName || 'Nguyễn Văn Hùng'}</Text>
-              <Text style={styles.cardPhone}>{user?.phone || '0903.112.334'}</Text>
-            </View>
-
-            <View style={[styles.cardBottom, { borderColor: tierStyle.borderColor + '40' }]}>
-              <View>
-                <Text style={styles.cardMetaLabel}>Điểm Thưởng Tích Lũy</Text>
-                <Text style={[styles.cardMetaValue, { color: '#fff' }]}>
-                  {tierInfo.loyaltyPoints.toLocaleString('vi-VN')} PTS
-                </Text>
-                <Text style={styles.cardMetaSub}>
-                  ≈ {(tierInfo.loyaltyPoints * 100).toLocaleString('vi-VN')} đ
-                </Text>
-              </View>
-
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.cardMetaLabel}>Chu Kỳ Duy Trì Hạng</Text>
-                <Text style={styles.cardMetaValue}>
-                  {tierInfo.tierExpiresAt
-                    ? new Date(tierInfo.tierExpiresAt).toLocaleDateString('vi-VN')
-                    : '12 Tháng'}
-                </Text>
-                <Text style={styles.cardMetaSub}>Quy định BR-18</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Rolling 12-Month Spend Breakdown & Progress (BR-16, BR-17) */}
-          <View style={styles.spendCard}>
-            <View style={styles.spendHeader}>
-              <View>
-                <Text style={styles.spendTitle}>Chi Tiêu 12 Tháng Trượt</Text>
-                <Text style={styles.spendSubtitle}>Căn cứ xét hạng tự động theo 365 ngày gần nhất</Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.recalcBtn, recalculating && { opacity: 0.6 }]}
-                disabled={recalculating}
-                onPress={handleRecalculateTier}
+        <View style={[styles.menuCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          {menuItems.map((item, idx) => {
+            const IconComp = item.Icon;
+            return (
+              <Pressable
+                key={item.label}
+                onPress={item.onPress}
+                style={({ pressed }) => [
+                  styles.menuItem,
+                  idx < menuItems.length - 1 && {
+                    borderBottomWidth: 1,
+                    borderBottomColor: theme.borderSubtle,
+                  },
+                  { opacity: pressed ? 0.75 : 1 },
+                ]}
               >
-                {recalculating ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.recalcBtnText}>Cập Nhật</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.spendMetricsGrid}>
-              <View style={styles.spendMetricItem}>
-                <Text style={styles.metricLabel}>12 Tháng Trượt (BR-16)</Text>
-                <Text style={[styles.metricVal, { color: tierStyle.accentColor }]}>
-                  {tierInfo.rolling12MonthSpend.toLocaleString('vi-VN')} đ
-                </Text>
-              </View>
-              <View style={styles.spendMetricItem}>
-                <Text style={styles.metricLabel}>Tích Lũy Trọn Đời</Text>
-                <Text style={styles.metricVal}>
-                  {tierInfo.totalLifetimeSpend.toLocaleString('vi-VN')} đ
-                </Text>
-              </View>
-            </View>
-
-            {/* Next Tier Progress Bar */}
-            {tierInfo.nextTier ? (
-              <View style={styles.progressContainer}>
-                <View style={styles.progressLabels}>
-                  <Text style={styles.progressTextLeft}>
-                    Mục tiêu: {tierInfo.nextTier.name}
-                  </Text>
-                  <Text style={styles.progressTextRight}>{progressPercent}%</Text>
-                </View>
-                <View style={styles.progressBarTrack}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      { width: `${progressPercent}%`, backgroundColor: tierStyle.accentColor },
-                    ]}
+                <View style={styles.menuLeft}>
+                  <IconComp
+                    size={17}
+                    strokeWidth={1.75}
+                    color={item.accentColor || theme.accent}
                   />
+                  <Text style={[styles.menuLabel, { color: theme.textHeading, fontFamily: fonts.bodyMedium }]}>
+                    {item.label}
+                  </Text>
                 </View>
-                <Text style={styles.progressRemaining}>
-                  Cần thêm {tierInfo.nextTier.remainingSpend.toLocaleString('vi-VN')} đ chi tiêu trong chu kỳ để thăng hạng
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.highestTierNotice}>
-                <Text style={styles.highestTierNoticeText}>
-                  Chúc mừng! Bạn đang giữ Hạng Kim Cương cao nhất của hệ sinh thái Phanta.
-                </Text>
-              </View>
-            )}
+                <ChevronRight size={16} strokeWidth={1.75} color={theme.textMuted} />
+              </Pressable>
+            );
+          })}
+        </View>
 
-            {/* Loyalty points quick action button */}
-            <TouchableOpacity
-              style={styles.redeemBtn}
-              onPress={() => setShowRedeemModal(true)}
-            >
-              <Text style={styles.redeemBtnText}>
-                Đổi Điểm Thưởng Giảm Giá ({tierInfo.loyaltyPoints} PTS khả dụng)
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Current Tier Privileges Grid */}
-          <Text style={styles.sectionTitle}>Đặc Quyền Hạng {tierInfo.currentTier}</Text>
-          <View style={styles.privilegesGrid}>
-            <View style={styles.privilegeItem}>
-              
-              <Text style={styles.privilegeTitle}>Giảm {tierInfo.discountRate}% Tiền Sân</Text>
-              <Text style={styles.privilegeSub}>Tự động áp dụng khi đặt sân bất kỳ</Text>
-            </View>
-
-            <View style={styles.privilegeItem}>
-              <Text style={styles.privilegeIcon}>⭐</Text>
-              <Text style={styles.privilegeTitle}>Nhân {tierInfo.pointMultiplier}x Điểm Thưởng</Text>
-              <Text style={styles.privilegeSub}>Tích điểm siêu tốc sau mỗi trận đấu</Text>
-            </View>
-
-            <View style={styles.privilegeItem}>
-              
-              <Text style={styles.privilegeTitle}>Voucher Độc Quyền</Text>
-              <Text style={styles.privilegeSub}>Mã giảm giá dành riêng cho hội viên</Text>
-            </View>
-
-            <View style={styles.privilegeItem}>
-              
-              <Text style={styles.privilegeTitle}>Ưu Tiên Check-in</Text>
-              <Text style={styles.privilegeSub}>Làn quét QR riêng tại cửa vào sân</Text>
-            </View>
-          </View>
-
-          {/* Service Management Menu */}
-          <Text style={styles.sectionTitle}>Quản Lý Dịch Vụ</Text>
-          <View style={styles.menuList}>
-            {onOpenVouchers && (
-              <TouchableOpacity style={styles.menuItem} onPress={onOpenVouchers}>
-                <TwoLineText
-                  primary="Kho Voucher & Mã Khuyến Mãi"
-                  secondary="Áp dụng mã giảm giá và xem tiến độ giải ngân ngân sách"
-                  primaryStyle={{ fontSize: 13 }}
-                  secondaryStyle={{ fontSize: 11 }}
-                />
-                <Text style={styles.menuArrow}>→</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity style={styles.menuItem} onPress={onOpenWallet}>
-              <TwoLineText
-                primary="Ví Phanta Pay & Sổ Cái"
-                secondary="Xem số dư, lịch sử giao dịch và nạp tiền VietQR"
-                primaryStyle={{ fontSize: 13 }}
-                secondaryStyle={{ fontSize: 11 }}
-              />
-              <Text style={styles.menuArrow}>→</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} onPress={onOpenHistory}>
-              <TwoLineText
-                primary="Lịch Sử Đặt Sân & Vé Cũ"
-                secondary="Tra cứu các trận đấu đã hoàn tất và hóa đơn thanh toán"
-                primaryStyle={{ fontSize: 13 }}
-                secondaryStyle={{ fontSize: 11 }}
-              />
-              <Text style={styles.menuArrow}>→</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={() =>
-                Alert.alert(
-                  'Mã QR Định Danh',
-                  'Mã QR động của bạn được làm mới mỗi 60 giây để đảm bảo an toàn tại cửa xoay Turnstile Gym & Hồ bơi (BR-27).'
-                )
-              }
-            >
-              <TwoLineText
-                primary="Mã QR Động Định Danh (Turnstile)"
-                secondary="Sẵn sàng quét tại cửa xoay Gym & Hồ bơi (Mục 6.1)"
-                primaryStyle={{ fontSize: 13 }}
-                secondaryStyle={{ fontSize: 11 }}
-              />
-              <Text style={styles.menuArrow}>[x]</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-            <Text style={styles.logoutText}>Đăng Xuất Tài Khoản ⎋</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* Modal Redeem Points */}
-        <Modal
-          visible={showRedeemModal}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowRedeemModal(false)}
+        <Pressable
+          onPress={handleAuthAction}
+          style={({ pressed }) => [
+            styles.logoutBtn,
+            {
+              backgroundColor: token ? theme.dangerSoft : theme.accent,
+              borderColor: token ? theme.danger : theme.accent,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>Đổi Điểm Thưởng Lấy Ưu Đãi</Text>
-              <Text style={styles.modalSub}>
-                Tỷ lệ quy đổi chuẩn: 1 Điểm = 100 VND tiền giảm trừ trực tiếp (Quy định BR-16).
-              </Text>
+          <Text
+            style={[
+              styles.logoutText,
+              {
+                color: token ? theme.danger : theme.onAccent,
+                fontFamily: fonts.bodySemiBold,
+              },
+            ]}
+          >
+            {token ? 'Đăng xuất tài khoản' : 'Đăng nhập tài khoản'}
+          </Text>
+        </Pressable>
+      </ScrollView>
 
-              <View style={styles.modalInputBox}>
-                <Text style={styles.modalInputLabel}>Số điểm muốn quy đổi:</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  keyboardType="numeric"
-                  value={redeemAmount}
-                  onChangeText={setRedeemAmount}
-                  placeholder="200"
-                  placeholderTextColor={colors.textMuted}
-                />
-                <Text style={styles.modalConvertHint}>
-                  Tương đương: {((parseInt(redeemAmount, 10) || 0) * 100).toLocaleString('vi-VN')} VND
-                </Text>
-              </View>
+      <EditProfileModal
+        visible={editModalVisible}
+        initialData={profile}
+        onClose={() => setEditModalVisible(false)}
+        onSave={handleSaveProfile}
+      />
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.modalCancelBtn}
-                  onPress={() => setShowRedeemModal(false)}
-                >
-                  <Text style={styles.modalCancelText}>Hủy</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.modalSubmitBtn, redeeming && { opacity: 0.6 }]}
-                  disabled={redeeming}
-                  onPress={handleRedeemPoints}
-                >
-                  {redeeming ? (
-                    <ActivityIndicator size="small" color="#000" />
-                  ) : (
-                    <Text style={styles.modalSubmitText}>Xác Nhận Đổi</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      </View>
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, padding: 16 },
-
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  backBtn: { padding: 8, backgroundColor: colors.surface, borderRadius: 10, marginRight: 12 },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  headerTitleBox: { flex: 1 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
-  headerSubtitle: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
-  headerBadge: {
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#1e293b',
-  },
-  headerBadgeText: { fontSize: 11, fontWeight: 'bold' },
-
-  scroll: { paddingBottom: 40 },
-
-  // VIP Card
-  vipCard: {
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1.5,
-  },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardBrand: { fontSize: 10, fontWeight: '800', color: '#fef3c7', letterSpacing: 1 },
-  cardTier: { fontSize: 16, fontWeight: '900', marginTop: 4 },
-  cardChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
-  cardChipText: { fontSize: 10, fontWeight: '900' },
-  cardMiddle: { marginVertical: 18 },
-  cardName: { fontSize: 18, fontWeight: '900', color: '#fff' },
-  cardPhone: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingTop: 12,
-  },
-  cardMetaLabel: { fontSize: 9, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' },
-  cardMetaValue: { fontSize: 14, fontWeight: '800', marginTop: 2 },
-  cardMetaSub: { fontSize: 9, color: 'rgba(255,255,255,0.5)', marginTop: 1 },
-
-  // Spend Card
-  spendCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 20,
-  },
-  spendHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  spendTitle: { fontSize: 14, fontWeight: 'bold', color: '#fff' },
-  spendSubtitle: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
-  recalcBtn: {
-    backgroundColor: '#1e293b',
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  recalcBtnText: { fontSize: 11, color: colors.primary, fontWeight: 'bold' },
-
-  spendMetricsGrid: { flexDirection: 'row', gap: 12, marginBottom: 14 },
-  spendMetricItem: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  metricLabel: { fontSize: 10, color: colors.textSecondary },
-  metricVal: { fontSize: 14, fontWeight: '900', color: '#fff', marginTop: 4 },
-
-  progressContainer: { marginTop: 4 },
-  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  progressTextLeft: { fontSize: 11, color: colors.textSecondary, fontWeight: '600' },
-  progressTextRight: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
-  progressBarTrack: { height: 6, backgroundColor: '#1e293b', borderRadius: 3, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 3 },
-  progressRemaining: { fontSize: 10, color: colors.textMuted, marginTop: 6 },
-  highestTierNotice: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 4,
-  },
-  highestTierNoticeText: { fontSize: 11, color: '#f59e0b', fontWeight: 'bold' },
-
-  redeemBtn: {
-    marginTop: 14,
-    backgroundColor: '#1e293b',
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    borderRadius: 12,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  redeemBtnText: { color: '#f59e0b', fontSize: 12, fontWeight: 'bold' },
-
-  // Privileges Grid
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#fff', marginBottom: 10 },
-  privilegesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20 },
-  privilegeItem: {
-    width: '48%',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 12,
-  },
-  privilegeIcon: { fontSize: 18, marginBottom: 6 },
-  privilegeTitle: { fontSize: 12, fontWeight: 'bold', color: '#fff' },
-  privilegeSub: { fontSize: 10, color: colors.textMuted, marginTop: 2, lineHeight: 14 },
-
-  // Menu List
-  menuList: { gap: 10, marginBottom: 24 },
-  menuItem: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  menuArrow: { fontSize: 14, color: colors.primary, fontWeight: 'bold' },
-
-  // Logout
-  logoutBtn: {
-    backgroundColor: '#ef444415',
-    borderWidth: 1,
-    borderColor: '#ef444440',
-    borderRadius: 14,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  logoutText: { color: '#f87171', fontWeight: '800', fontSize: 13 },
-
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalBox: {
+  safeArea: { flex: 1 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
     width: '100%',
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 20,
+    alignSelf: 'center',
+  },
+  profileCard: {
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    padding: spacing.xl,
+    alignItems: 'center',
+    gap: 4,
   },
-  modalTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 6 },
-  modalSub: { fontSize: 11, color: colors.textSecondary, marginBottom: 16, lineHeight: 16 },
-  modalInputBox: { marginBottom: 18 },
-  modalInputLabel: { fontSize: 12, color: colors.textSecondary, marginBottom: 6 },
-  modalInput: {
-    backgroundColor: '#0f172a',
+  avatar: { width: 76, height: 76, borderRadius: 20, borderWidth: 2, marginBottom: spacing.xs },
+  name: { fontSize: 18 },
+  phone: { fontSize: 13 },
+  editBtn: {
+    marginTop: spacing.sm,
+    minHeight: 38,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  modalConvertHint: { fontSize: 11, color: colors.volt, fontWeight: 'bold', marginTop: 6 },
-  modalActions: { flexDirection: 'row', gap: 10 },
-  modalCancelBtn: {
-    flex: 1,
-    backgroundColor: '#1e293b',
-    borderRadius: 10,
-    paddingVertical: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
   },
-  modalCancelText: { color: colors.textSecondary, fontSize: 13, fontWeight: 'bold' },
-  modalSubmitBtn: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    borderRadius: 10,
-    paddingVertical: 12,
+  editBtnText: { fontSize: 12 },
+  tierBox: {
+    width: '100%',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: 6,
+  },
+  tierTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  tierLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tierTitle: { fontSize: 12 },
+  tierBenefit: { fontSize: 12 },
+  tierProgressText: { fontSize: 11, lineHeight: 16 },
+  progressTrack: { height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 2 },
+  progressFill: { height: '100%', borderRadius: 3 },
+  menuCard: { borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden' },
+  menuItem: {
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  modalSubmitText: { color: '#000', fontSize: 13, fontWeight: 'bold' },
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
+  menuLabel: { fontSize: 13 },
+  logoutBtn: {
+    minHeight: 46,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutText: { fontSize: 13 },
 });

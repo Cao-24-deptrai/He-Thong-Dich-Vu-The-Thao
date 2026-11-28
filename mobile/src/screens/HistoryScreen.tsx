@@ -1,36 +1,45 @@
-// mobile/src/screens/HistoryScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
-  FlatList,
+  Pressable,
+  ScrollView,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
-  Alert,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { QrCode, Calendar } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
 import { Booking } from '../types';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
 interface Props {
+  onBack?: () => void;
   onViewTicket: (bookingId: string) => void;
 }
 
-export const HistoryScreen: React.FC<Props> = ({ onViewTicket }) => {
+export const HistoryScreen: React.FC<Props> = ({ onBack, onViewTicket }) => {
+  const theme = useTheme();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'UPCOMING' | 'PAST'>('UPCOMING');
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const fetchBookings = async () => {
     try {
       setLoading(true);
       const data = await api.getMyBookings();
-      setBookings(data);
-    } catch (err: any) {
+      setBookings(Array.isArray(data) ? data : []);
+    } catch (err) {
       console.error('Failed to load my bookings:', err);
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -40,365 +49,235 @@ export const HistoryScreen: React.FC<Props> = ({ onViewTicket }) => {
     fetchBookings();
   }, []);
 
-  const handleCancelBooking = (bookingId: string) => {
-    Alert.alert(
-      'Xác nhận hủy đặt sân',
-      'Bạn có chắc chắn muốn hủy đơn đặt chỗ này không? Khung giờ sẽ được giải phóng cho khách hàng khác.',
-      [
-        { text: 'Không', style: 'cancel' },
-        {
-          text: 'Hủy đơn ngay',
-          style: 'destructive',
-          onPress: async () => {
-            setCancellingId(bookingId);
-            try {
-              await api.cancelBooking(bookingId);
-              Alert.alert('Thành công', 'Đã hủy đơn đặt chỗ thành công.');
-              await fetchBookings();
-            } catch (err: any) {
-              Alert.alert('Lỗi hủy đơn', err.message);
-            } finally {
-              setCancellingId(null);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const filteredBookings = bookings.filter((b) => {
-    if (tab === 'UPCOMING') {
-      return b.status === 'CONFIRMED' || b.status === 'HELD';
-    }
-    return b.status !== 'CONFIRMED' && b.status !== 'HELD';
-  });
-
-  const getStatusBadge = (status: string, isCheckedIn?: boolean) => {
-    if (isCheckedIn) {
-      return { label: 'ĐÃ CHECK-IN', bg: '#064e3b', color: '#34d399' };
-    }
-    switch (status) {
-      case 'CONFIRMED':
-        return { label: 'ĐÃ THANH TOÁN', bg: '#064e3b', color: '#34d399' };
-      case 'HELD':
-        return { label: 'ĐANG GIỮ CHỖ', bg: '#78350f', color: '#fbbf24' };
-      case 'CANCELLED':
-        return { label: 'ĐÃ HỦY', bg: '#7f1d1d', color: '#f87171' };
-      case 'EXPIRED':
-        return { label: 'QUÁ HẠN', bg: '#334155', color: '#94a3b8' };
-      case 'REFUND_PENDING':
-        return { label: 'CHỜ HOÀN TIỀN', bg: '#78350f', color: '#f59e0b' };
-      case 'REFUNDED':
-        return { label: 'ĐÃ HOÀN TIỀN', bg: '#1e3a8a', color: '#60a5fa' };
-      default:
-        return { label: status, bg: '#334155', color: '#cbd5e1' };
+  const handleCancelBooking = async (bookingId: string) => {
+    setCancellingId(bookingId);
+    try {
+      await api.cancelBooking(bookingId);
+      setDialog({
+        visible: true,
+        title: 'Đã hủy đơn đặt sân',
+        message: 'Khung giờ đã được giải phóng và tiền cọc được hoàn trả theo quy định.',
+      });
+      await fetchBookings();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể hủy đơn này.';
+      setDialog({ visible: true, title: 'Không thể hủy đơn', message: msg });
+    } finally {
+      setCancellingId(null);
     }
   };
+
+  const filtered = bookings.filter((b) =>
+    tab === 'UPCOMING'
+      ? b.status === 'CONFIRMED' || b.status === 'HELD'
+      : b.status === 'COMPLETED' || b.status === 'CANCELLED' || b.status === 'EXPIRED'
+  );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Lịch Sử Đặt Chỗ</Text>
-          <Text style={styles.headerSubtitle}>Quản lý vé đã đặt & theo dõi lịch chơi của bạn</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader title="Lịch sử đặt sân" onBack={onBack} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <View style={styles.tabRow}>
+          {[
+            { key: 'UPCOMING' as const, label: 'Sắp tới' },
+            { key: 'PAST' as const, label: 'Đã hoàn thành / Hủy' },
+          ].map((t) => {
+            const active = tab === t.key;
+            return (
+              <Pressable
+                key={t.key}
+                onPress={() => setTab(t.key)}
+                style={[
+                  styles.tabBtn,
+                  {
+                    backgroundColor: active ? theme.accent : theme.surfaceElevated,
+                    borderColor: active ? theme.accent : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    { color: active ? theme.onAccent : theme.textSecondary, fontFamily: fonts.bodySemiBold },
+                  ]}
+                >
+                  {t.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
-        {/* Filter Tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, tab === 'UPCOMING' && styles.activeTab]}
-            onPress={() => setTab('UPCOMING')}
-          >
-            <Text style={[styles.tabText, tab === 'UPCOMING' && styles.activeTabText]}>
-              Sắp tới ({bookings.filter((b) => b.status === 'CONFIRMED' || b.status === 'HELD').length})
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.tab, tab === 'PAST' && styles.activeTab]}
-            onPress={() => setTab('PAST')}
-          >
-            <Text style={[styles.tabText, tab === 'PAST' && styles.activeTabText]}>
-              Lịch sử / Đã hủy ({bookings.filter((b) => b.status !== 'CONFIRMED' && b.status !== 'HELD').length})
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* List */}
         {loading ? (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Đang tải lịch sử đơn đặt...</Text>
-          </View>
-        ) : filteredBookings.length === 0 ? (
-          <View style={styles.centerContainer}>
-            <Text style={styles.emptyIcon}>🎫</Text>
-            <Text style={styles.emptyTitle}>Chưa có đơn đặt nào</Text>
-            <Text style={styles.emptySubtitle}>
-              {tab === 'UPCOMING'
-                ? 'Bạn không có lịch chơi nào sắp tới. Hãy khám phá và đặt sân ngay!'
-                : 'Lịch sử giao dịch trống.'}
+          <ActivityIndicator color={theme.accent} style={{ marginVertical: spacing.xl }} />
+        ) : filtered.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Calendar size={28} strokeWidth={1.5} color={theme.textMuted} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Chưa có đơn đặt sân nào trong mục này.
             </Text>
           </View>
         ) : (
-          <FlatList
-            data={filteredBookings}
-            keyExtractor={(item) => item._id}
-            contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => {
-              const badge = getStatusBadge(item.status, item.isCheckedIn);
-              const isConfirmed = item.status === 'CONFIRMED';
-              const canCancel = item.status === 'CONFIRMED' || item.status === 'HELD';
-
-              return (
-                <View style={styles.bookingCard}>
-                  <View style={styles.cardTopRow}>
-                    <View>
-                      <Text style={styles.courtName}>
-                        {item.venueId?.name || 'Sân Thể Thao'}
-                      </Text>
-                      <Text style={styles.bookingCode}>
-                        Mã đơn: #{item._id.slice(-6).toUpperCase()}
-                      </Text>
-                    </View>
-                    <View style={[styles.statusBadge, { backgroundColor: badge.bg }]}>
-                      <Text style={[styles.statusText, { color: badge.color }]}>
-                        {badge.label}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.cardInfoGrid}>
-                    <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Ngày chơi</Text>
-                      <Text style={styles.infoVal}>
-                        📅 {item.bookingDate ? item.bookingDate.split('T')[0] : 'N/A'}
-                      </Text>
-                    </View>
-                    <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Khung giờ</Text>
-                      <Text style={styles.infoValHighlight}>
-                        ⏰ {item.startTime} - {item.endTime}
-                      </Text>
-                    </View>
-                    <View style={styles.infoCol}>
-                      <Text style={styles.infoLabel}>Tổng tiền</Text>
-                      <Text style={styles.infoValPrice}>
-                        {item.totalPrice?.toLocaleString('vi-VN')} đ
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Actions */}
-                  <View style={styles.cardActions}>
-                    {canCancel && (
-                      <TouchableOpacity
-                        disabled={cancellingId === item._id}
-                        style={styles.cancelBtn}
-                        onPress={() => handleCancelBooking(item._id)}
-                      >
-                        {cancellingId === item._id ? (
-                          <ActivityIndicator size="small" color="#f87171" />
-                        ) : (
-                          <Text style={styles.cancelBtnText}>Hủy đơn</Text>
-                        )}
-                      </TouchableOpacity>
-                    )}
-
-                    {isConfirmed && (
-                      <TouchableOpacity
-                        style={styles.viewTicketBtn}
-                        onPress={() => onViewTicket(item._id)}
-                      >
-                        <Text style={styles.viewTicketBtnText}>Xem Vé QR 🎟️</Text>
-                      </TouchableOpacity>
-                    )}
+          filtered.map((b: any) => {
+            const isConfirmed = b.status === 'CONFIRMED';
+            return (
+              <View
+                key={b._id}
+                style={[styles.bookingCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+              >
+                <View style={styles.cardTop}>
+                  <Text style={[styles.bookingId, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                    #{b._id.slice(-8).toUpperCase()}
+                  </Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      {
+                        backgroundColor: isConfirmed ? theme.successSoft : theme.warningSoft,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: isConfirmed ? theme.success : theme.warning, fontFamily: fonts.bodySemiBold },
+                      ]}
+                    >
+                      {b.status === 'CONFIRMED'
+                        ? 'Đã xác nhận'
+                        : b.status === 'HELD'
+                          ? 'Đang giữ chỗ'
+                          : b.status === 'COMPLETED'
+                            ? 'Hoàn thành'
+                            : 'Đã hủy'}
+                    </Text>
                   </View>
                 </View>
-              );
-            }}
-          />
+
+                <Text style={[styles.venueTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+                  {b.venueId?.name || 'Đơn đặt sân Phanta Sports'}
+                </Text>
+
+                <View style={[styles.metaBox, { backgroundColor: theme.surfaceElevated }]}>
+                  <View style={styles.metaRow}>
+                    <Text style={[styles.metaLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                      Ngày thi đấu
+                    </Text>
+                    <Text style={[styles.metaVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                      {b.bookingDate}
+                    </Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={[styles.metaLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                      Khung giờ
+                    </Text>
+                    <Text style={[styles.metaVal, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                      {b.startTime} - {b.endTime}
+                    </Text>
+                  </View>
+                  <View style={styles.metaRow}>
+                    <Text style={[styles.metaLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                      Tổng tiền
+                    </Text>
+                    <Text style={[styles.metaVal, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+                      {(b.totalPrice || 0).toLocaleString('vi-VN')} đ
+                    </Text>
+                  </View>
+                </View>
+
+                {tab === 'UPCOMING' ? (
+                  <View style={styles.actionsRow}>
+                    <Pressable
+                      onPress={() => onViewTicket(b._id)}
+                      style={({ pressed }) => [
+                        styles.qrBtn,
+                        { backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 },
+                      ]}
+                    >
+                      <QrCode size={15} strokeWidth={1.75} color={theme.onAccent} />
+                      <Text style={[styles.qrBtnText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+                        Mở vé QR
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      disabled={cancellingId === b._id}
+                      onPress={() => handleCancelBooking(b._id)}
+                      style={({ pressed }) => [
+                        styles.cancelBtn,
+                        {
+                          borderColor: theme.danger,
+                          backgroundColor: theme.dangerSoft,
+                          opacity: pressed ? 0.8 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.cancelText, { color: theme.danger, fontFamily: fonts.bodySemiBold }]}>
+                        {cancellingId === b._id ? 'Đang hủy' : 'Hủy đơn'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            );
+          })
         )}
-      </View>
+      </ScrollView>
+
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  safeArea: { flex: 1 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  tabRow: { flexDirection: 'row', gap: spacing.sm },
+  tabBtn: { flex: 1, minHeight: 42, borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  tabText: { fontSize: 12 },
+  emptyCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.xxl, alignItems: 'center', gap: spacing.sm },
+  emptyText: { fontSize: 13, textAlign: 'center' },
+  bookingCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, gap: spacing.md },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  bookingId: { fontSize: 12 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
+  statusText: { fontSize: 11 },
+  venueTitle: { fontSize: 16 },
+  metaBox: { borderRadius: radius.md, padding: spacing.md, gap: 4 },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  metaLabel: { fontSize: 12 },
+  metaVal: { fontSize: 12 },
+  actionsRow: { flexDirection: 'row', gap: spacing.sm },
+  qrBtn: {
     flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  header: {
-    paddingTop: 16,
-    paddingBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  headerSubtitle: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  tabContainer: {
+    minHeight: 44,
+    borderRadius: radius.md,
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 16,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  activeTab: {
-    backgroundColor: colors.primary,
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  activeTabText: {
-    color: '#fff',
-    fontWeight: '700',
-  },
-  listContent: {
-    paddingBottom: 30,
-    gap: 14,
-  },
-  bookingCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardTopRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  courtName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  bookingCode: {
-    fontSize: 11,
-    color: colors.textMuted,
-    
-    marginTop: 2,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  cardInfoGrid: {
-    flexDirection: 'row',
-    backgroundColor: colors.background,
-    borderRadius: 14,
-    padding: 12,
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  infoCol: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginBottom: 3,
-  },
-  infoVal: {
-    fontSize: 11,
-    color: colors.textPrimary,
-    fontWeight: '600',
-  },
-  infoValHighlight: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.primaryLight,
-  },
-  infoValPrice: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.success,
-    
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  cancelBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
-  },
-  cancelBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#f87171',
-  },
-  viewTicketBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-  },
-  viewTicketBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  centerContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
+    gap: 6,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 13,
-    color: colors.textSecondary,
+  qrBtnText: { fontSize: 13 },
+  cancelBtn: {
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 10,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  emptySubtitle: {
-    fontSize: 12,
-    color: colors.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
-  },
+  cancelText: { fontSize: 12 },
 });

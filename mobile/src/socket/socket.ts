@@ -30,7 +30,7 @@ export function getSocket(): Socket {
     });
 
     socket.on('disconnect', () => {
-      console.log('🔌 Disconnected from WebSocket gateway');
+      console.log('Disconnected from WebSocket gateway');
     });
   }
   return socket;

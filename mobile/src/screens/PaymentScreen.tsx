@@ -1,23 +1,23 @@
-// mobile/src/screens/PaymentScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
   Image,
-  Alert,
   TextInput,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { Clock, CheckCircle2 } from 'lucide-react-native';
+import QRCode from 'qrcode';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
-import { PaymentLinkResponse } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
 import { subscribeSlotChanges } from '../socket/socket';
-import QRCode from 'qrcode';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
 interface Props {
   onBack: () => void;
@@ -25,689 +25,369 @@ interface Props {
 }
 
 export const PaymentScreen: React.FC<Props> = ({ onBack, onPaymentSuccess }) => {
+  const theme = useTheme();
   const {
     activeBooking,
     selectedFacility,
     selectedVenue,
     setPaymentData,
-    paymentData,
     appliedVoucher,
     voucherDiscount,
     setAppliedVoucher,
   } = useBookingStore();
 
   const [loading, setLoading] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(600);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
-
-  // Voucher input state
   const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [applyingVoucher, setApplyingVoucher] = useState(false);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
   const originalPrice = activeBooking?.totalPrice || 0;
   const currentDiscount = appliedVoucher ? voucherDiscount : 0;
   const finalPrice = Math.max(0, originalPrice - currentDiscount);
 
-  // Initialize Payment Link
   useEffect(() => {
-    if (!activeBooking) return;
+    if (!activeBooking) {
+      setLoading(false);
+      return;
+    }
 
-    const initPayment = async () => {
+    const generateQr = async () => {
       try {
         setLoading(true);
         const data = await api.createPaymentLink(activeBooking._id);
         setPaymentData(data);
-
-        // Generate QR code data URL from payos qrCode string
         if (data.qrCode) {
           const url = await QRCode.toDataURL(data.qrCode, {
-            width: 260,
+            width: 240,
             margin: 2,
-            color: { dark: '#000000', light: '#ffffff' },
+            color: { dark: '#0B0E0B', light: '#FFFFFF' },
           });
           setQrDataUrl(url);
         }
-      } catch (err: any) {
-        console.error('Failed to create payment link:', err);
-        Alert.alert('Lỗi tạo thanh toán', err.message || 'Không thể tạo mã VietQR');
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Không thể tạo liên kết thanh toán VietQR.';
+        setDialog({ visible: true, title: 'Lỗi tạo thanh toán', message: msg });
       } finally {
         setLoading(false);
       }
     };
-
-    initPayment();
+    generateQr();
   }, [activeBooking]);
 
-  // 10-minute hold countdown timer
   useEffect(() => {
-    if (timeLeft <= 0) {
-      Alert.alert('Hết giờ giữ chỗ', 'Thời gian giữ chỗ 10 phút đã hết. Vui lòng chọn lại khung giờ.', [
-        { text: 'Đồng ý', onPress: onBack },
-      ]);
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
+    if (timeLeft <= 0) return;
+    const timer = setInterval(() => setTimeLeft((prev) => Math.max(0, prev - 1)), 1000);
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  // Real-time listener: When Webhook completes, slot status changes to CONFIRMED
   useEffect(() => {
     if (!activeBooking) return;
-
     const unsubscribe = subscribeSlotChanges((data) => {
-      if (
-        data.venueId === (activeBooking.venueId._id || activeBooking.venueId) &&
-        data.startTime === activeBooking.startTime &&
-        data.status === 'CONFIRMED'
-      ) {
-        Alert.alert('Thanh toán thành công! 🎉', 'Hệ thống đã xác nhận thanh toán PayOS. Vé vào sân của bạn đã sẵn sàng!');
+      if (data.status === 'CONFIRMED') {
         onPaymentSuccess();
       }
     });
-
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [activeBooking]);
 
-  // Apply promo code on payment screen
+  const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+  const secs = String(timeLeft % 60).padStart(2, '0');
+
   const handleApplyPromo = async () => {
     const code = promoCodeInput.trim().toUpperCase();
-    if (!code) {
-      Alert.alert('Nhắc nhở', 'Vui lòng nhập mã khuyến mãi');
-      return;
-    }
-
-    setApplyingVoucher(true);
+    if (!code || !activeBooking) return;
     try {
-      const venueId = activeBooking?.venueId?._id || activeBooking?.venueId;
-      const res = await api.validateVoucher(code, originalPrice, venueId);
-
-      if (res.valid && res.voucher) {
-        setAppliedVoucher(res.voucher, res.discountAmount);
-        Alert.alert(
-          'Áp dụng thành công! 🏷️',
-          `Mã ${code} đã được áp dụng.\nBạn được giảm -${res.discountAmount.toLocaleString('vi-VN')} đ`
-        );
-        setPromoCodeInput('');
-      } else {
-        Alert.alert('Không thể áp dụng', res.reason || 'Mã không đủ điều kiện hoặc đã hết ngân sách.');
-      }
-    } catch (err: any) {
-      // Fallback local check
-      if (code === 'PHANTA50K' || code === 'GOLDVIP15' || code === 'WELCOME100K') {
-        const disc = code === 'WELCOME100K' ? 100000 : code === 'PHANTA50K' ? 50000 : Math.round(originalPrice * 0.15);
-        setAppliedVoucher({
+      const validation = await api.validateVoucher(
+        code,
+        originalPrice,
+        selectedVenue?._id,
+        selectedFacility?.sportTypes?.[0]
+      );
+      if (validation.valid && validation.voucher) {
+        await api.applyVoucher({
           code,
-          title: `Mã ưu đãi ${code}`,
-          discountType: code === 'GOLDVIP15' ? 'PERCENT' : 'FIXED',
-          discountValue: code === 'GOLDVIP15' ? 15 : disc,
-          validUntil: '2026-12-31',
-          isActive: true,
-        }, disc);
-        Alert.alert('Áp dụng thành công', `Đã giảm -${disc.toLocaleString('vi-VN')} đ`);
+          bookingId: activeBooking._id,
+          orderAmount: originalPrice,
+          venueId: selectedVenue?._id,
+        });
+        setAppliedVoucher(validation.voucher, validation.discountAmount);
         setPromoCodeInput('');
+        setDialog({
+          visible: true,
+          title: 'Áp dụng mã thành công',
+          message: `Đã giảm ${validation.discountAmount.toLocaleString('vi-VN')} đ.`,
+        });
       } else {
-        Alert.alert('Lỗi áp dụng voucher', err.message || 'Mã không hợp lệ');
+        setDialog({
+          visible: true,
+          title: 'Mã chưa hợp lệ',
+          message: validation.reason || 'Không đủ điều kiện áp dụng mã này.',
+        });
       }
-    } finally {
-      setApplyingVoucher(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể kiểm tra mã giảm giá.';
+      setDialog({ visible: true, title: 'Lỗi mã giảm giá', message: msg });
     }
   };
 
-  const handleRemoveVoucher = () => {
-    setAppliedVoucher(null, 0);
-    Alert.alert('Đã gỡ mã', 'Đã hủy áp dụng voucher cho đơn này.');
-  };
-
-  // Manual Check Button
-  const handleCheckPayment = async () => {
+  const handleConfirmPaid = async () => {
     if (!activeBooking) return;
     setVerifying(true);
     try {
-      const bookings = await api.getMyBookings();
-      const current = bookings.find((b) => b._id === activeBooking._id);
-      if (current && current.status === 'CONFIRMED') {
+      const statusRes = await api.getPaymentStatus(activeBooking._id);
+      if (statusRes?.status === 'CONFIRMED' || statusRes?.paymentStatus === 'PAID') {
         onPaymentSuccess();
       } else {
-        Alert.alert('Đang chờ xử lý', 'Chưa nhận được xác nhận từ ngân hàng. Nếu bạn vừa chuyển khoản, vui lòng đợi 5-10 giây.');
+        setDialog({
+          visible: true,
+          title: 'Đang chờ xác nhận',
+          message: 'Hệ thống chưa nhận được tín hiệu chuyển khoản từ ngân hàng. Vui lòng hoàn tất quét mã VietQR.',
+        });
       }
-    } catch (err: any) {
-      Alert.alert('Lỗi kiểm tra', err.message);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể kiểm tra trạng thái thanh toán.';
+      setDialog({ visible: true, title: 'Lỗi kiểm tra thanh toán', message: msg });
     } finally {
       setVerifying(false);
     }
   };
 
-  const formatTimer = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+  if (!activeBooking) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <ScreenHeader title="Thanh toán VietQR" onBack={onBack} />
+        <View style={styles.emptyWrap}>
+          <Text style={[styles.emptyTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Chưa có đơn đặt sân đang giữ chỗ
+          </Text>
+          <Text style={[styles.emptyDesc, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+            Vui lòng chọn sân và khung giờ trước khi tiến hành thanh toán.
+          </Text>
+          <Pressable
+            onPress={onBack}
+            style={[styles.backActionBtn, { backgroundColor: theme.accent }]}
+          >
+            <Text style={[styles.backActionText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+              Chọn khung giờ
+            </Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <Text style={styles.backBtnText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.topBarInfo}>
-            <Text style={styles.topBarTitle}>Thanh Toán VietQR PayOS</Text>
-            <Text style={styles.topBarSubtitle}>Mục 3.1 & 5.3: Giữ chỗ tự động 10 phút</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader title="Thanh toán VietQR" onBack={onBack} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <View
+          style={[
+            styles.timerBanner,
+            {
+              backgroundColor: theme.accentSecondarySoft,
+              borderColor: theme.accentSecondary,
+            },
+          ]}
+        >
+          <View style={styles.timerLeft}>
+            <Clock size={16} strokeWidth={1.75} color={theme.accentSecondary} />
+            <Text style={[styles.timerLabel, { color: theme.textHeading, fontFamily: fonts.bodyMedium }]}>
+              Thời gian khóa giữ chỗ còn lại
+            </Text>
+          </View>
+          <Text style={[styles.timerClock, { color: theme.accentSecondary, fontFamily: fonts.headingBold }]}>
+            {mins}:{secs}
+          </Text>
+        </View>
+
+        <View style={[styles.qrCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.qrTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Quét mã VietQR PayOS
+          </Text>
+          <Text style={[styles.qrSubtitle, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+            Hệ thống tự động xác nhận giao dịch trong 3 giây
+          </Text>
+
+          <View style={styles.qrWhiteBox}>
+            {loading || !qrDataUrl ? (
+              <ActivityIndicator color="#16A34A" />
+            ) : (
+              <Image source={{ uri: qrDataUrl }} style={styles.qrImage} resizeMode="contain" />
+            )}
+          </View>
+
+          <Text style={[styles.amountText, { color: theme.accent, fontFamily: fonts.headingBold }]}>
+            {finalPrice.toLocaleString('vi-VN')} đ
+          </Text>
+        </View>
+
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Chi tiết đơn đặt sân
+          </Text>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Cơ sở
+            </Text>
+            <Text style={[styles.detailVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+              {selectedFacility?.name || 'Phanta Sports'}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Sân thi đấu
+            </Text>
+            <Text style={[styles.detailVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+              {selectedVenue?.name || activeBooking.venueId}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Giảm giá voucher
+            </Text>
+            <Text style={[styles.detailVal, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+              -{currentDiscount.toLocaleString('vi-VN')} đ
+            </Text>
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Countdown Warning Banner */}
-          <View style={styles.timerBanner}>
-            <View style={styles.timerIconBox}>
-              <Text style={styles.timerIcon}>⏳</Text>
-            </View>
-            <View style={styles.timerInfo}>
-              <Text style={styles.timerTitle}>Thời gian giữ chỗ còn lại:</Text>
-              <Text style={styles.timerCount}>{formatTimer(timeLeft)}</Text>
-            </View>
-          </View>
-
-          {/* Booking Summary Card */}
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>THÔNG TIN ĐẶT CHỖ</Text>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Cơ sở:</Text>
-              <Text style={styles.summaryVal}>{selectedFacility?.name}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Sân:</Text>
-              <Text style={styles.summaryVal}>{selectedVenue?.name}</Text>
-            </View>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Thời gian:</Text>
-              <Text style={styles.summaryVal}>
-                {activeBooking?.startTime} - {activeBooking?.endTime} ({activeBooking?.bookingDate?.split('T')[0]})
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Nhập mã giảm giá
+          </Text>
+          <View style={styles.promoRow}>
+            <TextInput
+              value={promoCodeInput}
+              onChangeText={setPromoCodeInput}
+              placeholder="Nhập mã voucher"
+              placeholderTextColor={theme.placeholder}
+              autoCapitalize="characters"
+              style={[
+                styles.promoInput,
+                {
+                  backgroundColor: theme.inputBg,
+                  borderColor: theme.inputBorder,
+                  color: theme.textHeading,
+                  fontFamily: fonts.bodyMedium,
+                },
+              ]}
+            />
+            <Pressable
+              onPress={handleApplyPromo}
+              style={({ pressed }) => [
+                styles.applyBtn,
+                { backgroundColor: theme.surfaceElevated, borderColor: theme.border, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Text style={[styles.applyBtnText, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                Áp dụng
               </Text>
-            </View>
+            </Pressable>
+          </View>
+        </View>
 
-            {/* Price breakdown */}
-            <View style={styles.breakdownDivider} />
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Giá thuê sân gốc:</Text>
-              <Text style={styles.summaryVal}>{originalPrice.toLocaleString('vi-VN')} đ</Text>
-            </View>
-
-            {appliedVoucher && currentDiscount > 0 && (
-              <View style={styles.summaryRow}>
-                <Text style={[styles.summaryLabel, { color: colors.volt, fontWeight: '700' }]}>
-                  Voucher ({appliedVoucher.code}):
-                </Text>
-                <Text style={[styles.summaryVal, { color: colors.volt, fontWeight: '800' }]}>
-                  -{currentDiscount.toLocaleString('vi-VN')} đ
-                </Text>
-              </View>
-            )}
-
-            <View style={[styles.summaryRow, styles.summaryTotalRow]}>
-              <Text style={styles.summaryTotalLabel}>Tổng thanh toán:</Text>
-              <Text style={styles.summaryTotalVal}>
-                {finalPrice.toLocaleString('vi-VN')} đ
+        <Pressable
+          onPress={handleConfirmPaid}
+          disabled={verifying}
+          style={({ pressed }) => [
+            styles.confirmBtn,
+            { backgroundColor: theme.accent, opacity: verifying ? 0.6 : pressed ? 0.85 : 1 },
+          ]}
+        >
+          {verifying ? (
+            <ActivityIndicator color={theme.onAccent} />
+          ) : (
+            <>
+              <CheckCircle2 size={18} strokeWidth={1.75} color={theme.onAccent} />
+              <Text style={[styles.confirmBtnText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+                Kiểm tra trạng thái thanh toán
               </Text>
-            </View>
-          </View>
+            </>
+          )}
+        </Pressable>
+      </ScrollView>
 
-          {/* Voucher / Promo Code Box */}
-          <View style={styles.voucherBox}>
-            <View style={styles.voucherBoxHeader}>
-              <Text style={styles.voucherBoxTitle}>MÃ GIẢM GIÁ & VOUCHER</Text>
-              {appliedVoucher && (
-                <TouchableOpacity onPress={handleRemoveVoucher}>
-                  <Text style={styles.removeVoucherText}>Gỡ bỏ</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {appliedVoucher ? (
-              <View style={styles.appliedVoucherInfo}>
-                <View style={styles.appliedBadge}>
-                  <Text style={styles.appliedBadgeText}>✓ {appliedVoucher.code}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.appliedVoucherTitle}>
-                    {appliedVoucher.title || `Voucher ${appliedVoucher.code}`}
-                  </Text>
-                  <Text style={styles.appliedVoucherSub}>
-                    Tiết kiệm {currentDiscount.toLocaleString('vi-VN')} đ cho đơn này
-                  </Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.promoInputRow}>
-                <TextInput
-                  style={styles.promoInput}
-                  placeholder="Nhập mã (VD: PHANTA50K)"
-                  placeholderTextColor={colors.textMuted}
-                  value={promoCodeInput}
-                  onChangeText={setPromoCodeInput}
-                  autoCapitalize="characters"
-                />
-                <TouchableOpacity
-                  style={[styles.applyPromoBtn, applyingVoucher && { opacity: 0.6 }]}
-                  disabled={applyingVoucher}
-                  onPress={handleApplyPromo}
-                >
-                  {applyingVoucher ? (
-                    <ActivityIndicator size="small" color="#000" />
-                  ) : (
-                    <Text style={styles.applyPromoBtnText}>Áp Dụng</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* VietQR Display Card */}
-          <View style={styles.qrCard}>
-            <Text style={styles.qrCardTitle}>QUÉT MÃ VIETQR ĐỂ THANH TOÁN</Text>
-            <Text style={styles.qrCardSub}>Tương thích mọi App ngân hàng & Ví điện tử</Text>
-
-            {loading ? (
-              <View style={styles.qrLoadingBox}>
-                <ActivityIndicator size="large" color={colors.primary} />
-                <Text style={styles.loadingText}>Đang tạo mã VietQR PayOS...</Text>
-              </View>
-            ) : qrDataUrl ? (
-              <View style={styles.qrImageWrapper}>
-                <Image source={{ uri: qrDataUrl }} style={styles.qrImage} />
-                <View style={styles.payOsBadge}>
-                  <Text style={styles.payOsBadgeText}>⚡ Powered by PayOS</Text>
-                </View>
-              </View>
-            ) : (
-              <View style={styles.qrFallback}>
-                <Text style={styles.qrFallbackText}>Không thể hiển thị mã QR. Vui lòng thử lại.</Text>
-              </View>
-            )}
-
-            {/* Bank details info */}
-            {paymentData && (
-              <View style={styles.bankDetails}>
-                <View style={styles.bankDetailRow}>
-                  <Text style={styles.bankLabel}>Chủ tài khoản:</Text>
-                  <Text style={styles.bankVal}>{paymentData.accountName || 'CONG TY SPORTS BOOKING'}</Text>
-                </View>
-                <View style={styles.bankDetailRow}>
-                  <Text style={styles.bankLabel}>Số tài khoản:</Text>
-                  <Text style={styles.bankValHighlight}>{paymentData.accountNumber || '0911223344'}</Text>
-                </View>
-                <View style={styles.bankDetailRow}>
-                  <Text style={styles.bankLabel}>Số tiền:</Text>
-                  <Text style={styles.bankValPrice}>
-                    {finalPrice.toLocaleString('vi-VN')} VNĐ
-                  </Text>
-                </View>
-                <View style={styles.bankDetailRow}>
-                  <Text style={styles.bankLabel}>Nội dung CK:</Text>
-                  <Text style={styles.bankValCode}>{paymentData.description || `SB ${activeBooking?._id?.slice(-8)}`}</Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Action Buttons */}
-          <TouchableOpacity
-            style={styles.checkBtn}
-            disabled={verifying}
-            onPress={handleCheckPayment}
-          >
-            {verifying ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.checkBtnText}>Tôi Đã Chuyển Khoản Thành Công ✓</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  backBtnText: {
-    fontSize: 20,
-    color: '#fff',
-  },
-  topBarInfo: {
-    flex: 1,
-  },
-  topBarTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  topBarSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
+  safeArea: { flex: 1 },
+  emptyWrap: { flex: 1, padding: spacing.xxl, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
+  emptyTitle: { fontSize: 18, textAlign: 'center' },
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
+  backActionBtn: { minHeight: 44, paddingHorizontal: spacing.xl, borderRadius: radius.md, justifyContent: 'center' },
+  backActionText: { fontSize: 13 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
   timerBanner: {
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.warning,
-    marginBottom: 16,
-  },
-  timerIconBox: {
-    marginRight: 12,
-  },
-  timerIcon: {
-    fontSize: 24,
-  },
-  timerInfo: {
-    flex: 1,
-  },
-  timerTitle: {
-    fontSize: 11,
-    color: colors.warning,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  timerCount: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#fff',
-    marginTop: 2,
-  },
-  summaryCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 14,
-  },
-  summaryTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  summaryRow: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
   },
-  summaryLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
-  },
-  summaryVal: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textPrimary,
-  },
-  breakdownDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 6,
-  },
-  summaryTotalRow: {
-    marginTop: 8,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    marginBottom: 0,
-  },
-  summaryTotalLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  summaryTotalVal: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: colors.primaryLight,
-  },
-
-  // Voucher Box
-  voucherBox: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 16,
-  },
-  voucherBoxHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  voucherBoxTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  removeVoucherText: {
-    fontSize: 11,
-    color: colors.danger,
-    fontWeight: '700',
-  },
-  promoInputRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  promoInput: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  applyPromoBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  applyPromoBtnText: {
-    color: '#000',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-  appliedVoucherInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
-    borderRadius: 10,
-    padding: 10,
-  },
-  appliedBadge: {
-    backgroundColor: colors.volt,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  appliedBadgeText: {
-    fontSize: 11,
-    fontWeight: '900',
-    color: '#000',
-  },
-  appliedVoucherTitle: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  appliedVoucherSub: {
-    fontSize: 10,
-    color: colors.voltLight,
-    marginTop: 2,
-  },
-
-  // QR Card
+  timerLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  timerLabel: { fontSize: 13 },
+  timerClock: { fontSize: 18 },
   qrCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-  },
-  qrCardTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: 0.5,
-  },
-  qrCardSub: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 2,
-    marginBottom: 14,
-  },
-  qrLoadingBox: {
-    width: 240,
-    height: 240,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 12,
-    color: '#64748b',
-  },
-  qrImageWrapper: {
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 16,
-    backgroundColor: '#f8fafc',
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    padding: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
   },
-  qrImage: {
-    width: 240,
-    height: 240,
-  },
-  payOsBadge: {
-    marginTop: 8,
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  payOsBadgeText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  qrFallback: {
-    width: 240,
-    height: 240,
+  qrTitle: { fontSize: 18 },
+  qrSubtitle: { fontSize: 12, textAlign: 'center' },
+  qrWhiteBox: {
+    width: 210,
+    height: 210,
+    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: spacing.md,
+    marginVertical: spacing.sm,
   },
-  qrFallbackText: {
-    color: '#ef4444',
-    fontSize: 12,
-  },
-  bankDetails: {
-    width: '100%',
-    marginTop: 16,
-    paddingTop: 14,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    gap: 6,
-  },
-  bankDetailRow: {
+  qrImage: { width: '100%', height: '100%' },
+  amountText: { fontSize: 24 },
+  card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg, gap: spacing.md },
+  sectionTitle: { fontSize: 15 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  detailLabel: { fontSize: 12 },
+  detailVal: { fontSize: 13 },
+  promoRow: { flexDirection: 'row', gap: spacing.sm },
+  promoInput: { flex: 1, minHeight: 44, borderRadius: radius.md, borderWidth: 1, paddingHorizontal: spacing.md, fontSize: 13 },
+  applyBtn: { minHeight: 44, paddingHorizontal: spacing.lg, borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  applyBtnText: { fontSize: 13 },
+  confirmBtn: {
+    minHeight: 48,
+    borderRadius: radius.md,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  bankLabel: {
-    fontSize: 11,
-    color: '#64748b',
-  },
-  bankVal: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1e293b',
-  },
-  bankValHighlight: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.primaryDark,
-  },
-  bankValPrice: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#059669',
-  },
-  bankValCode: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#d97706',
-  },
-  checkBtn: {
-    backgroundColor: colors.success,
-    borderRadius: 16,
-    paddingVertical: 15,
     alignItems: 'center',
-    shadowColor: colors.success,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
-  checkBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '800',
-  },
+  confirmBtnText: { fontSize: 14 },
 });

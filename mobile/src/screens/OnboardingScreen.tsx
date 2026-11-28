@@ -1,47 +1,53 @@
-// mobile/src/screens/OnboardingScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
   Text,
+  Image,
+  Pressable,
   StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
+import { ArrowRight } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
+import { ThemeToggleButton } from '../components/ThemeToggleButton';
 
 interface OnboardingSlide {
   id: number;
-  icon: string;
+  imageUri: string;
   title: string;
   subtitle: string;
-  highlight: string;
 }
 
-export const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+export const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({
+  onFinish,
+}) => {
+  const theme = useTheme();
   const [currentStep, setCurrentStep] = useState<number>(0);
 
   const slides: OnboardingSlide[] = [
     {
       id: 1,
-      icon: '⚡',
-      title: 'Đặt Sân Siêu Tốc 30 Giây',
-      subtitle: 'Ma trận lịch thi đấu thông minh. Khóa giữ chỗ 10 phút chống trùng lặp tuyệt đối.',
-      highlight: 'KHÓA CHỖ 10 PHÚT',
+      imageUri:
+        'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=400&q=80',
+      title: 'Đặt sân nhanh, không trùng lịch',
+      subtitle:
+        'Khóa giữ chỗ 10 phút và tự động giải phóng nếu quá hạn. Thanh toán VietQR PayOS khớp lệnh trong 3 giây.',
     },
     {
       id: 2,
-      icon: '🎟️',
-      title: 'Vé QR Động Apple Wallet',
-      subtitle: 'Mã QR tự động làm mới mỗi 60 giây. Quét mở cửa xoay Turnstile vào sân chưa đầy 1 giây.',
-      highlight: 'QR ĐỘNG 60S',
+      imageUri:
+        'https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80',
+      title: 'Vé QR động 60 giây và Face ID',
+      subtitle:
+        'Mã QR xoay vòng mỗi 60 giây kèm gói vé ngoại tuyến. Cổng xoay Gym nhận diện khuôn mặt mở trong 0.5 giây.',
     },
     {
       id: 3,
-      icon: '🏆',
-      title: 'Hệ Sinh Thái Thể Thao Đỉnh Cao',
-      subtitle: '7 Cụm sân hiện đại, Thẻ Gym Face ID, 2 Hồ bơi Olympic và 100 dàn máy Cyber Gaming RTX 4090.',
-      highlight: 'TỔ HỢP 7 MÔN',
+      imageUri:
+        'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=400&q=80',
+      title: 'Đa tiện ích thể thao và Esports',
+      subtitle:
+        '7 cụm sân thi đấu, 2 hồ bơi Olympic và nước ấm 31.5 độ C, phòng Cyber Gaming 100 máy RTX 4090.',
     },
   ];
 
@@ -56,55 +62,125 @@ export const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish 
   const slide = slides[currentStep];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <View style={styles.container}>
-        {/* Top Skip button */}
         <View style={styles.topBar}>
-          <Text style={styles.stepIndicator}>Bước {currentStep + 1} / {slides.length}</Text>
-          <TouchableOpacity onPress={onFinish}>
-            <Text style={styles.skipText}>Bỏ qua</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content Box */}
-        <View style={styles.content}>
-          <View style={styles.iconCircle}>
-            <Text style={styles.iconEmoji}>{slide.icon}</Text>
-          </View>
-
-          <View style={styles.highlightBadge}>
-            <Text style={styles.highlightText}>{slide.highlight}</Text>
-          </View>
-
-          <TwoLineText
-            primary={slide.title}
-            secondary={slide.subtitle}
-            align="center"
-            primaryStyle={{ fontSize: 22, fontWeight: '900', color: '#fff', marginBottom: 6 }}
-            secondaryStyle={{ fontSize: 14, color: '#94a3b8', lineHeight: 22, textAlign: 'center' }}
-          />
-
-          {/* Dots Indicator */}
-          <View style={styles.dotsRow}>
-            {slides.map((s, idx) => (
-              <View
-                key={s.id}
+          <Text
+            style={[
+              styles.stepIndicator,
+              { color: theme.accent, fontFamily: fonts.headingBold },
+            ]}
+          >
+            0{currentStep + 1} / 0{slides.length}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <Pressable
+              onPress={onFinish}
+              style={({ pressed }) => [styles.skipBtn, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text
                 style={[
-                  styles.dot,
-                  currentStep === idx ? styles.dotActive : styles.dotInactive,
+                  styles.skipText,
+                  { color: theme.textSecondary, fontFamily: fonts.bodyMedium },
                 ]}
-              />
-            ))}
+              >
+                Bỏ qua
+              </Text>
+            </Pressable>
+            <ThemeToggleButton />
           </View>
         </View>
 
-        {/* Bottom Button */}
+        <View style={styles.content}>
+          <View
+            style={[
+              styles.imageCircle,
+              {
+                borderColor: theme.accent,
+                backgroundColor: theme.surfaceElevated,
+              },
+            ]}
+          >
+            <Image
+              source={{ uri: slide.imageUri }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          </View>
+
+          <Text
+            style={[
+              styles.title,
+              { color: theme.textHeading, fontFamily: fonts.headingBold },
+            ]}
+          >
+            {slide.title}
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              { color: theme.textSecondary, fontFamily: fonts.body },
+            ]}
+          >
+            {slide.subtitle}
+          </Text>
+
+          <View style={styles.dotsRow}>
+            {slides.map((s, idx) => {
+              const active = currentStep === idx;
+              return (
+                <Pressable
+                  key={s.id}
+                  onPress={() => setCurrentStep(idx)}
+                  accessibilityLabel={`Bước ${idx + 1}`}
+                  style={[
+                    styles.dot,
+                    {
+                      width: active ? 24 : 8,
+                      backgroundColor: active ? theme.accent : theme.borderLight,
+                    },
+                  ]}
+                />
+              );
+            })}
+          </View>
+        </View>
+
         <View style={styles.bottomBar}>
-          <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-            <Text style={styles.nextBtnText}>
-              {currentStep === slides.length - 1 ? 'Bắt Đầu Trải Nghiệm Ngay →' : 'Tiếp Theo →'}
+          <Pressable
+            onPress={handleNext}
+            style={({ pressed }) => [
+              styles.nextBtn,
+              {
+                backgroundColor: theme.accent,
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.nextBtnText,
+                { color: theme.onAccent, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
+              {currentStep === slides.length - 1 ? 'Bắt đầu ngay' : 'Tiếp theo'}
             </Text>
-          </TouchableOpacity>
+            <ArrowRight size={16} strokeWidth={2} color={theme.onAccent} />
+          </Pressable>
+
+          <Pressable
+            onPress={onFinish}
+            style={({ pressed }) => [styles.homeBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text
+              style={[
+                styles.homeBtnText,
+                { color: theme.textSecondary, fontFamily: fonts.bodyMedium },
+              ]}
+            >
+              Bỏ qua và vào trang chủ
+            </Text>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -112,44 +188,91 @@ export const OnboardingScreen: React.FC<{ onFinish: () => void }> = ({ onFinish 
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, padding: 24, justifyContent: 'space-between' },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  stepIndicator: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
-  skipText: { fontSize: 13, fontWeight: '700', color: colors.primary },
-  content: { alignItems: 'center', marginVertical: 'auto' },
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 30,
-    backgroundColor: colors.primary + '20',
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    padding: spacing.xxl,
+    justifyContent: 'space-between',
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  stepIndicator: {
+    fontSize: 13,
+  },
+  skipBtn: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  skipText: {
+    fontSize: 13,
+  },
+  content: {
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  imageCircle: {
+    width: 184,
+    height: 184,
+    borderRadius: 92,
     borderWidth: 2,
-    borderColor: colors.primary,
+    padding: 4,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 90,
+  },
+  title: {
+    fontSize: 21,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+  },
+  bottomBar: {
+    gap: spacing.sm,
+  },
+  nextBtn: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    gap: spacing.sm,
   },
-  iconEmoji: { fontSize: 44 },
-  highlightBadge: {
-    backgroundColor: '#78350f30',
-    borderWidth: 1,
-    borderColor: '#f59e0b50',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 16,
+  nextBtnText: {
+    fontSize: 14,
   },
-  highlightText: { fontSize: 11, fontWeight: '900', color: '#fbbf24', letterSpacing: 0.5 },
-  dotsRow: { flexDirection: 'row', gap: 8, marginTop: 30 },
-  dot: { height: 8, borderRadius: 4 },
-  dotActive: { width: 24, backgroundColor: colors.primary },
-  dotInactive: { width: 8, backgroundColor: '#334155' },
-  bottomBar: { marginBottom: 12 },
-  nextBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
+  homeBtn: {
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  nextBtnText: { color: '#000', fontWeight: '900', fontSize: 15 },
+  homeBtnText: {
+    fontSize: 13,
+  },
 });

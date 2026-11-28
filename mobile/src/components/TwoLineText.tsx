@@ -1,7 +1,6 @@
-// mobile/src/components/TwoLineText.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TextStyle, ViewStyle } from 'react-native';
-import { colors } from '../theme/colors';
+import { fonts, useTheme } from '../theme/colors';
 
 interface TwoLineTextProps {
   primary: string;
@@ -22,26 +21,63 @@ export const TwoLineText: React.FC<TwoLineTextProps> = ({
   secondaryStyle,
   align = 'left',
   badge,
-  badgeColor = colors.primary,
+  badgeColor,
 }) => {
-  const alignmentStyle: TextStyle = {
-    textAlign: align,
-  };
+  const theme = useTheme();
+  const activeBadgeColor = badgeColor || theme.accent;
+  const alignmentStyle: TextStyle = { textAlign: align };
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <View style={[styles.row, align === 'center' && styles.rowCenter, align === 'right' && styles.rowRight]}>
-        <Text style={[styles.primary, alignmentStyle, primaryStyle]} numberOfLines={1}>
+      <View
+        style={[
+          styles.row,
+          align === 'center' && styles.rowCenter,
+          align === 'right' && styles.rowRight,
+        ]}
+      >
+        <Text
+          style={[
+            styles.primary,
+            { color: theme.textHeading, fontFamily: fonts.heading },
+            alignmentStyle,
+            primaryStyle,
+          ]}
+          numberOfLines={1}
+        >
           {primary}
         </Text>
-        {badge && (
-          <View style={[styles.badge, { borderColor: badgeColor, backgroundColor: badgeColor + '20' }]}>
-            <Text style={[styles.badgeText, { color: badgeColor }]}>{badge}</Text>
+        {badge ? (
+          <View
+            style={[
+              styles.badge,
+              {
+                borderColor: activeBadgeColor,
+                backgroundColor: activeBadgeColor + '1A',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.badgeText,
+                { color: activeBadgeColor, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
+              {badge}
+            </Text>
           </View>
-        )}
+        ) : null}
       </View>
       {secondary ? (
-        <Text style={[styles.secondary, alignmentStyle, secondaryStyle]} numberOfLines={2}>
+        <Text
+          style={[
+            styles.secondary,
+            { color: theme.textSecondary, fontFamily: fonts.body },
+            alignmentStyle,
+            secondaryStyle,
+          ]}
+          numberOfLines={2}
+        >
           {secondary}
         </Text>
       ) : null}
@@ -65,27 +101,21 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   primary: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#ffffff',
-    letterSpacing: -0.2,
+    fontSize: 15,
+    flexShrink: 1,
   },
   secondary: {
     fontSize: 12,
-    fontWeight: '500',
-    color: colors.textSecondary || '#cbd5e1',
     marginTop: 2,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   badge: {
     paddingHorizontal: 6,
-    paddingVertical: 1.5,
+    paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
   },
   badgeText: {
     fontSize: 10,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
 });

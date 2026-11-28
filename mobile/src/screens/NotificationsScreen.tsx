@@ -1,154 +1,198 @@
-// mobile/src/screens/NotificationsScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  Pressable,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
+import { Bell, Check } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
+import { api } from '../api/client';
+import { ScreenHeader } from '../components/ScreenHeader';
+import type { ScreenId } from '../../App';
 
-interface NotificationItem {
-  id: string;
-  type: 'SCHEDULE' | 'WALLET' | 'PROMO';
-  title: string;
-  body: string;
-  time: string;
-  isRead: boolean;
+interface Props {
+  onBack: () => void;
+  onNavigate?: (screen: ScreenId) => void;
 }
 
-export const NotificationsScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [filter, setFilter] = useState<'ALL' | 'SCHEDULE' | 'WALLET'>('ALL');
+export const NotificationsScreen: React.FC<Props> = ({ onBack }) => {
+  const theme = useTheme();
+  const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const notifications: NotificationItem[] = [
-    {
-      id: 'N-1',
-      type: 'SCHEDULE',
-      title: 'Nhắc Lịch Thi Đấu: Còn 60 Phút!',
-      body: 'Trận bóng đá Sân mini F1 bắt đầu lúc 18:00 hôm nay. Vui lòng có mặt trước 10 phút để nhận sân và dụng cụ.',
-      time: '17:00 Hôm nay',
-      isRead: false,
-    },
-    {
-      id: 'N-2',
-      type: 'WALLET',
-      title: 'Hoàn Tiền Cọc Tự Động Thành Công',
-      body: 'Đã hoàn trả +150.000 đ vào ví Phanta Pay do bạn hủy sân trước 12 giờ đúng quy định.',
-      time: '14:20 26/10',
-      isRead: true,
-    },
-    {
-      id: 'N-3',
-      type: 'PROMO',
-      title: 'Voucher Giảm 20% Giờ Vàng Đã Sẵn Sàng',
-      body: 'Nhận ngay mã PHANTA20 áp dụng cho các khung giờ thi đấu 17:30 - 21:00 cuối tuần này!',
-      time: '09:00 25/10',
-      isRead: true,
-    },
-    {
-      id: 'N-4',
-      type: 'WALLET',
-      title: 'Nạp Tiền Thành Công Qua VietQR PayOS',
-      body: 'Giao dịch nạp +1.000.000 đ từ ngân hàng MB Bank đã được ghi nhận vào sổ cái ví Phanta Pay.',
-      time: '20:30 24/10',
-      isRead: true,
-    },
-  ];
+  const loadNotifications = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getMyNotifications();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const filteredList = filter === 'ALL' ? notifications : notifications.filter((n) => n.type === filter);
+  useEffect(() => {
+    loadNotifications();
+  }, []);
+
+  const handleMarkRead = async (id: string) => {
+    try {
+      await api.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch {
+      // ignore
+    }
+  };
+
+  const filtered = notifications.filter((n) =>
+    filter === 'UNREAD' ? !n.isRead : true
+  );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-          )}
-          <TwoLineText
-            primary="Trung Tâm Thông Báo"
-            secondary="Cập nhật lịch thi đấu, biến động ví & ưu đãi"
-            badge="1 MỚI"
-            badgeColor={colors.primary}
-          />
-        </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader
+        title="Trung tâm thông báo"
+        onBack={onBack}
+        rightElement={
+          <Pressable onPress={handleMarkAllRead}>
+            <Text style={[styles.readAllText, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+              Đã đọc tất cả
+            </Text>
+          </Pressable>
+        }
+      />
 
-        {/* Filter Pills */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
         <View style={styles.filterRow}>
-          {(['ALL', 'SCHEDULE', 'WALLET'] as const).map((f) => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[styles.filterBtn, filter === f && styles.filterBtnActive]}
-            >
-              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'ALL' ? 'Tất Cả' : f === 'SCHEDULE' ? 'Lịch Đấu' : 'Ví & Tiền'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {[
+            { key: 'ALL' as const, label: `Tất cả (${notifications.length})` },
+            {
+              key: 'UNREAD' as const,
+              label: `Chưa đọc (${notifications.filter((n) => !n.isRead).length})`,
+            },
+          ].map((f) => {
+            const active = filter === f.key;
+            return (
+              <Pressable
+                key={f.key}
+                onPress={() => setFilter(f.key)}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: active ? theme.accent : theme.surfaceElevated,
+                    borderColor: active ? theme.accent : theme.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    { color: active ? theme.onAccent : theme.textPrimary, fontFamily: fonts.bodyMedium },
+                  ]}
+                >
+                  {f.label}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
-        {/* Notifications List */}
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-          {filteredList.map((n) => (
-            <View key={n.id} style={[styles.notifCard, !n.isRead && styles.notifUnread]}>
-              <View style={styles.notifTop}>
-                <TwoLineText
-                  primary={n.title}
-                  secondary={n.body}
-                  primaryStyle={{ fontSize: 14, color: !n.isRead ? colors.primary : '#fff' }}
-                  secondaryStyle={{ fontSize: 12, lineHeight: 17 }}
-                />
-              </View>
-              <View style={styles.notifBottom}>
-                <Text style={styles.notifTime}>{n.time}</Text>
-                {!n.isRead && <View style={styles.unreadDot} />}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+        {loading ? (
+          <ActivityIndicator color={theme.accent} style={{ marginVertical: spacing.xl }} />
+        ) : filtered.length === 0 ? (
+          <View style={[styles.emptyBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Chưa có thông báo nào trong hộp thư của bạn.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.list}>
+            {filtered.map((item) => (
+              <Pressable
+                key={item._id}
+                onPress={() => handleMarkRead(item._id)}
+                style={({ pressed }) => [
+                  styles.notifCard,
+                  {
+                    backgroundColor: theme.surface,
+                    borderColor: item.isRead ? theme.border : theme.borderAccent,
+                    opacity: pressed ? 0.85 : item.isRead ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <View style={styles.notifTop}>
+                  <View style={styles.notifTitleRow}>
+                    <View
+                      style={[
+                        styles.iconBox,
+                        { backgroundColor: item.isRead ? theme.surfaceElevated : theme.accentSoft },
+                      ]}
+                    >
+                      {item.isRead ? (
+                        <Check size={14} strokeWidth={1.75} color={theme.textMuted} />
+                      ) : (
+                        <Bell size={14} strokeWidth={1.75} color={theme.accent} />
+                      )}
+                    </View>
+                    <Text style={[styles.notifTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+                      {item.title || 'Thông báo hệ thống'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.notifTime, { color: theme.textMuted, fontFamily: fonts.body }]}>
+                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : ''}
+                  </Text>
+                </View>
+                <Text style={[styles.notifDesc, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  {item.body || item.message || ''}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
-  backBtn: { padding: 8, backgroundColor: colors.card, borderRadius: 8 },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  filterRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-  filterBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 10,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
+  safeArea: { flex: 1 },
+  readAllText: { fontSize: 12 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
-  filterBtnActive: { borderColor: colors.primary, backgroundColor: colors.primary + '20' },
-  filterText: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
-  filterTextActive: { color: colors.primary },
-  scroll: { paddingBottom: 30, gap: 10 },
-  notifCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: 14,
-  },
-  notifUnread: {
-    borderColor: colors.primary + '50',
-    backgroundColor: '#0f172a',
-  },
-  notifTop: { marginBottom: 8 },
-  notifBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  notifTime: { fontSize: 10, color: colors.textMuted },
-  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  filterRow: { flexDirection: 'row', gap: spacing.sm },
+  filterChip: { minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1, justifyContent: 'center' },
+  filterText: { fontSize: 12 },
+  emptyBox: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.xl, alignItems: 'center' },
+  emptyText: { fontSize: 13, textAlign: 'center' },
+  list: { gap: spacing.sm },
+  notifCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, gap: spacing.xs },
+  notifTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  notifTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
+  iconBox: { width: 28, height: 28, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  notifTitle: { fontSize: 14, flex: 1 },
+  notifTime: { fontSize: 10 },
+  notifDesc: { fontSize: 12, lineHeight: 18, paddingLeft: 36 },
 });

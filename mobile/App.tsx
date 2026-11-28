@@ -1,22 +1,48 @@
-// mobile/App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   StyleSheet,
   StatusBar,
   SafeAreaView,
-  ScrollView,
-  Dimensions,
+  Animated,
+  Easing,
   Platform,
 } from 'react-native';
-import { colors } from './src/theme/colors';
-import { useAuthStore } from './src/store/useAuthStore';
+import { useFonts } from 'expo-font';
+import {
+  Barlow_500Medium,
+  Barlow_600SemiBold,
+  Barlow_700Bold,
+} from '@expo-google-fonts/barlow';
+import {
+  Lexend_400Regular,
+  Lexend_500Medium,
+  Lexend_600SemiBold,
+} from '@expo-google-fonts/lexend';
+import {
+  Home,
+  Calendar,
+  LayoutGrid,
+  FileText,
+  User,
+} from 'lucide-react-native';
+
+import { fonts, spacing, useTheme } from './src/theme/colors';
+import { useThemeStore } from './src/store/useThemeStore';
 import { useBookingStore } from './src/store/useBookingStore';
+import { useAuthStore } from './src/store/useAuthStore';
+import {
+  ServicesDropupMenu,
+  ServiceScreenTarget,
+} from './src/components/ServicesDropupMenu';
 
 // Screens
 import { AuthScreen } from './src/screens/AuthScreen';
+import { SplashScreen } from './src/screens/SplashScreen';
+import { WelcomeScreen } from './src/screens/WelcomeScreen';
+import { OnboardingScreen } from './src/screens/OnboardingScreen';
 import { FacilityListScreen } from './src/screens/FacilityListScreen';
 import { VenueSlotGridScreen } from './src/screens/VenueSlotGridScreen';
 import { PaymentScreen } from './src/screens/PaymentScreen';
@@ -35,84 +61,114 @@ import { OfflineScreen } from './src/screens/OfflineScreen';
 import { ProcessScreen } from './src/screens/ProcessScreen';
 import { VouchersScreen } from './src/screens/VouchersScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { OnboardingScreen } from './src/screens/OnboardingScreen';
 
-type ScreenId =
+export type ScreenId =
   | 'HOME'
   | 'BOOKING_SLOTS'
   | 'PAYMENT'
+  | 'VOUCHERS'
   | 'TICKET'
   | 'GYM_POOL'
   | 'GAMING'
+  | 'PROCESS'
   | 'CONTRACTS'
   | 'COACHES'
   | 'MATCHMAKING'
   | 'WALLET'
+  | 'HISTORY'
   | 'RATINGS'
   | 'CHAT'
+  | 'PROFILE'
   | 'NOTIFICATIONS'
   | 'OFFLINE'
-  | 'PROCESS'
-  | 'VOUCHERS'
-  | 'PROFILE'
-  | 'HISTORY'
+  | 'SPLASH'
+  | 'WELCOME'
   | 'ONBOARDING'
   | 'AUTH';
 
+const HIDE_DOCK_SCREENS: ScreenId[] = ['SPLASH', 'WELCOME', 'ONBOARDING', 'AUTH'];
+
 export default function App() {
-  const { user, token, logout } = useAuthStore();
-  const { activeBooking, resetBooking } = useBookingStore();
+  const theme = useTheme();
+  const { mode: themeMode, pendingMode, commitThemeTransition } = useThemeStore();
+  const { activeBooking } = useBookingStore();
+  const hydrateAuth = useAuthStore((s) => s.hydrate);
+  const themeFade = useRef(new Animated.Value(1)).current;
 
-  const [currentScreen, setCurrentScreen] = useState<ScreenId>('HOME');
-  const [showScreenSelector, setShowScreenSelector] = useState<boolean>(false);
+  useEffect(() => {
+    hydrateAuth();
+  }, [hydrateAuth]);
+
+  useEffect(() => {
+    if (!pendingMode) return;
+    const useNative = Platform.OS !== 'web';
+    Animated.timing(themeFade, {
+      toValue: 0.1,
+      duration: 110,
+      easing: Easing.out(Easing.quad),
+      useNativeDriver: useNative,
+    }).start(() => {
+      commitThemeTransition();
+      Animated.timing(themeFade, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: useNative,
+      }).start();
+    });
+  }, [pendingMode, commitThemeTransition, themeFade]);
+
+  const [fontsLoaded, fontsError] = useFonts({
+    Barlow_500Medium,
+    Barlow_600SemiBold,
+    Barlow_700Bold,
+    Lexend_400Regular,
+    Lexend_500Medium,
+    Lexend_600SemiBold,
+  });
+
+  const [currentScreen, setCurrentScreen] = useState<ScreenId>('WELCOME');
+  const [showServicesMenu, setShowServicesMenu] = useState<boolean>(false);
   const [ticketBookingId, setTicketBookingId] = useState<string | undefined>(undefined);
-  const [viewMode, setViewMode] = useState<'PHONE_CHASSIS' | 'FULL_MOBILE'>('PHONE_CHASSIS');
 
-  const windowWidth = Dimensions.get('window').width;
-  const isWeb = Platform.OS === 'web';
-  const isWebSimulator = isWeb && windowWidth > 460 && viewMode === 'PHONE_CHASSIS';
+  const hideBottomDock = HIDE_DOCK_SCREENS.includes(currentScreen);
 
-  // Screen catalog for the 20-screen suite (strictly without tournaments)
-  const screensCatalog: { id: ScreenId; label: string; group: string }[] = [
-    { id: 'HOME', label: '1. Trang Chủ Sân Bãi', group: 'Chính' },
-    { id: 'BOOKING_SLOTS', label: '2. Đặt Sân Ma Trận 30p', group: 'Đặt Sân' },
-    { id: 'PAYMENT', label: '3. Thanh Toán & VietQR', group: 'Đặt Sân' },
-    { id: 'TICKET', label: '4. Vé QR Động 60s', group: 'Vé & Vào Sân' },
-    { id: 'PROCESS', label: '5. Quy Trình 6 Bước', group: 'Vé & Vào Sân' },
-    { id: 'OFFLINE', label: '6. Gói Vé Ngoại Tuyến', group: 'Vé & Vào Sân' },
-    { id: 'GYM_POOL', label: '7. Gym Face ID & Bể Bơi', group: 'Tiện Ích' },
-    { id: 'GAMING', label: '8. Cyber Gaming 100 PC', group: 'Tiện Ích' },
-    { id: 'COACHES', label: '9. HLV & PT 1-1', group: 'Tiện Ích' },
-    { id: 'CONTRACTS', label: '10. Hợp Đồng Thuê Cố Định', group: 'Tiện Ích' },
-    { id: 'MATCHMAKING', label: '11. Cáp Kèo Giao Hữu', group: 'Tiện Ích' },
-    { id: 'WALLET', label: '12. Ví Phanta Pay', group: 'Tài Chính' },
-    { id: 'VOUCHERS', label: '13. Kho Voucher Ưu Đãi', group: 'Tài Chính' },
-    { id: 'HISTORY', label: '14. Lịch Sử & Sổ Cái', group: 'Tài Chính' },
-    { id: 'RATINGS', label: '15. Đánh Giá 4 Tiêu Chí', group: 'Cá Nhân' },
-    { id: 'CHAT', label: '16. Trợ Lý CSKH 24/7', group: 'Cá Nhân' },
-    { id: 'NOTIFICATIONS', label: '17. Trung Tâm Thông Báo', group: 'Cá Nhân' },
-    { id: 'PROFILE', label: '18. Hồ Sơ & Thẻ Gold', group: 'Cá Nhân' },
-    { id: 'ONBOARDING', label: '19. Onboarding Hướng Dẫn', group: 'Khởi Đầu' },
-    { id: 'AUTH', label: '20. Đăng Nhập OTP SĐT', group: 'Khởi Đầu' },
-  ];
+  const navigateTo = (screen: ScreenId) => {
+    setShowServicesMenu(false);
+    setCurrentScreen(screen);
+  };
 
-  // Render current screen content
   const renderScreen = () => {
     switch (currentScreen) {
       case 'HOME':
-        return <FacilityListScreen onSelectFacility={() => setCurrentScreen('BOOKING_SLOTS')} />;
+        return (
+          <FacilityListScreen
+            onSelectFacility={() => navigateTo('BOOKING_SLOTS')}
+            onNavigate={(screen) => navigateTo(screen)}
+          />
+        );
       case 'BOOKING_SLOTS':
         return (
           <VenueSlotGridScreen
-            onBack={() => setCurrentScreen('HOME')}
-            onProceedPayment={() => setCurrentScreen('PAYMENT')}
+            onBack={() => navigateTo('HOME')}
+            onProceedPayment={() => navigateTo('PAYMENT')}
+            onOpenVouchers={() => navigateTo('VOUCHERS')}
           />
         );
       case 'PAYMENT':
         return (
           <PaymentScreen
-            onBack={() => setCurrentScreen('BOOKING_SLOTS')}
-            onPaymentSuccess={() => setCurrentScreen('TICKET')}
+            onBack={() => navigateTo('BOOKING_SLOTS')}
+            onPaymentSuccess={() => navigateTo('TICKET')}
+          />
+        );
+      case 'VOUCHERS':
+        return (
+          <VouchersScreen
+            onBack={() => navigateTo(activeBooking ? 'BOOKING_SLOTS' : 'HOME')}
+            onSelectVoucher={() => {
+              navigateTo(activeBooking ? 'PAYMENT' : 'BOOKING_SLOTS');
+            }}
           />
         );
       case 'TICKET':
@@ -121,390 +177,348 @@ export default function App() {
             bookingId={ticketBookingId}
             onBack={() => {
               setTicketBookingId(undefined);
-              setCurrentScreen('HOME');
+              navigateTo('HOME');
             }}
           />
         );
       case 'GYM_POOL':
-        return <GymMembershipScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'GAMING':
-        return <GamingScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'CONTRACTS':
-        return <ContractsScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'COACHES':
-        return <CoachesScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'MATCHMAKING':
-        return <MatchmakingScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'WALLET':
-        return <WalletScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'RATINGS':
-        return <RatingsScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'CHAT':
-        return <ChatScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'NOTIFICATIONS':
-        return <NotificationsScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'OFFLINE':
-        return <OfflineScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'PROCESS':
-        return <ProcessScreen onBack={() => setCurrentScreen('HOME')} />;
-      case 'VOUCHERS':
         return (
-          <VouchersScreen
-            onBack={() => setCurrentScreen('HOME')}
-            onSelectVoucher={() => {
-              if (activeBooking) {
-                setCurrentScreen('PAYMENT');
-              } else {
-                setCurrentScreen('HOME');
-              }
+          <GymMembershipScreen
+            onBack={() => navigateTo('HOME')}
+            onBook={() => navigateTo('BOOKING_SLOTS')}
+          />
+        );
+      case 'GAMING':
+        return (
+          <GamingScreen
+            onBack={() => navigateTo('HOME')}
+            onCheckout={() => navigateTo('PAYMENT')}
+          />
+        );
+      case 'CONTRACTS':
+        return <ContractsScreen onBack={() => navigateTo('HOME')} />;
+      case 'COACHES':
+        return <CoachesScreen onBack={() => navigateTo('HOME')} />;
+      case 'MATCHMAKING':
+        return <MatchmakingScreen onBack={() => navigateTo('HOME')} />;
+      case 'WALLET':
+        return <WalletScreen onBack={() => navigateTo('HOME')} />;
+      case 'HISTORY':
+        return (
+          <HistoryScreen
+            onBack={() => navigateTo('PROFILE')}
+            onViewTicket={(id) => {
+              setTicketBookingId(id);
+              navigateTo('TICKET');
             }}
+          />
+        );
+      case 'RATINGS':
+        return <RatingsScreen onBack={() => navigateTo('HOME')} />;
+      case 'CHAT':
+        return <ChatScreen onBack={() => navigateTo('HOME')} />;
+      case 'NOTIFICATIONS':
+        return (
+          <NotificationsScreen
+            onBack={() => navigateTo('HOME')}
+            onNavigate={(screen) => navigateTo(screen)}
+          />
+        );
+      case 'OFFLINE':
+        return (
+          <OfflineScreen
+            onBack={() => navigateTo('HOME')}
+            onOpenTicket={() => navigateTo('TICKET')}
+          />
+        );
+      case 'PROCESS':
+        return (
+          <ProcessScreen
+            onBack={() => navigateTo('HOME')}
+            onStartBooking={() => navigateTo('BOOKING_SLOTS')}
           />
         );
       case 'PROFILE':
         return (
           <ProfileScreen
-            onBack={() => setCurrentScreen('HOME')}
-            onOpenWallet={() => setCurrentScreen('WALLET')}
-            onOpenHistory={() => setCurrentScreen('HISTORY')}
-            onOpenVouchers={() => setCurrentScreen('VOUCHERS')}
+            onBack={() => navigateTo('HOME')}
+            onNavigate={(screen) => navigateTo(screen)}
+            onOpenWallet={() => navigateTo('WALLET')}
+            onOpenHistory={() => navigateTo('HISTORY')}
+            onOpenVouchers={() => navigateTo('VOUCHERS')}
           />
         );
-      case 'HISTORY':
+      case 'SPLASH':
         return (
-          <HistoryScreen
-            onViewTicket={(id) => {
-              setTicketBookingId(id);
-              setCurrentScreen('TICKET');
-            }}
+          <SplashScreen
+            onStart={() => navigateTo('WELCOME')}
+            onSkipToHome={() => navigateTo('HOME')}
+          />
+        );
+      case 'WELCOME':
+        return (
+          <WelcomeScreen
+            onLogin={() => navigateTo('AUTH')}
+            onOnboarding={() => navigateTo('ONBOARDING')}
+            onGuest={() => navigateTo('HOME')}
           />
         );
       case 'ONBOARDING':
-        return <OnboardingScreen onFinish={() => setCurrentScreen('HOME')} />;
+        return <OnboardingScreen onFinish={() => navigateTo('HOME')} />;
       case 'AUTH':
-        return <AuthScreen />;
+        return (
+          <AuthScreen
+            onBack={() => navigateTo('WELCOME')}
+            onSuccess={() => navigateTo('HOME')}
+            onGuest={() => navigateTo('HOME')}
+          />
+        );
       default:
-        return <FacilityListScreen onSelectFacility={() => setCurrentScreen('BOOKING_SLOTS')} />;
+        return (
+          <FacilityListScreen
+            onSelectFacility={() => navigateTo('BOOKING_SLOTS')}
+            onNavigate={(screen) => navigateTo(screen)}
+          />
+        );
     }
   };
 
-  // Main app body
-  const appContent = (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-
-      {/* Top Simulator Control Bar */}
-      <View style={styles.topControlBar}>
-        <TouchableOpacity
-          style={styles.selectorBtn}
-          onPress={() => setShowScreenSelector(!showScreenSelector)}
-        >
-          <Text style={styles.selectorBtnText}>
-            📱 {screensCatalog.find((s) => s.id === currentScreen)?.label || 'Chọn Màn Hình'} ⌵
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.topRightControls}>
-          {isWeb && (
-            <TouchableOpacity
-              style={styles.modeToggleBtn}
-              onPress={() =>
-                setViewMode(viewMode === 'PHONE_CHASSIS' ? 'FULL_MOBILE' : 'PHONE_CHASSIS')
-              }
-            >
-              <Text style={styles.modeToggleText}>
-                {viewMode === 'PHONE_CHASSIS' ? '📱 Full' : '💻 Khung'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          <TouchableOpacity
-            style={styles.notifBadge}
-            onPress={() => setCurrentScreen('NOTIFICATIONS')}
-          >
-            <Text style={styles.notifBadgeText}>🔔</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.chatBadge}
-            onPress={() => setCurrentScreen('CHAT')}
-          >
-            <Text style={styles.chatBadgeText}>💬</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Screen Selector Dropdown Drawer */}
-      {showScreenSelector && (
-        <View style={styles.dropdownModal}>
-          <View style={styles.dropdownHeader}>
-            <Text style={styles.dropdownTitle}>Hệ Thống Màn Hình Phanta Mobile</Text>
-            <TouchableOpacity onPress={() => setShowScreenSelector(false)}>
-              <Text style={styles.dropdownClose}>✕</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.dropdownScroll}>
-            {screensCatalog.map((s) => (
-              <TouchableOpacity
-                key={s.id}
-                onPress={() => {
-                  setCurrentScreen(s.id);
-                  setShowScreenSelector(false);
-                }}
-                style={[
-                  styles.dropdownItem,
-                  currentScreen === s.id && styles.dropdownItemActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.dropdownItemText,
-                    currentScreen === s.id && styles.dropdownItemTextActive,
-                  ]}
-                >
-                  {s.label}
-                </Text>
-                <Text style={styles.dropdownItemGroup}>{s.group}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Screen Viewport */}
-      <View style={styles.viewport}>{renderScreen()}</View>
-
-      {/* 5-Tab Bottom Dock Navigation */}
-      <View style={styles.bottomDock}>
-        <TouchableOpacity
-          style={[styles.dockTab, currentScreen === 'HOME' && styles.dockTabActive]}
-          onPress={() => setCurrentScreen('HOME')}
-        >
-          <Text style={[styles.dockIcon, currentScreen === 'HOME' && styles.dockIconActive]}>🏠</Text>
-          <Text style={[styles.dockLabel, currentScreen === 'HOME' && styles.dockLabelActive]}>Trang Chủ</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.dockTab, currentScreen === 'BOOKING_SLOTS' && styles.dockTabActive]}
-          onPress={() => setCurrentScreen('BOOKING_SLOTS')}
-        >
-          <Text style={[styles.dockIcon, currentScreen === 'BOOKING_SLOTS' && styles.dockIconActive]}>⚽</Text>
-          <Text style={[styles.dockLabel, currentScreen === 'BOOKING_SLOTS' && styles.dockLabelActive]}>Đặt Sân</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.dockTab, currentScreen === 'TICKET' && styles.dockTabActive]}
-          onPress={() => setCurrentScreen('TICKET')}
-        >
-          <Text style={[styles.dockIcon, currentScreen === 'TICKET' && styles.dockIconActive]}>🎟️</Text>
-          <Text style={[styles.dockLabel, currentScreen === 'TICKET' && styles.dockLabelActive]}>Vé Vào Sân</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.dockTab,
-            ['GYM_POOL', 'GAMING', 'COACHES', 'CONTRACTS', 'MATCHMAKING'].includes(currentScreen) &&
-              styles.dockTabActive,
-          ]}
-          onPress={() => setCurrentScreen('CONTRACTS')}
-        >
-          <Text
-            style={[
-              styles.dockIcon,
-              ['GYM_POOL', 'GAMING', 'COACHES', 'CONTRACTS', 'MATCHMAKING'].includes(currentScreen) &&
-                styles.dockIconActive,
-            ]}
-          >
-            📋
-          </Text>
-          <Text
-            style={[
-              styles.dockLabel,
-              ['GYM_POOL', 'GAMING', 'COACHES', 'CONTRACTS', 'MATCHMAKING'].includes(currentScreen) &&
-                styles.dockLabelActive,
-            ]}
-          >
-            Hợp Đồng
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.dockTab,
-            ['PROFILE', 'WALLET', 'HISTORY', 'VOUCHERS'].includes(currentScreen) && styles.dockTabActive,
-          ]}
-          onPress={() => setCurrentScreen('PROFILE')}
-        >
-          <Text
-            style={[
-              styles.dockIcon,
-              ['PROFILE', 'WALLET', 'HISTORY', 'VOUCHERS'].includes(currentScreen) && styles.dockIconActive,
-            ]}
-          >
-            👤
-          </Text>
-          <Text
-            style={[
-              styles.dockLabel,
-              ['PROFILE', 'WALLET', 'HISTORY', 'VOUCHERS'].includes(currentScreen) && styles.dockLabelActive,
-            ]}
-          >
-            Cá Nhân
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-
-  // If on web desktop and phone chassis mode is active, wrap in iPhone 15 Pro simulator chassis
-  if (isWebSimulator) {
+  if (!fontsLoaded && !fontsError) {
     return (
-      <View style={styles.webContainer}>
-        {/* Simulator Frame Header */}
-        <View style={styles.simulatorBanner}>
-          <Text style={styles.simulatorTitle}>PHANTA SPORTS MOBILE SIMULATOR</Text>
-          <Text style={styles.simulatorSub}>
-            Mô phỏng iPhone 15 Pro • Nhấn '📱 Full' để chuyển toàn màn hình
-          </Text>
-        </View>
-
-        {/* iPhone Chassis */}
-        <View style={styles.phoneChassis}>
-          {/* Dynamic Island */}
-          <View style={styles.dynamicIsland}>
-            <View style={styles.cameraHole} />
-            <View style={styles.sensorHole} />
-          </View>
-          {appContent}
-        </View>
-      </View>
+      <View
+        style={[
+          styles.loadingFallback,
+          { backgroundColor: theme.background },
+        ]}
+      />
     );
   }
 
-  // Pure Fullscreen Mobile App (No Desktop Wrapper)
-  return appContent;
+  const activeDockTab =
+    currentScreen === 'HOME'
+      ? 'HOME'
+      : currentScreen === 'BOOKING_SLOTS'
+        ? 'BOOKING_SLOTS'
+        : currentScreen === 'CONTRACTS'
+          ? 'CONTRACTS'
+          : currentScreen === 'PROFILE'
+            ? 'PROFILE'
+            : null;
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <StatusBar
+        barStyle={themeMode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.background}
+      />
+
+      <Animated.View style={[styles.themeLayer, { opacity: themeFade }]}>
+        <View style={styles.viewport}>{renderScreen()}</View>
+
+        <ServicesDropupMenu
+          visible={showServicesMenu}
+          currentScreen={currentScreen}
+          onSelect={(target: ServiceScreenTarget) => navigateTo(target)}
+          onClose={() => setShowServicesMenu(false)}
+        />
+
+        {!hideBottomDock ? (
+        <View
+          style={[
+            styles.bottomDock,
+            {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.border,
+            },
+          ]}
+        >
+          <View style={styles.dockInner}>
+            <Pressable
+              style={styles.dockTab}
+              onPress={() => navigateTo('HOME')}
+            >
+              <Home
+                size={18}
+                strokeWidth={1.75}
+                color={activeDockTab === 'HOME' ? theme.accent : theme.textMuted}
+              />
+              <Text
+                style={[
+                  styles.dockLabel,
+                  {
+                    color: activeDockTab === 'HOME' ? theme.accent : theme.textMuted,
+                    fontFamily:
+                      activeDockTab === 'HOME' ? fonts.bodySemiBold : fonts.body,
+                  },
+                ]}
+              >
+                Trang chủ
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.dockTab}
+              onPress={() => navigateTo('BOOKING_SLOTS')}
+            >
+              <Calendar
+                size={18}
+                strokeWidth={1.75}
+                color={
+                  activeDockTab === 'BOOKING_SLOTS' ? theme.accent : theme.textMuted
+                }
+              />
+              <Text
+                style={[
+                  styles.dockLabel,
+                  {
+                    color:
+                      activeDockTab === 'BOOKING_SLOTS'
+                        ? theme.accent
+                        : theme.textMuted,
+                    fontFamily:
+                      activeDockTab === 'BOOKING_SLOTS'
+                        ? fonts.bodySemiBold
+                        : fonts.body,
+                  },
+                ]}
+              >
+                Đặt sân
+              </Text>
+            </Pressable>
+
+            <View style={styles.centerTabWrapper}>
+              <Pressable
+                onPress={() => setShowServicesMenu((v) => !v)}
+                accessibilityLabel="Mở menu tiện ích"
+                style={({ pressed }) => [
+                  styles.centerServicesBtn,
+                  {
+                    backgroundColor: showServicesMenu
+                      ? theme.accentSecondary
+                      : theme.accent,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <LayoutGrid
+                  size={20}
+                  strokeWidth={2}
+                  color={
+                    showServicesMenu ? theme.onAccentSecondary : theme.onAccent
+                  }
+                />
+              </Pressable>
+            </View>
+
+            <Pressable
+              style={styles.dockTab}
+              onPress={() => navigateTo('CONTRACTS')}
+            >
+              <FileText
+                size={18}
+                strokeWidth={1.75}
+                color={
+                  activeDockTab === 'CONTRACTS' ? theme.accent : theme.textMuted
+                }
+              />
+              <Text
+                style={[
+                  styles.dockLabel,
+                  {
+                    color:
+                      activeDockTab === 'CONTRACTS' ? theme.accent : theme.textMuted,
+                    fontFamily:
+                      activeDockTab === 'CONTRACTS'
+                        ? fonts.bodySemiBold
+                        : fonts.body,
+                  },
+                ]}
+              >
+                Hợp đồng
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={styles.dockTab}
+              onPress={() => navigateTo('PROFILE')}
+            >
+              <User
+                size={18}
+                strokeWidth={1.75}
+                color={
+                  activeDockTab === 'PROFILE' ? theme.accent : theme.textMuted
+                }
+              />
+              <Text
+                style={[
+                  styles.dockLabel,
+                  {
+                    color:
+                      activeDockTab === 'PROFILE' ? theme.accent : theme.textMuted,
+                    fontFamily:
+                      activeDockTab === 'PROFILE' ? fonts.bodySemiBold : fonts.body,
+                  },
+                ]}
+              >
+                Cá nhân
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
+      </Animated.View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background, width: '100%', height: '100%' },
-  viewport: { flex: 1 },
-  topControlBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#0C0F0C',
-    borderBottomWidth: 1,
-    borderColor: 'rgba(156, 255, 147, 0.22)',
-    zIndex: 10,
-  },
-  selectorBtn: {
-    backgroundColor: '#191C14',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(156, 255, 147, 0.3)',
-    maxWidth: '55%',
-  },
-  selectorBtnText: { color: '#9CFF93', fontWeight: '800', fontSize: 11 },
-  topRightControls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  modeToggleBtn: {
-    backgroundColor: '#22261E',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  modeToggleText: { fontSize: 10, fontWeight: '800', color: '#9CFF93' },
-  notifBadge: { backgroundColor: '#191C14', padding: 5, borderRadius: 6 },
-  notifBadgeText: { fontSize: 12 },
-  chatBadge: { backgroundColor: '#191C14', padding: 5, borderRadius: 6 },
-  chatBadgeText: { fontSize: 12 },
-  dropdownModal: {
-    position: 'absolute',
-    top: 48,
-    left: 12,
-    right: 12,
-    backgroundColor: '#121512',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#9CFF93',
-    padding: 12,
-    maxHeight: 420,
-    zIndex: 100,
-    shadowColor: '#000',
-    shadowOpacity: 0.6,
-    shadowRadius: 15,
-  },
-  dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  dropdownTitle: { fontSize: 13, fontWeight: '900', color: '#FFFFFF' },
-  dropdownClose: { fontSize: 16, color: '#A1A79F', padding: 4 },
-  dropdownScroll: { maxHeight: 350 },
-  dropdownItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  dropdownItemActive: { backgroundColor: 'rgba(156, 255, 147, 0.18)' },
-  dropdownItemText: { fontSize: 12, fontWeight: '700', color: '#cbd5e1' },
-  dropdownItemTextActive: { color: '#9CFF93', fontWeight: '900' },
-  dropdownItemGroup: { fontSize: 10, color: '#A1A79F' },
-  bottomDock: {
-    flexDirection: 'row',
-    backgroundColor: '#0C0F0C',
-    borderTopWidth: 1,
-    borderColor: 'rgba(156, 255, 147, 0.22)',
-    paddingVertical: 8,
-    paddingBottom: 12,
-  },
-  dockTab: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  dockTabActive: {},
-  dockIcon: { fontSize: 17, color: '#64748b' },
-  dockIconActive: { color: '#9CFF93' },
-  dockLabel: { fontSize: 10, fontWeight: '700', color: '#64748b', marginTop: 3 },
-  dockLabelActive: { color: '#9CFF93' },
-  webContainer: {
+  loadingFallback: {
     flex: 1,
-    backgroundColor: '#060D0A',
+  },
+  safeArea: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  themeLayer: {
+    flex: 1,
+  },
+  viewport: {
+    flex: 1,
+  },
+  bottomDock: {
+    borderTopWidth: 1,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
   },
-  simulatorBanner: { alignItems: 'center', marginBottom: 12 },
-  simulatorTitle: { fontSize: 14, fontWeight: '900', color: '#9CFF93', letterSpacing: 1 },
-  simulatorSub: { fontSize: 11, color: '#A1A79F', marginTop: 2 },
-  phoneChassis: {
-    width: 395,
-    height: 844,
-    backgroundColor: '#0C0F0C',
-    borderRadius: 48,
-    borderWidth: 8,
-    borderColor: '#191C14',
-    overflow: 'hidden',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOpacity: 0.6,
-    shadowRadius: 30,
-  },
-  dynamicIsland: {
-    position: 'absolute',
-    top: 10,
-    alignSelf: 'center',
-    width: 110,
-    height: 30,
-    backgroundColor: '#000',
-    borderRadius: 20,
-    zIndex: 99,
+  dockInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    width: '100%',
+    maxWidth: 680,
   },
-  cameraHole: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#111827' },
-  sensorHole: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#0f172a' },
+  dockTab: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  centerTabWrapper: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerServicesBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockLabel: {
+    fontSize: 11,
+  },
 });

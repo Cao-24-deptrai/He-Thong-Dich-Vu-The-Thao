@@ -1,22 +1,22 @@
-// mobile/src/screens/TicketScreen.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
   Image,
-  Animated,
-  Easing,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { CheckCircle2, RefreshCw } from 'lucide-react-native';
+import QRCode from 'qrcode';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
 import { QrTokenResponse } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
-import QRCode from 'qrcode';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
 interface Props {
   bookingId?: string;
@@ -24,772 +24,330 @@ interface Props {
 }
 
 export const TicketScreen: React.FC<Props> = ({ bookingId, onBack }) => {
-  const { activeBooking, selectedFacility, selectedVenue } = useBookingStore();
-  const targetId = bookingId || activeBooking?._id;
-
+  const theme = useTheme();
+  const { activeBooking } = useBookingStore();
+  const [resolvedId, setResolvedId] = useState<string | undefined>(bookingId || activeBooking?._id);
   const [ticketData, setTicketData] = useState<QrTokenResponse | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState(60);
   const [loading, setLoading] = useState(true);
-
-  // Animated Laser Beam
-  const laserAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(laserAnim, {
-          toValue: 1,
-          duration: 1600,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(laserAnim, {
-          toValue: 0,
-          duration: 1600,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    animation.start();
-
-    return () => animation.stop();
-  }, [laserAnim]);
-
-  const laserTranslateY = laserAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 200],
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
   });
 
-  // Fetch or refresh dynamic QR code (60s dynamic JWT)
-  const fetchDynamicQr = async () => {
-    if (!targetId) return;
+  useEffect(() => {
+    if (bookingId || activeBooking?._id) {
+      setResolvedId(bookingId || activeBooking?._id);
+      return;
+    }
+    api
+      .getMyBookings()
+      .then((list) => {
+        const confirmed = list.find((b) => b.status === 'CONFIRMED') || list[0];
+        if (confirmed) {
+          setResolvedId(confirmed._id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch(() => setLoading(false));
+  }, [bookingId, activeBooking]);
+
+  const fetchDynamicQr = async (id: string) => {
     try {
-      const res = await api.getDynamicQr(targetId);
+      setErrorMsg(null);
+      const res = await api.getDynamicQr(id);
       setTicketData(res);
-      setSecondsRemaining(60);
+      setSecondsRemaining(res.expiresInSeconds || 60);
 
       const url = await QRCode.toDataURL(res.qrToken, {
         width: 240,
         margin: 1,
-        color: { dark: '#0f172a', light: '#ffffff' },
+        color: { dark: '#0B0E0B', light: '#FFFFFF' },
       });
       setQrDataUrl(url);
-    } catch (err: any) {
-      console.error('Failed to load dynamic QR ticket:', err);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể tải vé QR cho đơn này.';
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDynamicQr();
-  }, [targetId]);
+    if (!resolvedId) return;
+    fetchDynamicQr(resolvedId);
+  }, [resolvedId]);
 
-  // 60-second auto-refresh countdown
   useEffect(() => {
+    if (!resolvedId) return;
     const timer = setInterval(() => {
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
-          fetchDynamicQr();
+          fetchDynamicQr(resolvedId);
           return 60;
         }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
-  }, [targetId]);
+  }, [resolvedId]);
 
-  const progressPct = (secondsRemaining / 60) * 100;
-  const isCheckedIn = ticketData?.isCheckedIn;
+  const handleScanCheckin = async () => {
+    if (!ticketData?.qrToken) return;
+    try {
+      await api.scanCheckin(ticketData.qrToken);
+      setDialog({
+        visible: true,
+        title: 'Mở cổng thành công',
+        message: 'Hệ thống đã xác nhận check-in hợp lệ và mở cổng vào sân.',
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể quét mã check-in.';
+      setDialog({ visible: true, title: 'Thông báo check-in', message: msg });
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <ScreenHeader title="Vé điện tử vào sân" onBack={onBack} />
+        <View style={styles.centerState}>
+          <ActivityIndicator color={theme.accent} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!resolvedId || errorMsg) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <ScreenHeader title="Vé điện tử vào sân" onBack={onBack} />
+        <View style={styles.centerState}>
+          <Text style={[styles.emptyTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Chưa có vé đặt sân khả dụng
+          </Text>
+          <Text style={[styles.emptyDesc, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+            {errorMsg || 'Bạn cần đăng nhập và hoàn tất thanh toán 1 đơn đặt sân để nhận vé QR.'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const bookingInfo = ticketData?.booking;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top Header */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <Text style={styles.backBtnText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.topBarInfo}>
-            <Text style={styles.topBarTitle}>Thẻ Vé Vào Sân Điện Tử</Text>
-            <Text style={styles.topBarSubtitle}>Vé điện tử Apple Wallet</Text>
-            <Text style={[styles.topBarSubtitle, { fontSize: 11, color: colors.primary, marginTop: 1 }]}>Mã QR bảo mật làm mới mỗi 60s</Text>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader
+        title="Vé điện tử vào sân"
+        onBack={onBack}
+        rightElement={
+          <Pressable
+            onPress={() =>
+              setDialog({
+                visible: true,
+                title: 'Bảo mật HMAC-SHA256',
+                message: 'Mã QR tự động xoay vòng mỗi 60 giây nhằm chống chụp màn hình chia sẻ vé.',
+              })
+            }
+          >
+            <Text style={[styles.secTag, { color: theme.accent, fontFamily: fonts.headingBold }]}>
+              SEC-02
+            </Text>
+          </Pressable>
+        }
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <View style={[styles.ticketCard, { backgroundColor: theme.surface, borderColor: theme.borderAccent }]}>
+          <View style={[styles.ticketTop, { borderBottomColor: theme.borderSubtle }]}>
+            <View>
+              <Text style={[styles.metaLabel, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                Mã đơn hàng
+              </Text>
+              <Text style={[styles.orderCode, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+                #{resolvedId.slice(-8).toUpperCase()}
+              </Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: theme.successSoft }]}>
+              <Text style={[styles.statusText, { color: theme.success, fontFamily: fonts.bodySemiBold }]}>
+                {ticketData?.isCheckedIn ? 'Đã check-in' : 'Sẵn sàng vào sân'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.qrArea}>
+            <View style={[styles.qrOuterRing, { borderColor: theme.accent }]}>
+              <View style={styles.qrInnerBox}>
+                {qrDataUrl ? (
+                  <Image source={{ uri: qrDataUrl }} style={styles.qrImage} resizeMode="contain" />
+                ) : (
+                  <ActivityIndicator color="#16A34A" />
+                )}
+              </View>
+            </View>
+            <Text style={[styles.countdownText, { color: theme.textHeading, fontFamily: fonts.bodyMedium }]}>
+              Tự làm mới sau:{' '}
+              <Text style={{ color: theme.accent, fontFamily: fonts.headingBold }}>
+                {secondsRemaining}s
+              </Text>
+            </Text>
+          </View>
+
+          <View style={[styles.detailsBox, { backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }]}>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Sân thi đấu
+              </Text>
+              <Text style={[styles.detailVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                {bookingInfo?.venue?.name || 'Sân đã đặt'}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Khung giờ
+              </Text>
+              <Text style={[styles.detailVal, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                {bookingInfo ? `${bookingInfo.startTime} - ${bookingInfo.endTime}` : '--'}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Ngày thi đấu
+              </Text>
+              <Text style={[styles.detailVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                {bookingInfo?.bookingDate || '--'}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={[styles.detailLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Tổng thanh toán
+              </Text>
+              <Text style={[styles.detailVal, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+                {(bookingInfo?.totalPrice || 0).toLocaleString('vi-VN')} đ
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <Pressable
+              onPress={handleScanCheckin}
+              style={({ pressed }) => [
+                styles.primaryCta,
+                { backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 },
+              ]}
+            >
+              <CheckCircle2 size={18} strokeWidth={1.75} color={theme.onAccent} />
+              <Text style={[styles.primaryCtaText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+                Quét mã mở cổng vào sân
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => fetchDynamicQr(resolvedId)}
+              style={({ pressed }) => [
+                styles.outlineBtn,
+                { borderColor: theme.border, backgroundColor: theme.surfaceElevated, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <RefreshCw size={15} strokeWidth={1.75} color={theme.textPrimary} />
+              <Text style={[styles.outlineText, { color: theme.textPrimary, fontFamily: fonts.bodyMedium }]}>
+                Làm mới mã QR
+              </Text>
+            </Pressable>
           </View>
         </View>
+      </ScrollView>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Main Apple Wallet Ticket Card */}
-          <View style={styles.walletCardContainer}>
-            {/* Top Pass Header */}
-            <View style={styles.passHeader}>
-              <View style={styles.passHeaderTopRow}>
-                <View style={styles.brandRow}>
-                  <View style={styles.brandBadge}>
-                    <Text style={styles.brandBadgeText}>SPORT PASS</Text>
-                  </View>
-                  <Text style={styles.facilityName} numberOfLines={1}>
-                    {selectedFacility?.name || 'Cơ sở Thể Thao'}
-                  </Text>
-                </View>
-                <View style={styles.vipTag}>
-                  <Text style={styles.vipTagText}>VIP ACCESS</Text>
-                </View>
-              </View>
-
-              {/* Venue Name & Pass ID */}
-              <View style={styles.venueRow}>
-                <View>
-                  <Text style={styles.venueLabel}>VỊ TRÍ / SÂN ĐẤU</Text>
-                  <Text style={styles.venueName}>
-                    {ticketData?.booking?.venue?.name || selectedVenue?.name || 'Sân Thể Thao'}
-                  </Text>
-                </View>
-                <View style={styles.passIdBox}>
-                  <Text style={styles.passIdLabel}>MÃ VÉ</Text>
-                  <Text style={styles.passIdValue}>
-                    #{targetId ? targetId.slice(-6).toUpperCase() : 'PASS'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Boarding Itinerary Route */}
-              <View style={styles.routeContainer}>
-                <View style={styles.routeStop}>
-                  <View style={[styles.routeDot, styles.routeDotActive]} />
-                  <Text style={styles.routeText}>CHECK-IN</Text>
-                </View>
-                <View style={styles.routeLine} />
-                <View style={styles.routeStop}>
-                  <View style={[styles.routeDot, isCheckedIn && styles.routeDotActive]} />
-                  <Text style={styles.routeText}>VÀO CỔNG</Text>
-                </View>
-                <View style={styles.routeLine} />
-                <View style={styles.routeStop}>
-                  <View style={[styles.routeDot, isCheckedIn && styles.routeDotActive]} />
-                  <Text style={styles.routeText}>RA SÂN</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Apple Wallet Perforated Tear Notch Line */}
-            <View style={styles.perforatedSection}>
-              <View style={styles.notchLeft} />
-              <View style={styles.tearDashedLine} />
-              <View style={styles.notchRight} />
-            </View>
-
-            {/* Middle QR Code Section */}
-            <View style={styles.qrSection}>
-              {/* Ready / Checked In Badge */}
-              {isCheckedIn ? (
-                <View style={styles.checkedInBanner}>
-                  <Text style={styles.checkedInText}>✓ ĐÃ CHECK-IN THÀNH CÔNG</Text>
-                  <Text style={styles.checkedInSub}>
-                    {ticketData?.checkedInAt
-                      ? new Date(ticketData.checkedInAt).toLocaleTimeString('vi-VN')
-                      : 'Hợp lệ'}
-                  </Text>
-                </View>
-              ) : (
-                <View style={styles.scanReadyBadge}>
-                  <View style={styles.pulseDot} />
-                  <Text style={styles.scanReadyText}>ĐƯA MÃ NÀY CHO LỄ TÂN HOẶC CỔNG QUÉT</Text>
-                </View>
-              )}
-
-              {/* Holographic QR Scanner Box */}
-              <View style={styles.scannerWrapper}>
-                {/* 4 Glowing Corner Brackets */}
-                <View style={[styles.cornerBracket, styles.cornerTopLeft]} />
-                <View style={[styles.cornerBracket, styles.cornerTopRight]} />
-                <View style={[styles.cornerBracket, styles.cornerBottomLeft]} />
-                <View style={[styles.cornerBracket, styles.cornerBottomRight]} />
-
-                {loading ? (
-                  <View style={styles.loadingBox}>
-                    <ActivityIndicator size="large" color="#00f2fe" />
-                    <Text style={styles.loadingText}>Đang khởi tạo mã bảo mật...</Text>
-                  </View>
-                ) : qrDataUrl ? (
-                  <View style={styles.qrImageContainer}>
-                    <Image source={{ uri: qrDataUrl }} style={styles.qrImage} />
-
-                    {/* Animated Neon Laser Scan Beam */}
-                    {!isCheckedIn && (
-                      <Animated.View
-                        style={[
-                          styles.laserBeamContainer,
-                          { transform: [{ translateY: laserTranslateY }] },
-                        ]}
-                      >
-                        <View style={styles.laserBeamGlow} />
-                        <View style={styles.laserBeamLine} />
-                      </Animated.View>
-                    )}
-                  </View>
-                ) : (
-                  <Text style={styles.errorText}>Không thể tải mã QR vé</Text>
-                )}
-
-                {/* Checked-In Holographic Watermark Stamp */}
-                {isCheckedIn && (
-                  <View style={styles.watermarkStamp}>
-                    <Text style={styles.stampTextMain}>VERIFIED</Text>
-                    <Text style={styles.stampTextSub}>ĐÃ VÀO SÂN</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* 60-Second Dynamic Token Countdown */}
-              <View style={styles.countdownSection}>
-                <View style={styles.countdownHeader}>
-                  <View style={styles.countdownLabelRow}>
-                    <Text style={styles.lockIcon}>🔒</Text>
-                    <Text style={styles.countdownLabel}>Mã động làm mới sau:</Text>
-                  </View>
-                  <Text style={styles.countdownSeconds}>{secondsRemaining}s</Text>
-                </View>
-                <View style={styles.progressTrack}>
-                  <View
-                    style={[
-                      styles.progressFill,
-                      {
-                        width: `${progressPct}%`,
-                        backgroundColor: secondsRemaining < 10 ? '#ef4444' : '#00f2fe',
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.securityHint}>
-                  Token tự đổi mỗi 60 giây để chống chụp ảnh màn hình gian lận vé.
-                </Text>
-              </View>
-            </View>
-
-            {/* Lower Pass Details (Boarding Info) */}
-            <View style={styles.passDetailsSection}>
-              <View style={styles.detailsGrid}>
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailTitle}>NGÀY ĐẤU</Text>
-                  <Text style={styles.detailValue}>
-                    {ticketData?.booking?.bookingDate?.split('T')[0] || activeBooking?.bookingDate?.split('T')[0] || 'Hôm nay'}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailTitle}>KHUNG GIỜ</Text>
-                  <Text style={[styles.detailValue, styles.detailHighlight]}>
-                    {ticketData?.booking?.startTime || activeBooking?.startTime} - {ticketData?.booking?.endTime || activeBooking?.endTime}
-                  </Text>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailTitle}>THANH TOÁN</Text>
-                  <Text style={[styles.detailValue, styles.detailPrice]}>
-                    {(ticketData?.booking?.totalPrice || activeBooking?.totalPrice)?.toLocaleString('vi-VN')} đ
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Manual Refresh Button */}
-          <TouchableOpacity
-            style={styles.manualRefreshBtn}
-            onPress={fetchDynamicQr}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.manualRefreshText}>⚡ TẢI LẠI MÃ QR MỚI NGAY LẬP TỨC</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  backBtnText: {
-    fontSize: 20,
-    color: '#fff',
-  },
-  topBarInfo: {
-    flex: 1,
-  },
-  topBarTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  topBarSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 40,
-    alignItems: 'center',
-  },
-  walletCardContainer: {
+  safeArea: { flex: 1 },
+  centerState: { flex: 1, padding: spacing.xxl, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
+  emptyTitle: { fontSize: 17, textAlign: 'center' },
+  emptyDesc: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  secTag: { fontSize: 12 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
     width: '100%',
-    maxWidth: 380,
-    backgroundColor: '#0f172a',
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    alignSelf: 'center',
   },
-  passHeader: {
-    backgroundColor: '#1e293b',
-    padding: 20,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-  },
-  passHeaderTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 8,
-  },
-  brandBadge: {
-    backgroundColor: 'rgba(0, 242, 254, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginRight: 8,
+  ticketCard: {
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: 'rgba(0, 242, 254, 0.3)',
+    padding: spacing.lg,
+    gap: spacing.lg,
   },
-  brandBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#00f2fe',
-    letterSpacing: 0.5,
-  },
-  facilityName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#ffffff',
-    flex: 1,
-  },
-  vipTag: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
-  },
-  vipTagText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#f59e0b',
-  },
-  venueRow: {
+  ticketTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-  venueLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#94a3b8',
-    letterSpacing: 0.5,
-  },
-  venueName: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#ffffff',
-    marginTop: 2,
-  },
-  passIdBox: {
-    alignItems: 'flex-end',
-  },
-  passIdLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    fontWeight: '700',
-  },
-  passIdValue: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#00f2fe',
-    
-  },
-  routeContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
   },
-  routeStop: {
-    alignItems: 'center',
-  },
-  routeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#475569',
-    marginBottom: 3,
-  },
-  routeDotActive: {
-    backgroundColor: '#00f2fe',
-    shadowColor: '#00f2fe',
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
-  },
-  routeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#94a3b8',
-  },
-  routeLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#334155',
-    marginHorizontal: 8,
-  },
-  perforatedSection: {
-    height: 24,
-    backgroundColor: '#0f172a',
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  notchLeft: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    position: 'absolute',
-    left: -12,
-    zIndex: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  notchRight: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    position: 'absolute',
-    right: -12,
-    zIndex: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-  },
-  tearDashedLine: {
-    flex: 1,
-    height: 1,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+  metaLabel: { fontSize: 11 },
+  orderCode: { fontSize: 18, marginTop: 2 },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill },
+  statusText: { fontSize: 11 },
+  qrArea: { alignItems: 'center', gap: spacing.sm },
+  qrOuterRing: {
+    width: 190,
+    height: 190,
+    borderRadius: radius.xl,
+    borderWidth: 2,
     borderStyle: 'dashed',
-    marginHorizontal: 16,
-  },
-  qrSection: {
-    padding: 24,
-    alignItems: 'center',
-    backgroundColor: '#0f172a',
-  },
-  scanReadyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 242, 254, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 242, 254, 0.25)',
-  },
-  pulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#00f2fe',
-    marginRight: 6,
-  },
-  scanReadyText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#00f2fe',
-    letterSpacing: 0.5,
-  },
-  checkedInBanner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginBottom: 18,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.success,
-  },
-  checkedInText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.success,
-  },
-  checkedInSub: {
-    fontSize: 9,
-    color: '#10b981',
-    marginTop: 1,
-  },
-  scannerWrapper: {
-    width: 220,
-    height: 220,
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
     padding: 8,
   },
-  cornerBracket: {
-    position: 'absolute',
-    width: 18,
-    height: 18,
-    borderColor: '#00f2fe',
-    zIndex: 10,
-  },
-  cornerTopLeft: {
-    top: -3,
-    left: -3,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: 6,
-  },
-  cornerTopRight: {
-    top: -3,
-    right: -3,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: 6,
-  },
-  cornerBottomLeft: {
-    bottom: -3,
-    left: -3,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: 6,
-  },
-  cornerBottomRight: {
-    bottom: -3,
-    right: -3,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: 6,
-  },
-  qrImageContainer: {
-    width: 204,
-    height: 204,
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 12,
-  },
-  qrImage: {
-    width: 204,
-    height: 204,
-  },
-  laserBeamContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 20,
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-  laserBeamGlow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 16,
-    backgroundColor: 'rgba(0, 242, 254, 0.3)',
-  },
-  laserBeamLine: {
-    height: 2,
-    backgroundColor: '#00f2fe',
-    shadowColor: '#00f2fe',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-  },
-  loadingBox: {
+  qrInnerBox: {
+    width: 168,
+    height: 168,
+    borderRadius: radius.lg,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 8,
   },
-  loadingText: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 8,
-  },
-  errorText: {
-    fontSize: 11,
-    color: '#ef4444',
-  },
-  watermarkStamp: {
-    position: 'absolute',
-    borderWidth: 3,
-    borderColor: '#10b981',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(6, 78, 59, 0.85)',
-    transform: [{ rotate: '-14deg' }],
-    alignItems: 'center',
-    zIndex: 20,
-    shadowColor: '#10b981',
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-  },
-  stampTextMain: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#ffffff',
-    letterSpacing: 2,
-  },
-  stampTextSub: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#a7f3d0',
-    letterSpacing: 1,
-  },
-  countdownSection: {
-    width: '100%',
-    marginTop: 20,
-  },
-  countdownHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  countdownLabelRow: {
+  qrImage: { width: '100%', height: '100%' },
+  countdownText: { fontSize: 13 },
+  detailsBox: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, gap: spacing.sm },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
+  detailLabel: { fontSize: 12 },
+  detailVal: { fontSize: 12 },
+  actions: { gap: spacing.sm },
+  primaryCta: {
+    minHeight: 48,
+    borderRadius: radius.md,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
   },
-  lockIcon: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  countdownLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#94a3b8',
-  },
-  countdownSeconds: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#00f2fe',
-    
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  securityHint: {
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 14,
-  },
-  passDetailsSection: {
-    backgroundColor: '#1e293b',
-    padding: 18,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  detailsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailItem: {
-    flex: 1,
-  },
-  detailTitle: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#64748b',
-    letterSpacing: 0.5,
-  },
-  detailValue: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginTop: 3,
-  },
-  detailHighlight: {
-    color: '#00f2fe',
-  },
-  detailPrice: {
-    color: '#10b981',
-    
-  },
-  manualRefreshBtn: {
-    marginTop: 20,
-    backgroundColor: 'rgba(0, 242, 254, 0.12)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 14,
+  primaryCtaText: { fontSize: 14 },
+  outlineBtn: {
+    minHeight: 44,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(0, 242, 254, 0.3)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
-  manualRefreshText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#00f2fe',
-    letterSpacing: 0.5,
-  },
+  outlineText: { fontSize: 12 },
 });

@@ -1,226 +1,507 @@
-// mobile/src/screens/GamingScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
+  Pressable,
   ScrollView,
-  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
   SafeAreaView,
-  Alert,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
+import { api } from '../api/client';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
-interface PCStation {
-  id: string;
-  name: string;
-  zone: 'VIP_RTX4090' | 'STANDARD_RTX4080' | 'STREAMING';
-  status: 'AVAILABLE' | 'OCCUPIED' | 'MAINTENANCE';
-  ratePerHour: number;
+interface Props {
+  onBack: () => void;
+  onCheckout?: () => void;
 }
 
-export const GamingScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [selectedStation, setSelectedStation] = useState<PCStation | null>(null);
-  const [selectedHours, setSelectedHours] = useState<number>(2);
+interface GamingMachine {
+  _id: string;
+  machineCode: string;
+  name?: string;
+  zone?: string;
+  status: string;
+  hourlyPrice?: number;
+  pricePerHour?: number;
+  position?: {
+    x?: number;
+    y?: number;
+    floor?: number;
+    roomName?: string;
+  };
+  specs?:
+    | string
+    | {
+        cpu?: string;
+        ram?: string;
+        gpu?: string;
+        screen?: string;
+      };
+}
 
-  const pcStations: PCStation[] = [
-    { id: 'PC-01', name: 'Máy VIP 01', zone: 'VIP_RTX4090', status: 'AVAILABLE', ratePerHour: 25000 },
-    { id: 'PC-02', name: 'Máy VIP 02', zone: 'VIP_RTX4090', status: 'AVAILABLE', ratePerHour: 25000 },
-    { id: 'PC-03', name: 'Máy VIP 03', zone: 'VIP_RTX4090', status: 'OCCUPIED', ratePerHour: 25000 },
-    { id: 'PC-04', name: 'Máy VIP 04', zone: 'VIP_RTX4090', status: 'AVAILABLE', ratePerHour: 25000 },
-    { id: 'PC-21', name: 'Máy Sảnh 21', zone: 'STANDARD_RTX4080', status: 'AVAILABLE', ratePerHour: 18000 },
-    { id: 'PC-22', name: 'Máy Sảnh 22', zone: 'STANDARD_RTX4080', status: 'AVAILABLE', ratePerHour: 18000 },
-    { id: 'PC-23', name: 'Máy Sảnh 23', zone: 'STANDARD_RTX4080', status: 'OCCUPIED', ratePerHour: 18000 },
-    { id: 'PC-24', name: 'Máy Sảnh 24', zone: 'STANDARD_RTX4080', status: 'AVAILABLE', ratePerHour: 18000 },
-    { id: 'PC-88', name: 'Phòng Stream 88', zone: 'STREAMING', status: 'AVAILABLE', ratePerHour: 40000 },
-  ];
+const isMachineAvailable = (status?: string) => {
+  const s = (status || '').toUpperCase();
+  return s === 'IDLE' || s === 'AVAILABLE';
+};
 
-  const handleBookPC = () => {
-    if (!selectedStation) {
-      Alert.alert('Chưa chọn máy', 'Vui lòng chọn một máy trạm còn trống.');
-      return;
+export const GamingScreen: React.FC<Props> = ({ onBack }) => {
+  const theme = useTheme();
+  const [cluster, setCluster] = useState<'LOBBY' | 'VIP'>('LOBBY');
+  const [machines, setMachines] = useState<GamingMachine[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const loadMachines = async () => {
+    try {
+      setLoading(true);
+      const data = await api.getGamingMachines();
+      setMachines(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load gaming machines:', err);
+      setMachines([]);
+    } finally {
+      setLoading(false);
     }
-    const total = selectedStation.ratePerHour * selectedHours;
-    Alert.alert(
-      'Xác nhận mở máy',
-      `Bạn đã chọn ${selectedStation.name} (${selectedHours} giờ).\nTổng tiền: ${total.toLocaleString('vi-VN')} đ\nCơ chế tính cước cuốn chiếu 15 phút bảo vệ quyền lợi.`,
-      [{ text: 'Đồng ý', onPress: () => Alert.alert('Thành công', 'Đã cấp lệnh mở máy từ xa!') }, { text: 'Hủy', style: 'cancel' }]
-    );
   };
 
+  useEffect(() => {
+    loadMachines();
+  }, []);
+
+  const filteredMachines = machines.filter((m) => {
+    const z = (m.zone || '').toUpperCase();
+    const isVipOrEsport = z.includes('VIP') || z.includes('STREAM') || z.includes('ESPORT');
+    if (cluster === 'VIP') return isVipOrEsport;
+    return !isVipOrEsport;
+  });
+
+  const vipRooms = Object.values(
+    machines
+      .filter((m) => {
+        const z = (m.zone || '').toUpperCase();
+        return z.includes('VIP') || z.includes('STREAM') || z.includes('ESPORT');
+      })
+      .reduce<
+        Record<
+          string,
+          {
+            roomName: string;
+            total: number;
+            available: number;
+            gpu: string;
+            screen: string;
+            price: number;
+          }
+        >
+      >((acc, m) => {
+        const roomName = m.position?.roomName || 'Phòng VIP';
+        if (!acc[roomName]) {
+          const specObj = typeof m.specs === 'object' && m.specs ? m.specs : undefined;
+          acc[roomName] = {
+            roomName,
+            total: 0,
+            available: 0,
+            gpu: specObj?.gpu || 'RTX 4090',
+            screen: specObj?.screen || '240Hz',
+            price: m.hourlyPrice ?? m.pricePerHour ?? 15000,
+          };
+        }
+        acc[roomName].total += 1;
+        if (isMachineAvailable(m.status)) {
+          acc[roomName].available += 1;
+        }
+        return acc;
+      }, {})
+  );
+
+  const togglePc = (id: string, status: string) => {
+    if (!isMachineAvailable(status)) return;
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((p) => p !== id);
+      if (prev.length >= 16) {
+        setDialog({
+          visible: true,
+          title: 'Giới hạn đặt online',
+          message: 'Mỗi đơn online đặt tối đa 16 máy để tránh khóa phòng máy ảo.',
+        });
+        return prev;
+      }
+      return [...prev, id];
+    });
+  };
+
+  const handleStartSession = async () => {
+    if (selectedIds.length === 0) {
+      setDialog({
+        visible: true,
+        title: 'Chưa chọn máy',
+        message: 'Vui lòng chọn ít nhất 1 máy trống trên sơ đồ.',
+      });
+      return;
+    }
+
+    try {
+      setStarting(true);
+      await Promise.all(
+        selectedIds.map((machineId) =>
+          api.startGamingSession({ machineId, depositAmount: 50000 })
+        )
+      );
+      setDialog({
+        visible: true,
+        title: 'Đã mở phiên chơi thành công',
+        message: `Đã khởi tạo phiên chơi cho ${selectedIds.length} máy đã chọn.`,
+      });
+      setSelectedIds([]);
+      await loadMachines();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Vui lòng đăng nhập hoặc kiểm tra số dư ví.';
+      setDialog({ visible: true, title: 'Không thể đặt máy', message: msg });
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const totalEstimate = machines
+    .filter((m) => selectedIds.includes(m._id))
+    .reduce((sum, m) => sum + (m.hourlyPrice ?? m.pricePerHour ?? (cluster === 'VIP' ? 15000 : 10000)), 0);
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-          )}
-          <TwoLineText
-            primary="Tổ Hợp Cyber Gaming 100 Máy"
-            secondary="Cấu hình RTX 4090 & Màn hình 360Hz Esports"
-            badge="100 MÁY"
-            badgeColor={colors.primary}
-          />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader
+        title="Cyber Esports 100 máy"
+        onBack={onBack}
+        rightElement={
+          <Pressable
+            onPress={() =>
+              setDialog({
+                visible: true,
+                title: 'Quy tắc Cyber Gaming',
+                message:
+                  'Tối đa 16 máy mỗi đơn online. Đơn lớn hơn vui lòng đặt trực tiếp tại quầy. Sảnh trang bị RTX 4080, phòng VIP trang bị RTX 4090.',
+              })
+            }
+          >
+            <Text style={[styles.ruleLink, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+              Quy định
+            </Text>
+          </Pressable>
+        }
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        <View style={[styles.ruleBanner, { backgroundColor: theme.surface, borderColor: theme.borderAccent }]}>
+          <View>
+            <Text style={[styles.ruleTag, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Quy định đặt online
+            </Text>
+            <Text style={[styles.ruleMain, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+              Tối đa 16 máy / đơn
+            </Text>
+          </View>
+          <View style={[styles.activeBadge, { backgroundColor: theme.accent }]}>
+            <Text style={[styles.activeBadgeText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+              {machines.length} máy hoạt động
+            </Text>
+          </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-          {/* Rule banner */}
-          <View style={styles.ruleBanner}>
-            <TwoLineText
-              primary="Cơ Chế Tính Cước Cuốn Chiếu 15 Phút"
-              secondary="Trả máy trước hạn được hoàn tiền thừa chính xác theo số phút thực tế vào ví Phanta Pay."
-              primaryStyle={{ fontSize: 13, color: '#fbbf24' }}
-              secondaryStyle={{ fontSize: 11, color: '#e2e8f0' }}
-            />
-          </View>
+        <View style={styles.tabRow}>
+          <Pressable
+            onPress={() => setCluster('LOBBY')}
+            style={[
+              styles.tabBtn,
+              {
+                backgroundColor: cluster === 'LOBBY' ? theme.accent : theme.surfaceElevated,
+                borderColor: cluster === 'LOBBY' ? theme.accent : theme.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                {
+                  color: cluster === 'LOBBY' ? theme.onAccent : theme.textSecondary,
+                  fontFamily: fonts.bodySemiBold,
+                },
+              ]}
+            >
+              Sảnh chính (50 máy)
+            </Text>
+          </Pressable>
 
-          {/* Station Matrix */}
-          <Text style={styles.sectionTitle}>Sơ Đồ Máy Trạm Trực Tuyến</Text>
-          <View style={styles.grid}>
-            {pcStations.map((pc) => {
-              const isSelected = selectedStation?.id === pc.id;
-              const isOccupied = pc.status === 'OCCUPIED';
+          <Pressable
+            onPress={() => setCluster('VIP')}
+            style={[
+              styles.tabBtn,
+              {
+                backgroundColor: cluster === 'VIP' ? theme.accent : theme.surfaceElevated,
+                borderColor: cluster === 'VIP' ? theme.accent : theme.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                {
+                  color: cluster === 'VIP' ? theme.onAccent : theme.textSecondary,
+                  fontFamily: fonts.bodySemiBold,
+                },
+              ]}
+            >
+              Phòng VIP & Esports (50 máy)
+            </Text>
+          </Pressable>
+        </View>
 
-              return (
-                <TouchableOpacity
-                  key={pc.id}
-                  disabled={isOccupied}
-                  onPress={() => setSelectedStation(pc)}
-                  style={[
-                    styles.pcCard,
-                    isOccupied && styles.pcOccupied,
-                    isSelected && styles.pcSelected,
-                  ]}
-                >
-                  <Text style={[styles.pcName, isSelected && styles.pcNameSelected]}>{pc.id}</Text>
-                  <Text style={styles.pcZone}>{pc.name}</Text>
-                  <Text style={[styles.pcRate, isSelected && styles.pcRateSelected]}>
-                    {pc.ratePerHour.toLocaleString('vi-VN')} đ/h
-                  </Text>
-                  <View style={[styles.statusDot, { backgroundColor: isOccupied ? colors.danger : colors.success }]} />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Hours Picker */}
-          {selectedStation && (
-            <View style={styles.bookingBox}>
-              <TwoLineText
-                primary={`Đang chọn: ${selectedStation.name}`}
-                secondary={`Đơn giá: ${selectedStation.ratePerHour.toLocaleString('vi-VN')} đ/giờ`}
-                primaryStyle={{ color: colors.primary }}
-              />
-
-              <Text style={styles.hoursLabel}>Chọn số giờ nạp trước:</Text>
-              <View style={styles.hoursRow}>
-                {[1, 2, 3, 5].map((h) => (
-                  <TouchableOpacity
-                    key={h}
-                    onPress={() => setSelectedHours(h)}
-                    style={[styles.hourBtn, selectedHours === h && styles.hourBtnSelected]}
-                  >
-                    <Text style={[styles.hourBtnText, selectedHours === h && styles.hourBtnTextSelected]}>
-                      {h} Giờ
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Tổng tạm tính:</Text>
-                <Text style={styles.totalValue}>
-                  {(selectedStation.ratePerHour * selectedHours).toLocaleString('vi-VN')} đ
+        <View style={[styles.matrixCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.matrixHeader}>
+            <Text style={[styles.matrixTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+              Sơ đồ chọn máy
+            </Text>
+            <View style={styles.legendRow}>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.accent }]} />
+                <Text style={[styles.legendText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  Chọn
                 </Text>
               </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.danger }]} />
+                <Text style={[styles.legendText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  Bận
+                </Text>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { borderWidth: 1, borderColor: theme.borderLight }]} />
+                <Text style={[styles.legendText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  Trống
+                </Text>
+              </View>
+            </View>
+          </View>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleBookPC}>
-                <Text style={styles.submitText}>Mở Máy & Bắt Đầu Chơi →</Text>
-              </TouchableOpacity>
+          {loading ? (
+            <ActivityIndicator color={theme.accent} style={{ marginVertical: spacing.lg }} />
+          ) : filteredMachines.length === 0 ? (
+            <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+              Chưa có dữ liệu máy trong khu vực này.
+            </Text>
+          ) : (
+            <View style={styles.pcGrid}>
+              {filteredMachines.map((m) => {
+                const isBusy = !isMachineAvailable(m.status);
+                const isSelected = selectedIds.includes(m._id);
+
+                return (
+                  <Pressable
+                    key={m._id}
+                    disabled={isBusy}
+                    onPress={() => togglePc(m._id, m.status)}
+                    style={[
+                      styles.pcBtn,
+                      {
+                        backgroundColor: isBusy
+                          ? theme.dangerSoft
+                          : isSelected
+                            ? theme.accent
+                            : theme.surfaceElevated,
+                        borderColor: isBusy
+                          ? theme.danger
+                          : isSelected
+                            ? theme.accent
+                            : theme.border,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.pcText,
+                        {
+                          color: isBusy
+                            ? theme.danger
+                            : isSelected
+                              ? theme.onAccent
+                              : theme.textPrimary,
+                          fontFamily: fonts.bodySemiBold,
+                        },
+                      ]}
+                    >
+                      {m.machineCode}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           )}
-        </ScrollView>
-      </View>
+
+          <Text style={[styles.selectedInfo, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+            Đang chọn:{' '}
+            <Text style={{ color: theme.accent, fontFamily: fonts.bodySemiBold }}>
+              {selectedIds.length} máy
+            </Text>{' '}
+            (tối đa 16 máy)
+          </Text>
+        </View>
+
+        {vipRooms.length > 0 ? (
+          <View style={styles.vipSection}>
+            <Text style={[styles.vipSectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+              Phòng VIP & Thi đấu Esports ({vipRooms.length} khu vực)
+            </Text>
+            <View style={styles.vipGrid}>
+              {vipRooms.map((room) => {
+                const isFull = room.available === 0;
+                const isAllFree = room.available === room.total;
+                const statusLabel = isFull
+                  ? 'HẾT MÁY'
+                  : isAllFree
+                    ? `TRỐNG ${room.available}/${room.total}`
+                    : `CÒN ${room.available} MÁY`;
+                const statusColor = isFull
+                  ? theme.danger
+                  : isAllFree
+                    ? theme.success
+                    : theme.warning;
+                return (
+                  <Pressable
+                    key={room.roomName}
+                    onPress={() => setCluster('VIP')}
+                    style={[
+                      styles.vipCard,
+                      { backgroundColor: theme.surface, borderColor: theme.border },
+                    ]}
+                  >
+                    <View style={styles.vipCardTop}>
+                      <Text
+                        numberOfLines={1}
+                        style={[styles.vipRoomName, { color: theme.textHeading, fontFamily: fonts.headingBold }]}
+                      >
+                        {room.roomName}
+                      </Text>
+                      <Text style={[styles.vipStatus, { color: statusColor, fontFamily: fonts.bodySemiBold }]}>
+                        {statusLabel}
+                      </Text>
+                    </View>
+                    <Text style={[styles.vipSpec, { color: theme.textPrimary, fontFamily: fonts.bodySemiBold }]}>
+                      {room.gpu}
+                    </Text>
+                    <Text numberOfLines={1} style={[styles.vipSub, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                      {room.screen}
+                    </Text>
+                    <Text style={[styles.vipPrice, { color: theme.accent, fontFamily: fonts.headingBold }]}>
+                      {room.price.toLocaleString('vi-VN')} đ/h
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
+
+        <Pressable
+          disabled={starting}
+          onPress={handleStartSession}
+          style={({ pressed }) => [
+            styles.ctaBtn,
+            { backgroundColor: theme.accent, opacity: starting ? 0.6 : pressed ? 0.85 : 1 },
+          ]}
+        >
+          <Text style={[styles.ctaText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+            Đặt {selectedIds.length} máy ({totalEstimate.toLocaleString('vi-VN')} đ/giờ)
+          </Text>
+        </Pressable>
+      </ScrollView>
+
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  backBtn: { padding: 8, backgroundColor: colors.card, borderRadius: 8 },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  scroll: { paddingBottom: 30 },
+  safeArea: { flex: 1 },
+  ruleLink: { fontSize: 12 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
+  },
   ruleBanner: {
-    backgroundColor: '#78350f30',
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: '#f59e0b40',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  sectionTitle: { fontSize: 15, fontWeight: '800', color: '#fff', marginBottom: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  pcCard: {
-    width: '31%',
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    padding: 10,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  pcOccupied: { opacity: 0.4 },
-  pcSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
-  pcName: { fontSize: 14, fontWeight: '800', color: '#fff' },
-  pcNameSelected: { color: colors.primary },
-  pcZone: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
-  pcRate: { fontSize: 11, fontWeight: '700', color: colors.primary, marginTop: 4 },
-  pcRateSelected: { color: '#fff' },
-  statusDot: { width: 6, height: 6, borderRadius: 3, position: 'absolute', top: 8, right: 8 },
-  bookingBox: {
-    marginTop: 20,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 16,
-  },
-  hoursLabel: { fontSize: 12, fontWeight: '700', color: '#cbd5e1', marginTop: 12, marginBottom: 8 },
-  hoursRow: { flexDirection: 'row', gap: 8 },
-  hourBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#1e293b',
-    alignItems: 'center',
-  },
-  hourBtnSelected: { backgroundColor: colors.primary },
-  hourBtnText: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
-  hourBtnTextSelected: { color: '#000' },
-  totalRow: {
+    padding: spacing.md,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderColor: colors.border,
+    gap: spacing.sm,
   },
-  totalLabel: { fontSize: 13, color: '#94a3b8', fontWeight: '600' },
-  totalValue: { fontSize: 18, color: colors.primary, fontWeight: '900' },
-  submitBtn: {
-    marginTop: 16,
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
+  ruleTag: { fontSize: 11 },
+  ruleMain: { fontSize: 15, marginTop: 2 },
+  activeBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: radius.pill },
+  activeBadgeText: { fontSize: 11 },
+  tabRow: { flexDirection: 'row', gap: spacing.sm },
+  tabBtn: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radius.md,
+    borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
   },
-  submitText: { color: '#000', fontWeight: '800', fontSize: 14 },
+  tabText: { fontSize: 12, textAlign: 'center' },
+  matrixCard: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.md, gap: spacing.md },
+  matrixHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
+  matrixTitle: { fontSize: 14 },
+  legendRow: { flexDirection: 'row', gap: spacing.md },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendDot: { width: 10, height: 10, borderRadius: 3 },
+  legendText: { fontSize: 11 },
+  emptyText: { fontSize: 12, textAlign: 'center', paddingVertical: spacing.lg },
+  pcGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  pcBtn: {
+    width: '15%',
+    minHeight: 38,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pcText: { fontSize: 10 },
+  selectedInfo: { fontSize: 12, textAlign: 'center' },
+  vipSection: { gap: spacing.sm },
+  vipSectionTitle: { fontSize: 14 },
+  vipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  vipCard: {
+    width: '48.5%',
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    gap: 4,
+  },
+  vipCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 6 },
+  vipRoomName: { fontSize: 13, flex: 1 },
+  vipStatus: { fontSize: 10 },
+  vipSpec: { fontSize: 12 },
+  vipSub: { fontSize: 11 },
+  vipPrice: { fontSize: 13, marginTop: 2 },
+  ctaBtn: { minHeight: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginTop: spacing.xs },
+  ctaText: { fontSize: 14 },
 });

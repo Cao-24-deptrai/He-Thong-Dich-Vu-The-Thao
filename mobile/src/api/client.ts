@@ -1,20 +1,21 @@
-// mobile/src/api/client.ts
-import { 
-  User, 
-  Facility, 
-  Venue, 
-  VenueAvailability, 
-  Booking, 
-  PaymentLinkResponse, 
+import {
+  User,
+  Facility,
+  Venue,
+  VenueAvailability,
+  Booking,
+  PaymentLinkResponse,
   QrTokenResponse,
   Voucher,
   VoucherValidationResult,
-  CustomerTierInfo
+  CustomerTierInfo,
 } from '../types';
 
-const API_BASE_URL = 
-  process.env.EXPO_PUBLIC_API_URL || 
-  (typeof window !== 'undefined' && window.location ? `http://${window.location.hostname}:3000` : 'http://localhost:3000');
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' && window.location
+    ? `http://${window.location.hostname}:3000`
+    : 'http://localhost:3000');
 
 class ApiClient {
   private token: string | null = null;
@@ -57,7 +58,9 @@ class ApiClient {
 
     if (!response.ok) {
       const errorMsg = data.message || data.error || `HTTP ${response.status}`;
-      const err = new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)) as any;
+      const err = new Error(
+        typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg)
+      ) as Error & { status?: number; data?: unknown };
       err.status = response.status;
       err.data = data;
       throw err;
@@ -67,7 +70,12 @@ class ApiClient {
   }
 
   // --- AUTH ---
-  async register(phone: string, password: string, fullName: string, email?: string): Promise<{ accessToken: string; user: User }> {
+  async register(
+    phone: string,
+    password: string,
+    fullName: string,
+    email?: string
+  ): Promise<{ accessToken: string; user: User }> {
     const res = await this.request<any>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ phone, password, fullName, email }),
@@ -77,7 +85,10 @@ class ApiClient {
     return { accessToken: token, user: res.user };
   }
 
-  async login(phone: string, password: string): Promise<{ accessToken: string; user: User }> {
+  async login(
+    phone: string,
+    password: string
+  ): Promise<{ accessToken: string; user: User }> {
     const res = await this.request<any>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ phone, password }),
@@ -85,6 +96,61 @@ class ApiClient {
     const token = res.accessToken || res.access_token;
     this.setToken(token);
     return { accessToken: token, user: res.user };
+  }
+
+  async sendOtp(phone: string): Promise<{ message: string }> {
+    return this.request<any>('/auth/otp/send', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  async verifyOtp(
+    phone: string,
+    code: string
+  ): Promise<{ accessToken: string; user: User }> {
+    const res = await this.request<any>('/auth/otp/verify', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
+    });
+    const token = res.accessToken || res.access_token;
+    this.setToken(token);
+    return { accessToken: token, user: res.user };
+  }
+
+  async getAuthMe(): Promise<User> {
+    return this.request<User>('/auth/me');
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.request('/auth/logout', { method: 'POST' });
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      this.setToken(null);
+    }
+  }
+
+  // --- USERS ---
+  async getMyProfile(): Promise<any> {
+    return this.request<any>('/users/me');
+  }
+
+  async updateMyProfile(payload: {
+    fullName?: string;
+    email?: string;
+    bio?: string;
+    favoriteSports?: string[];
+  }): Promise<any> {
+    return this.request<any>('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getUserTierInfo(): Promise<CustomerTierInfo> {
+    return this.request<CustomerTierInfo>('/users/tier-info');
   }
 
   // --- FACILITIES & VENUES ---
@@ -97,11 +163,16 @@ class ApiClient {
     return this.request<Venue[]>(`/venues?facilityId=${facilityId}`);
   }
 
-  async getVenueAvailability(venueId: string, date: string): Promise<VenueAvailability> {
-    return this.request<VenueAvailability>(`/venues/${venueId}/availability?date=${date}`);
+  async getVenueAvailability(
+    venueId: string,
+    date: string
+  ): Promise<VenueAvailability> {
+    return this.request<VenueAvailability>(
+      `/venues/${venueId}/availability?date=${date}`
+    );
   }
 
-  // --- BOOKING ENGINE ---
+  // --- BOOKINGS & RECURRING ---
   async holdSlot(payload: {
     venueId: string;
     bookingDate: string;
@@ -124,7 +195,21 @@ class ApiClient {
     });
   }
 
-  // --- PAYMENT (PAYOS / VIETQR) ---
+  async checkRecurring(payload: any): Promise<any> {
+    return this.request<any>('/bookings/recurring/check', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async createRecurring(payload: any): Promise<any> {
+    return this.request<any>('/bookings/recurring', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- PAYMENT & CHECKIN ---
   async createPaymentLink(bookingId: string): Promise<PaymentLinkResponse> {
     return this.request<PaymentLinkResponse>('/payments/create-link', {
       method: 'POST',
@@ -132,45 +217,68 @@ class ApiClient {
     });
   }
 
-  // --- DYNAMIC QR TICKET ---
+  async getPaymentStatus(bookingId: string): Promise<any> {
+    return this.request<any>(`/payments/status/${bookingId}`);
+  }
+
   async getDynamicQr(bookingId: string): Promise<QrTokenResponse> {
     return this.request<QrTokenResponse>(`/bookings/${bookingId}/qr`);
   }
 
-  // --- GYM MEMBERSHIP (Mục 6.1) ---
-  async purchaseGymPass(type: 'SINGLE_PASS' | 'MONTHLY_PASS' | 'YEARLY_PASS', paymentProvider?: string): Promise<any> {
-    return this.request<any>('/membership-pass/purchase', {
+  async scanCheckin(qrToken: string): Promise<any> {
+    return this.request<any>('/checkin/scan', {
       method: 'POST',
-      body: JSON.stringify({ type, paymentProvider: paymentProvider || 'PAYOS' }),
+      body: JSON.stringify({ qrToken }),
     });
   }
 
-  async getMyGymPasses(): Promise<any[]> {
-    return this.request<any[]>('/membership-pass/me');
+  // --- WALLET ---
+  async getMyWallet(): Promise<{
+    balance: number;
+    heldBalance?: number;
+    status?: string;
+  }> {
+    return this.request<any>('/wallets/me');
   }
 
-  async getGymPassQr(passId: string): Promise<{ qrToken: string; expiresInSeconds: number; remainingCheckIns: number }> {
-    return this.request<any>(`/membership-pass/${passId}/qr`, {
+  async getMyWalletTransactions(type?: string): Promise<any> {
+    const query = type ? `?type=${type}` : '';
+    return this.request<any>(`/wallets/me/transactions${query}`);
+  }
+
+  async topupWallet(amount: number, note?: string): Promise<any> {
+    return this.request<any>('/wallets/topup', {
       method: 'POST',
+      body: JSON.stringify({
+        amount,
+        idempotencyKey: `TOPUP-${Date.now()}`,
+        note: note || 'Nạp tiền qua VietQR',
+      }),
     });
   }
 
-  // --- GYM MEMBERSHIP & QR ACCESS (Epic E11: BR-26, BR-27, BR-28, BR-29, BR-30, AC-70) ---
+  async payWithWallet(payload: {
+    amount: number;
+    category: string;
+    refType: string;
+    refId: string;
+    note?: string;
+  }): Promise<any> {
+    return this.request<any>('/wallets/pay', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...payload,
+        idempotencyKey: `PAY-${payload.refId}-${Date.now()}`,
+      }),
+    });
+  }
+
+  // --- GYM & POOL ---
   async getGymPlans(): Promise<any[]> {
     return this.request<any[]>('/gym/plans');
   }
 
-  async getMyGymQr(): Promise<{
-    hasCredential: boolean;
-    qrCode?: string;
-    status?: 'ACTIVE' | 'EXPIRED';
-    planType?: string;
-    planName?: string;
-    startDate?: string;
-    endDate?: string;
-    daysRemaining?: number;
-    message?: string;
-  }> {
+  async getMyGymQr(): Promise<any> {
     return this.request<any>('/gym/my-qr');
   }
 
@@ -184,22 +292,6 @@ class ApiClient {
     });
   }
 
-  async calculateGymUpgrade(newPlanType: 'DAY_1' | 'MONTH_1' | 'MONTH_3' | 'MONTH_6'): Promise<{
-    canUpgrade: boolean;
-    currentPlanPrice: number;
-    newPlanPrice: number;
-    daysRemaining: number;
-    totalDays: number;
-    creditAmount: number;
-    finalAmount: number;
-    reason?: string;
-  }> {
-    return this.request<any>('/gym/calculate-upgrade', {
-      method: 'POST',
-      body: JSON.stringify({ newPlanType }),
-    });
-  }
-
   async getGymCapacity(): Promise<{
     insideCount: number;
     maxCapacity: number;
@@ -210,7 +302,6 @@ class ApiClient {
     return this.request<any>('/gym/capacity');
   }
 
-  // --- POOL TICKETS (Epic E11: BR-31, AC-87) ---
   async getPoolStatus(): Promise<any> {
     return this.request<any>('/pool/status');
   }
@@ -220,12 +311,7 @@ class ApiClient {
     childCount: number;
     customerPhone?: string;
     customerName?: string;
-  }): Promise<{
-    success: boolean;
-    totalAmount: number;
-    tickets: any[];
-    message: string;
-  }> {
+  }): Promise<any> {
     return this.request<any>('/pool/tickets/purchase', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -236,7 +322,57 @@ class ApiClient {
     return this.request<any[]>('/pool/tickets/my');
   }
 
-  // --- MATCHMAKING (Mục 6.3) ---
+  // --- GAMING ---
+  async getGamingMachines(zone?: string, status?: string): Promise<any[]> {
+    const params = new URLSearchParams();
+    if (zone) params.append('zone', zone);
+    if (status) params.append('status', status);
+    const qs = params.toString();
+    return this.request<any[]>(`/gaming/machines${qs ? `?${qs}` : ''}`);
+  }
+
+  async startGamingSession(payload: {
+    machineId: string;
+    depositAmount?: number;
+  }): Promise<any> {
+    return this.request<any>('/gaming/sessions/start', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- PT & CLASSES ---
+  async getTrainers(specialty?: string): Promise<any[]> {
+    const query = specialty ? `?specialty=${encodeURIComponent(specialty)}` : '';
+    return this.request<any[]>(`/pt-classes/trainers${query}`);
+  }
+
+  async getClasses(classType?: string): Promise<any[]> {
+    const query = classType ? `?classType=${encodeURIComponent(classType)}` : '';
+    return this.request<any[]>(`/pt-classes/classes${query}`);
+  }
+
+  async bookPtSession(payload: {
+    trainerId: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    notes?: string;
+  }): Promise<any> {
+    return this.request<any>('/pt-classes/pt/book', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async registerClass(classId: string, payload?: { notes?: string }): Promise<any> {
+    return this.request<any>(`/pt-classes/classes/${classId}/register`, {
+      method: 'POST',
+      body: JSON.stringify(payload || {}),
+    });
+  }
+
+  // --- MATCHMAKING ---
   async getMatchRequests(sportType?: string): Promise<any[]> {
     const query = sportType ? `?sportType=${sportType}` : '';
     return this.request<any[]>(`/match-requests${query}`);
@@ -259,14 +395,11 @@ class ApiClient {
       method: 'POST',
     });
   }
-  // --- VOUCHERS & CUSTOMER TIERS (M15) ---
+
+  // --- VOUCHERS ---
   async getVouchers(onlyActive: boolean = true): Promise<Voucher[]> {
     const query = onlyActive ? '?onlyActive=true' : '';
     return this.request<Voucher[]>(`/vouchers${query}`);
-  }
-
-  async getVoucherByCode(code: string): Promise<Voucher> {
-    return this.request<Voucher>(`/vouchers/${code.toUpperCase()}`);
   }
 
   async validateVoucher(
@@ -277,7 +410,12 @@ class ApiClient {
   ): Promise<VoucherValidationResult> {
     return this.request<VoucherValidationResult>('/vouchers/validate', {
       method: 'POST',
-      body: JSON.stringify({ code: code.toUpperCase(), orderAmount, venueId, sportType }),
+      body: JSON.stringify({
+        code: code.toUpperCase(),
+        orderAmount,
+        venueId,
+        sportType,
+      }),
     });
   }
 
@@ -297,21 +435,46 @@ class ApiClient {
     });
   }
 
-  async getUserTierInfo(): Promise<CustomerTierInfo> {
-    return this.request<CustomerTierInfo>('/users/tier-info');
+  // --- REVIEWS ---
+  async getReviewSummary(facilityId?: string): Promise<any> {
+    const query = facilityId ? `?facilityId=${facilityId}` : '';
+    return this.request<any>(`/reviews/summary${query}`);
   }
 
-  async recalculateUserTier(): Promise<CustomerTierInfo> {
-    return this.request<CustomerTierInfo>('/users/recalculate-tier', {
+  async createReview(payload: {
+    bookingId: string;
+    facilityRating: number;
+    serviceRating: number;
+    staffRating: number;
+    cleanlinessRating: number;
+    comment: string;
+  }): Promise<any> {
+    return this.request<any>('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- NOTIFICATIONS ---
+  async getMyNotifications(): Promise<any[]> {
+    return this.request<any[]>('/notifications/me');
+  }
+
+  async markNotificationRead(id: string): Promise<any> {
+    return this.request<any>(`/notifications/me/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsRead(): Promise<any> {
+    return this.request<any>('/notifications/me/read-all', {
       method: 'POST',
     });
   }
 
-  async redeemLoyaltyPoints(points: number, bookingId?: string): Promise<any> {
-    return this.request<any>('/users/redeem-points', {
-      method: 'POST',
-      body: JSON.stringify({ points, bookingId }),
-    });
+  // --- RENTALS / EQUIPMENTS ---
+  async getEquipments(): Promise<any[]> {
+    return this.request<any[]>('/rentals/equipments');
   }
 }
 

@@ -1,146 +1,205 @@
-// mobile/src/screens/ChatScreen.tsx
 import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   TextInput,
+  Pressable,
+  ScrollView,
+  StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
+import { Send } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
+import { ScreenHeader } from '../components/ScreenHeader';
+
+interface Props {
+  onBack: () => void;
+}
 
 interface ChatMessage {
   id: string;
-  sender: 'BOT' | 'USER';
+  sender: 'SYSTEM' | 'STAFF' | 'USER';
   text: string;
-  time: string;
+  time?: string;
 }
 
-export const ChatScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: 'BOT',
-      text: 'Xin chào! Tôi là Trợ Lý Ảo Phanta Sports. Tôi có thể hỗ trợ gì cho bạn về đặt sân, nạp ví, cổng xoay Face ID hay thuê dụng cụ?',
-      time: '18:30',
-    },
-    {
-      id: '2',
-      sender: 'BOT',
-      text: 'Mẹo nhanh: Bạn có thể hủy sân trước 12 giờ để nhận hoàn tiền cọc 100% tự động trong 3 giây vào ví Phanta Pay.',
-      time: '18:30',
-    },
-  ]);
+const INITIAL_MESSAGES: ChatMessage[] = [
+  {
+    id: '1',
+    sender: 'SYSTEM',
+    text: 'Phiên hỗ trợ trực tuyến đã kết nối với chuyên viên chăm sóc khách hàng Phanta.',
+  },
+  {
+    id: '2',
+    sender: 'STAFF',
+    text: 'Chào bạn Duy Khang. Lễ tân Phanta có thể hỗ trợ bạn về lịch sân bóng, lớp bơi lội hay đăng ký Face ID phòng Gym hôm nay không?',
+    time: '14:02',
+  },
+  {
+    id: '3',
+    sender: 'USER',
+    text: 'Sân F1 chiều nay lúc 17:30 bên mình đã chuẩn bị sẵn 10 áo bib và 1 quả bóng FIFA Pro cho đội mình chưa?',
+    time: '14:03',
+  },
+  {
+    id: '4',
+    sender: 'STAFF',
+    text: 'Hệ thống đã xuất phiếu chuẩn bị dụng cụ trước 60 phút tại quầy. Bạn chỉ cần quét mã QR vào sân để nhận ngay.',
+    time: '14:04',
+  },
+];
 
-  const [inputText, setInputText] = useState<string>('');
+const QUICK_PROMPTS = [
+  'Kiểm tra đơn sân F1 của tôi',
+  'Tôi muốn đổi lịch sang 19:00',
+  'Hướng dẫn nạp ví VietQR',
+];
 
-  const quickQuestions = [
-    'Quy định hủy sân hoàn cọc?',
-    'Cách qua cổng xoay Face ID?',
-    'Nạp ví PayOS bao lâu có tiền?',
-    'Thời gian mượn dụng cụ?',
-  ];
+export const ChatScreen: React.FC<Props> = ({ onBack }) => {
+  const theme = useTheme();
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [inputText, setInputText] = useState('');
 
-  const handleSend = (textToSend?: string) => {
-    const text = textToSend || inputText;
-    if (!text.trim()) return;
+  const handleSend = () => {
+    const trimmed = inputText.trim();
+    if (!trimmed) return;
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: String(Date.now()),
       sender: 'USER',
-      text,
-      time: '18:32',
+      text: trimmed,
+      time: timeStr,
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const replyMsg: ChatMessage = {
+      id: String(Date.now() + 1),
+      sender: 'STAFF',
+      text: 'Đã tiếp nhận yêu cầu của bạn. Nhân viên lễ tân đang kiểm tra và sẽ phản hồi trong ít phút.',
+      time: timeStr,
+    };
+
+    setMessages((prev) => [...prev, userMsg, replyMsg]);
     setInputText('');
-
-    setTimeout(() => {
-      let botReply = 'Cảm ơn bạn đã liên hệ! Yêu cầu của bạn đã được chuyển đến nhân viên hỗ trợ trực ban.';
-      if (text.includes('hủy') || text.includes('hoàn')) {
-        botReply = 'Quy định hủy sân: Hủy trước 12 giờ bắt đầu trận đấu được hoàn 100% tiền cọc tự động trong 3 giây vào ví Phanta Pay. Hủy muộn hơn tiền cọc sẽ chuyển vào quỹ bồi thường cơ sở.';
-      } else if (text.includes('Face ID') || text.includes('cổng')) {
-        botReply = 'Cổng xoay Gym & Hồ bơi: Bạn chỉ cần quét khuôn mặt tại camera AI cổng xoay (nhận diện < 500ms). Nếu chưa đăng ký, hãy ghé quầy lễ tân để ghi nhận sinh trắc học nhé!';
-      } else if (text.includes('nạp') || text.includes('PayOS')) {
-        botReply = 'Nạp ví VietQR PayOS: Sau khi chuyển khoản đúng nội dung và ngân hàng báo Có, hệ thống tự động cộng số dư vào ví trong vòng 3 giây!';
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: 'BOT',
-          text: botReply,
-          time: '18:32',
-        },
-      ]);
-    }, 500);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-          )}
-          <TwoLineText
-            primary="Hỗ Trợ Khách Hàng 24/7"
-            secondary="Trợ lý thông minh Phanta & Nhân viên hỗ trợ trực tuyến"
-            badge="ONLINE"
-            badgeColor={colors.success}
-          />
-        </View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader
+        title="Tổng đài Phanta Support 24/7"
+        subtitle="Trực tuyến phản hồi tức thì"
+        onBack={onBack}
+      />
 
-        {/* Messages List */}
-        <ScrollView style={styles.messagesContainer} contentContainerStyle={styles.messagesContent}>
-          {messages.map((m) => {
-            const isUser = m.sender === 'USER';
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.messagesList}
+      >
+        {messages.map((m) => {
+          if (m.sender === 'SYSTEM') {
             return (
-              <View key={m.id} style={[styles.msgRow, isUser ? styles.msgRowUser : styles.msgRowBot]}>
-                <View style={[styles.msgBubble, isUser ? styles.msgBubbleUser : styles.msgBubbleBot]}>
-                  <Text style={[styles.msgText, isUser ? styles.msgTextUser : styles.msgTextBot]}>
-                    {m.text}
-                  </Text>
-                  <Text style={[styles.msgTime, isUser ? styles.msgTimeUser : styles.msgTimeBot]}>
-                    {m.time}
-                  </Text>
-                </View>
+              <View
+                key={m.id}
+                style={[styles.systemBox, { backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }]}
+              >
+                <Text style={[styles.systemText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  {m.text}
+                </Text>
               </View>
             );
-          })}
+          }
+
+          if (m.sender === 'USER') {
+            return (
+              <View
+                key={m.id}
+                style={[styles.userBubble, { backgroundColor: theme.accent }]}
+              >
+                <Text style={[styles.userText, { color: theme.onAccent, fontFamily: fonts.bodyMedium }]}>
+                  {m.text}
+                </Text>
+                {m.time ? (
+                  <Text style={[styles.timeText, { color: theme.onAccent, opacity: 0.75, fontFamily: fonts.body }]}>
+                    {m.time}
+                  </Text>
+                ) : null}
+              </View>
+            );
+          }
+
+          return (
+            <View key={m.id} style={styles.staffRow}>
+              <View style={[styles.staffAvatar, { backgroundColor: theme.accent }]}>
+                <Text style={[styles.staffAvatarText, { color: theme.onAccent, fontFamily: fonts.headingBold }]}>
+                  P
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.staffBubble,
+                  { backgroundColor: theme.surface, borderColor: theme.border },
+                ]}
+              >
+                <Text style={[styles.staffText, { color: theme.textPrimary, fontFamily: fonts.body }]}>
+                  {m.text}
+                </Text>
+                {m.time ? (
+                  <Text style={[styles.timeText, { color: theme.textMuted, fontFamily: fonts.body }]}>
+                    {m.time}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      <View style={[styles.composerWrap, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
+          {QUICK_PROMPTS.map((q) => (
+            <Pressable
+              key={q}
+              onPress={() => setInputText(q)}
+              style={[
+                styles.quickChip,
+                { backgroundColor: theme.surfaceElevated, borderColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.quickChipText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                {q}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
-        {/* Quick FAQ Chips */}
-        <View style={styles.faqBox}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.faqScroll}>
-            {quickQuestions.map((q, idx) => (
-              <TouchableOpacity key={idx} style={styles.faqChip} onPress={() => handleSend(q)}>
-                <Text style={styles.faqChipText}>{q}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Input Bar */}
-        <View style={styles.inputBar}>
+        <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
-            placeholder="Nhập câu hỏi của bạn..."
-            placeholderTextColor={colors.textMuted}
             value={inputText}
             onChangeText={setInputText}
-            onSubmitEditing={() => handleSend()}
+            onSubmitEditing={handleSend}
+            placeholder="Nhập tin nhắn hỗ trợ"
+            placeholderTextColor={theme.placeholder}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.inputBg,
+                borderColor: theme.inputBorder,
+                color: theme.textHeading,
+                fontFamily: fonts.body,
+              },
+            ]}
           />
-          <TouchableOpacity style={styles.sendBtn} onPress={() => handleSend()}>
-            <Text style={styles.sendBtnText}>Gửi</Text>
-          </TouchableOpacity>
+          <Pressable
+            onPress={handleSend}
+            accessibilityLabel="Gửi tin nhắn"
+            style={({ pressed }) => [
+              styles.sendBtn,
+              { backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Send size={16} strokeWidth={2} color={theme.onAccent} />
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -148,70 +207,29 @@ export const ChatScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#0f172a',
+  safeArea: { flex: 1 },
+  messagesList: {
+    padding: spacing.lg,
+    gap: spacing.md,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
-  backBtn: { padding: 8, backgroundColor: colors.card, borderRadius: 8 },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  messagesContainer: { flex: 1 },
-  messagesContent: { padding: 16, gap: 12 },
-  msgRow: { flexDirection: 'row' },
-  msgRowUser: { justifyContent: 'flex-end' },
-  msgRowBot: { justifyContent: 'flex-start' },
-  msgBubble: { maxWidth: '80%', padding: 12, borderRadius: 16 },
-  msgBubbleUser: { backgroundColor: colors.primary, borderBottomRightRadius: 2 },
-  msgBubbleBot: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 2 },
-  msgText: { fontSize: 13, lineHeight: 19 },
-  msgTextUser: { color: '#000', fontWeight: '600' },
-  msgTextBot: { color: '#f1f5f9' },
-  msgTime: { fontSize: 9, marginTop: 4, textAlign: 'right' },
-  msgTimeUser: { color: '#00000080' },
-  msgTimeBot: { color: colors.textMuted },
-  faqBox: { paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#0f172a' },
-  faqScroll: { maxHeight: 34 },
-  faqChip: {
-    backgroundColor: '#1e293b',
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-  },
-  faqChipText: { fontSize: 11, color: '#38bdf8', fontWeight: '600' },
-  inputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 12,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#0f172a',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    color: '#fff',
-    fontSize: 13,
-  },
-  sendBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  sendBtnText: { color: '#000', fontWeight: '800', fontSize: 13 },
+  systemBox: { borderRadius: radius.md, borderWidth: 1, padding: spacing.md },
+  systemText: { fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  staffRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm, maxWidth: '86%' },
+  staffAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  staffAvatarText: { fontSize: 12 },
+  staffBubble: { flex: 1, borderRadius: radius.lg, borderTopLeftRadius: 4, borderWidth: 1, padding: spacing.md, gap: 4 },
+  staffText: { fontSize: 13, lineHeight: 19 },
+  userBubble: { alignSelf: 'flex-end', maxWidth: '84%', borderRadius: radius.lg, borderTopRightRadius: 4, padding: spacing.md, gap: 4 },
+  userText: { fontSize: 13, lineHeight: 19 },
+  timeText: { fontSize: 10, textAlign: 'right' },
+  composerWrap: { borderTopWidth: 1, padding: spacing.md, gap: spacing.sm },
+  quickRow: { gap: spacing.sm },
+  quickChip: { paddingHorizontal: spacing.md, paddingVertical: 6, borderRadius: radius.pill, borderWidth: 1 },
+  quickChipText: { fontSize: 11 },
+  inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
+  input: { flex: 1, minHeight: 44, borderRadius: radius.md, borderWidth: 1, paddingHorizontal: spacing.md, fontSize: 13 },
+  sendBtn: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
 });

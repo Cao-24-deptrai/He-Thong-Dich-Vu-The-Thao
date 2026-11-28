@@ -1,151 +1,194 @@
-// mobile/src/screens/OfflineScreen.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  Pressable,
   StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   SafeAreaView,
-  Alert,
 } from 'react-native';
-import { colors } from '../theme/colors';
-import { TwoLineText } from '../components/TwoLineText';
+import { WifiOff, ChevronRight } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
+import { api } from '../api/client';
+import { Booking } from '../types';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
-export const OfflineScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
-  const offlineTickets = [
-    {
-      id: 'OFF-1',
-      code: 'PHANTA-BK1001',
-      venue: 'Sân bóng mini F1',
-      timeSlot: '18:00 - 19:30 Hôm nay',
-      qrOffline: 'OFFLINE_HMAC_PHANTA_SEC256_BK1001',
-      validUntil: '22:00 26/10/2026',
-    },
-    {
-      id: 'OFF-2',
-      code: 'GYM-MEMBER-GOLD',
-      venue: 'Cửa Xoay IoT Face ID Gym & Hồ Bơi',
-      timeSlot: 'Hội viên 30 ngày / Không giới hạn',
-      qrOffline: 'OFFLINE_FACEID_SYNC_GOLD_99182',
-      validUntil: '26/11/2026',
-    },
-  ];
+interface Props {
+  onBack?: () => void;
+  onOpenTicket?: () => void;
+}
+
+const OFFLINE_CACHE_KEY = 'phanta_offline_booking';
+
+export const OfflineScreen: React.FC<Props> = ({ onBack, onOpenTicket }) => {
+  const theme = useTheme();
+  const [cachedBooking, setCachedBooking] = useState<Booking | null>(null);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
+
+  const syncOfflinePack = async () => {
+    try {
+      const bookings = await api.getMyBookings();
+      const confirmed = bookings.find((b) => b.status === 'CONFIRMED') || bookings[0] || null;
+      if (confirmed) {
+        setCachedBooking(confirmed);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(OFFLINE_CACHE_KEY, JSON.stringify(confirmed));
+        }
+        return;
+      }
+    } catch {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = window.localStorage.getItem(OFFLINE_CACHE_KEY);
+        if (raw) {
+          try {
+            setCachedBooking(JSON.parse(raw));
+          } catch {
+            setCachedBooking(null);
+          }
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    syncOfflinePack();
+  }, []);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader title="Chế độ ngoại tuyến" onBack={onBack} />
+
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          {onBack && (
-            <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-              <Text style={styles.backText}>←</Text>
-            </TouchableOpacity>
-          )}
-          <TwoLineText
-            primary="Chế Độ Ngoại Tuyến"
-            secondary="Gói vé Offline Pack & Sinh trắc học Face ID độc lập"
-            badge="OFFLINE PACK"
-            badgeColor="#f59e0b"
-          />
+        <View style={[styles.iconCircle, { backgroundColor: theme.accentSecondarySoft, borderColor: theme.accentSecondary }]}>
+          <WifiOff size={36} strokeWidth={1.75} color={theme.accentSecondary} />
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-          {/* Offline Notice Banner */}
-          <View style={styles.noticeBox}>
-            <TwoLineText
-              primary="Bảo Lưu Vé Không Cần Kết Nối Mạng"
-              secondary="Khi mất sóng hoặc mạng yếu, bạn vẫn có thể quét mã QR này qua mắt đọc cổng Turnstile bình thường nhờ cơ chế bảo mật chữ ký số HMAC lưu sẵn trên máy."
-              primaryStyle={{ color: '#fbbf24', fontSize: 13 }}
-              secondaryStyle={{ color: '#e2e8f0', fontSize: 11 }}
-            />
-          </View>
+        <View style={styles.textBlock}>
+          <Text style={[styles.title, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Gói vé ngoại tuyến (Offline Pack)
+          </Text>
+          <Text style={[styles.desc, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+            Vé QR đã lưu cục bộ và dữ liệu Face ID mở cổng Gym vẫn hoạt động độc lập ngay cả khi mất kết nối Internet.
+          </Text>
+        </View>
 
-          <Text style={styles.sectionTitle}>Vé Đã Lưu Trong Bộ Nhớ Máy</Text>
-          <View style={styles.ticketList}>
-            {offlineTickets.map((t) => (
-              <View key={t.id} style={styles.ticketCard}>
-                <View style={styles.ticketTop}>
-                  <TwoLineText
-                    primary={t.venue}
-                    secondary={t.timeSlot}
-                    primaryStyle={{ fontSize: 15 }}
-                    secondaryStyle={{ color: '#38bdf8' }}
-                  />
-                  <View style={styles.codeBadge}>
-                    <Text style={styles.codeText}>{t.code}</Text>
-                  </View>
-                </View>
-
-                {/* Simulated QR block */}
-                <View style={styles.qrContainer}>
-                  <View style={styles.qrPlaceholder}>
-                    <Text style={styles.qrIcon}>⚏</Text>
-                    <Text style={styles.qrTokenText}>{t.qrOffline}</Text>
-                  </View>
-                  <Text style={styles.qrSub}>Mã quét bảo mật ngoại tuyến</Text>
-                </View>
-
-                <View style={styles.ticketFooter}>
-                  <Text style={styles.validText}>Hiệu lực đến: {t.validUntil}</Text>
-                  <TouchableOpacity
-                    style={styles.openBtn}
-                    onPress={() => Alert.alert('Mã QR Ngoại Tuyến', `Mã: ${t.code}\nĐã sẵn sàng quét qua đầu đọc cổng xoay Turnstile!`)}
-                  >
-                    <Text style={styles.openBtnText}>Phóng To QR</Text>
-                  </TouchableOpacity>
-                </View>
+        {cachedBooking ? (
+          <View style={[styles.ticketPreview, { backgroundColor: theme.surface, borderColor: theme.borderAccent }]}>
+            <View style={styles.previewTop}>
+              <Text style={[styles.previewTag, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                Gói vé ngoại tuyến đã lưu
+              </Text>
+              <View style={[styles.hmacBadge, { backgroundColor: theme.accentSoft }]}>
+                <Text style={[styles.hmacText, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                  Sẵn sàng
+                </Text>
               </View>
-            ))}
+            </View>
+            <Text style={[styles.courtName, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+              {(cachedBooking as any).venueId?.name || 'Đơn đặt sân đã xác nhận'}
+            </Text>
+            <Text style={[styles.courtTime, { color: theme.accent, fontFamily: fonts.bodyMedium }]}>
+              {cachedBooking.startTime} - {cachedBooking.endTime} ({cachedBooking.bookingDate})
+            </Text>
+            <Text style={[styles.orderCode, { color: theme.textMuted, fontFamily: fonts.body }]}>
+              Mã đơn: #{cachedBooking._id.slice(-8).toUpperCase()}
+            </Text>
           </View>
-        </ScrollView>
+        ) : (
+          <View style={[styles.ticketPreview, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.orderCode, { color: theme.textSecondary, fontFamily: fonts.body, textAlign: 'center' }]}>
+              Chưa có vé nào được đồng bộ cục bộ. Hãy đăng nhập và đặt sân để lưu vé ngoại tuyến.
+            </Text>
+          </View>
+        )}
+
+        <View style={styles.actions}>
+          <Pressable
+            onPress={onOpenTicket}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: theme.accent, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Text style={[styles.primaryText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+              Mở vé QR ngoại tuyến
+            </Text>
+            <ChevronRight size={16} strokeWidth={2} color={theme.onAccent} />
+          </Pressable>
+
+          <Pressable
+            onPress={async () => {
+              await syncOfflinePack();
+              setDialog({
+                visible: true,
+                title: 'Đồng bộ hoàn tất',
+                message: 'Đã kiểm tra và cập nhật dữ liệu vé ngoại tuyến mới nhất từ máy chủ.',
+              });
+            }}
+            style={({ pressed }) => [styles.retryBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={[styles.retryText, { color: theme.textSecondary, fontFamily: fonts.bodyMedium }]}>
+              Đồng bộ lại dữ liệu
+            </Text>
+          </Pressable>
+        </View>
       </View>
+
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  backBtn: { padding: 8, backgroundColor: colors.card, borderRadius: 8 },
-  backText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  scroll: { paddingBottom: 30 },
-  noticeBox: {
-    backgroundColor: '#78350f25',
-    borderWidth: 1,
-    borderColor: '#f59e0b40',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 20,
-  },
-  sectionTitle: { fontSize: 15, fontWeight: '800', color: '#fff', marginBottom: 12 },
-  ticketList: { gap: 14 },
-  ticketCard: {
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 16,
-    padding: 16,
-  },
-  ticketTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  codeBadge: { backgroundColor: '#1e293b', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  codeText: { fontSize: 11, fontWeight: '800', color: colors.primary },
-  qrContainer: { alignItems: 'center', marginVertical: 12 },
-  qrPlaceholder: {
-    width: 140,
-    height: 140,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+  safeArea: { flex: 1 },
+  container: {
+    flex: 1,
+    padding: spacing.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
+    gap: spacing.xl,
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
   },
-  qrIcon: { fontSize: 44, color: '#000' },
-  qrTokenText: { fontSize: 8, color: '#334155', fontWeight: '700', textAlign: 'center', marginTop: 4 },
-  qrSub: { fontSize: 11, color: colors.textMuted, marginTop: 8 },
-  ticketFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderColor: colors.border },
-  validText: { fontSize: 10, color: colors.textMuted },
-  openBtn: { backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  openBtnText: { color: '#000', fontWeight: '800', fontSize: 11 },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textBlock: { alignItems: 'center', gap: spacing.sm },
+  title: { fontSize: 20, textAlign: 'center' },
+  desc: { fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  ticketPreview: { width: '100%', borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg, gap: 4 },
+  previewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  previewTag: { fontSize: 11 },
+  hmacBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill },
+  hmacText: { fontSize: 10 },
+  courtName: { fontSize: 16 },
+  courtTime: { fontSize: 13 },
+  orderCode: { fontSize: 11, marginTop: 4 },
+  actions: { width: '100%', gap: spacing.sm },
+  primaryBtn: {
+    minHeight: 48,
+    borderRadius: radius.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  primaryText: { fontSize: 14 },
+  retryBtn: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  retryText: { fontSize: 13 },
 });

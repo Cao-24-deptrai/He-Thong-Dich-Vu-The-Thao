@@ -1,49 +1,191 @@
-// mobile/src/screens/VenueSlotGridScreen.tsx
 import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   ScrollView,
   StyleSheet,
   ActivityIndicator,
   SafeAreaView,
-  Alert,
 } from 'react-native';
-import { colors } from '../theme/colors';
+import { Star, X, ChevronRight, Tag } from 'lucide-react-native';
+import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
 import { Venue, SlotAvailability } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
 import { subscribeSlotChanges } from '../socket/socket';
 import { PitchMap2D } from '../components/PitchMap2D';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { AppDialog } from '../components/AppDialog';
 
 interface Props {
   onBack: () => void;
   onProceedPayment: () => void;
+  onOpenVouchers?: () => void;
 }
 
-export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment }) => {
-  const { selectedFacility, setSelectedVenue, selectedVenue, selectedDate, setSelectedDate, setActiveBooking } = useBookingStore();
+interface EquipmentItem {
+  _id: string;
+  name: string;
+  depositAmount?: number;
+  rentalFee?: number;
+}
 
-  const [viewMode, setViewMode] = useState<'2D' | 'LIST'>('2D');
+const isPeakSlot = (startTime: string) => parseInt(startTime.split(':')[0], 10) >= 17;
+
+type SportFilterKey =
+  | 'ALL'
+  | 'FOOTBALL'
+  | 'BASKETBALL'
+  | 'VOLLEYBALL'
+  | 'BADMINTON'
+  | 'PICKLEBALL'
+  | 'TENNIS'
+  | 'GAMING'
+  | 'GYM';
+
+const SPORT_CATEGORIES: { key: SportFilterKey; label: string }[] = [
+  { key: 'ALL', label: 'Tất cả' },
+  { key: 'FOOTBALL', label: 'Bóng đá' },
+  { key: 'BASKETBALL', label: 'Bóng rổ' },
+  { key: 'VOLLEYBALL', label: 'Bóng chuyền' },
+  { key: 'BADMINTON', label: 'Cầu lông' },
+  { key: 'PICKLEBALL', label: 'Pickleball' },
+  { key: 'TENNIS', label: 'Tennis' },
+  { key: 'GAMING', label: 'Phòng máy' },
+  { key: 'GYM', label: 'Phòng gym' },
+];
+
+const SPORT_LABELS: Record<SportFilterKey | 'OTHER', string> = {
+  ALL: 'Tất cả',
+  FOOTBALL: 'Bóng đá',
+  BASKETBALL: 'Bóng rổ',
+  VOLLEYBALL: 'Bóng chuyền',
+  BADMINTON: 'Cầu lông',
+  PICKLEBALL: 'Pickleball',
+  TENNIS: 'Tennis',
+  GAMING: 'Phòng máy',
+  GYM: 'Phòng gym',
+  OTHER: 'Khác',
+};
+
+const detectVenueSport = (venue: Venue): SportFilterKey | 'OTHER' => {
+  const raw = `${venue.type || ''} ${venue.venueType || ''} ${venue.name || ''}`.toLowerCase();
+  if (
+    raw.includes('phòng máy') ||
+    raw.includes('gaming') ||
+    raw.includes('esport') ||
+    raw.includes('cyber') ||
+    raw.includes('pc')
+  ) {
+    return 'GAMING';
+  }
+  if (
+    raw.includes('phòng gym') ||
+    raw.includes('gym') ||
+    raw.includes('fitness') ||
+    raw.includes('yoga') ||
+    raw.includes('pilates')
+  ) {
+    return 'GYM';
+  }
+  if (
+    raw.includes('bóng đá') ||
+    raw.includes('football') ||
+    raw.includes('soccer') ||
+    raw.includes('futsal') ||
+    raw.includes('sân 5') ||
+    raw.includes('sân 7') ||
+    raw.includes('sân 11') ||
+    raw.includes('pitch')
+  ) {
+    return 'FOOTBALL';
+  }
+  if (raw.includes('bóng rổ') || raw.includes('basketball') || raw.includes('3x3')) {
+    return 'BASKETBALL';
+  }
+  if (raw.includes('bóng chuyền') || raw.includes('volleyball')) {
+    return 'VOLLEYBALL';
+  }
+  if (raw.includes('cầu lông') || raw.includes('badminton')) {
+    return 'BADMINTON';
+  }
+  if (raw.includes('pickleball')) {
+    return 'PICKLEBALL';
+  }
+  if (raw.includes('tennis')) {
+    return 'TENNIS';
+  }
+  return 'OTHER';
+};
+
+export const VenueSlotGridScreen: React.FC<Props> = ({
+  onBack,
+  onProceedPayment,
+  onOpenVouchers,
+}) => {
+  const theme = useTheme();
+  const {
+    selectedFacility,
+    setSelectedFacility,
+    setSelectedVenue,
+    selectedVenue,
+    selectedDate,
+    setSelectedDate,
+    setActiveBooking,
+    appliedVoucher,
+    voucherDiscount,
+    setAppliedVoucher,
+  } = useBookingStore();
+
+  const [viewMode, setViewMode] = useState<'2D' | 'LIST'>('LIST');
+  const [selectedSport, setSelectedSport] = useState<SportFilterKey>('ALL');
   const [venues, setVenues] = useState<Venue[]>([]);
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
-  const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
+  const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
+  const [selectedEquipmentIds, setSelectedEquipmentIds] = useState<string[]>([]);
+  const [selectedSlotTimes, setSelectedSlotTimes] = useState<string[]>([]);
   const [loadingVenues, setLoadingVenues] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [holding, setHolding] = useState(false);
+  const [dialog, setDialog] = useState<{ visible: boolean; title: string; message: string }>({
+    visible: false,
+    title: '',
+    message: '',
+  });
 
-  // Generate 5 upcoming days
-  const dateOptions = Array.from({ length: 5 }).map((_, i) => {
+  const dateOptions = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().split('T')[0];
-    const dayName = i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : `Thứ ${d.getDay() + 1 === 1 ? 'CN' : d.getDay() + 1}`;
-    const dayMonth = `${d.getDate()}/${d.getMonth() + 1}`;
-    return { dateStr, dayName, dayMonth };
+    const dayLabels = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dayName = i === 0 ? 'Hôm nay' : dayLabels[d.getDay()];
+    return {
+      dateStr,
+      dayName,
+      dayNumber: String(d.getDate()).padStart(2, '0'),
+    };
   });
 
-  // Load venues
+  useEffect(() => {
+    const ensureFacility = async () => {
+      if (selectedFacility) return;
+      try {
+        setLoadingVenues(true);
+        const list = await api.getFacilities();
+        if (list.length > 0) {
+          setSelectedFacility(list[0]);
+        } else {
+          setLoadingVenues(false);
+        }
+      } catch (err) {
+        console.error('Failed to load default facility:', err);
+        setLoadingVenues(false);
+      }
+    };
+    ensureFacility();
+  }, [selectedFacility]);
+
   useEffect(() => {
     if (!selectedFacility) return;
     const loadVenues = async () => {
@@ -51,11 +193,12 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
         setLoadingVenues(true);
         const data = await api.getVenues(selectedFacility._id);
         setVenues(data);
-        if (data.length > 0 && !selectedVenue) {
+        if (data.length > 0 && (!selectedVenue || selectedVenue.facilityId !== selectedFacility._id)) {
           setSelectedVenue(data[0]);
         }
       } catch (err) {
         console.error('Failed to load venues:', err);
+        setVenues([]);
       } finally {
         setLoadingVenues(false);
       }
@@ -63,26 +206,31 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
     loadVenues();
   }, [selectedFacility]);
 
-  // Load availability
-  const loadAvailability = async () => {
-    if (!selectedVenue || !selectedDate) return;
-    try {
-      setLoadingSlots(true);
-      setSelectedSlot(null);
-      const res = await api.getVenueAvailability(selectedVenue._id, selectedDate);
-      setSlots(res.slots || []);
-    } catch (err) {
-      console.error('Failed to load availability:', err);
-    } finally {
-      setLoadingSlots(false);
-    }
-  };
+  useEffect(() => {
+    api
+      .getEquipments()
+      .then((list) => setEquipments(Array.isArray(list) ? list : []))
+      .catch(() => setEquipments([]));
+  }, []);
 
   useEffect(() => {
+    if (!selectedVenue || !selectedDate) return;
+    const loadAvailability = async () => {
+      try {
+        setLoadingSlots(true);
+        setSelectedSlotTimes([]);
+        const res = await api.getVenueAvailability(selectedVenue._id, selectedDate);
+        setSlots(res.slots || []);
+      } catch (err) {
+        console.error('Failed to load availability:', err);
+        setSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
     loadAvailability();
   }, [selectedVenue, selectedDate]);
 
-  // Real-time Socket.io listener for slot changes
   useEffect(() => {
     const unsubscribe = subscribeSlotChanges((data) => {
       if (
@@ -91,631 +239,694 @@ export const VenueSlotGridScreen: React.FC<Props> = ({ onBack, onProceedPayment 
         data.bookingDate === selectedDate
       ) {
         setSlots((prevSlots) =>
-          prevSlots.map((s) => {
-            if (s.startTime === data.startTime) {
-              return {
-                ...s,
-                status: data.status as any,
-                holdExpiresAt: data.holdExpiresAt,
-              };
-            }
-            return s;
-          })
+          prevSlots.map((s) =>
+            s.startTime === data.startTime
+              ? {
+                  ...s,
+                  status: data.status as SlotAvailability['status'],
+                  holdExpiresAt: data.holdExpiresAt,
+                }
+              : s
+          )
         );
       }
     });
-
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   }, [selectedVenue, selectedDate]);
 
-  // Handle Hold Slot
-  const handleHoldSlot = async () => {
-    if (!selectedVenue || !selectedSlot) return;
+  const toggleSlot = (slot: SlotAvailability) => {
+    if (slot.status === 'CONFIRMED' || slot.status === 'HELD' || slot.status === 'PAST') return;
+    setSelectedSlotTimes((prev) =>
+      prev.includes(slot.startTime)
+        ? prev.filter((t) => t !== slot.startTime)
+        : [...prev, slot.startTime].sort()
+    );
+  };
 
-    setHolding(true);
+  const toggleEquipment = (id: string) => {
+    setSelectedEquipmentIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const filteredVenues =
+    selectedSport === 'ALL'
+      ? venues
+      : venues.filter((v) => detectVenueSport(v) === selectedSport);
+
+  useEffect(() => {
+    if (filteredVenues.length === 0) return;
+    if (!selectedVenue || !filteredVenues.some((v) => v._id === selectedVenue._id)) {
+      setSelectedVenue(filteredVenues[0]);
+    }
+  }, [selectedSport, venues]);
+
+  const selectedSlotObjs = slots.filter((s) => selectedSlotTimes.includes(s.startTime));
+  const fieldSubtotal = selectedSlotObjs.reduce((sum, s) => sum + s.price, 0);
+  const equipSubtotal = equipments
+    .filter((e) => selectedEquipmentIds.includes(e._id))
+    .reduce((sum, e) => sum + (e.rentalFee ?? e.depositAmount ?? 0), 0);
+  const voucherAmount = appliedVoucher ? voucherDiscount : 0;
+  const totalPayable = Math.max(0, fieldSubtotal + equipSubtotal - voucherAmount);
+
+  const handleConfirmHold = async (method: 'VIETQR' | 'WALLET') => {
+    if (!selectedVenue) {
+      setDialog({ visible: true, title: 'Chưa chọn sân', message: 'Vui lòng chọn sân thi đấu.' });
+      return;
+    }
+    if (selectedSlotObjs.length === 0) {
+      setDialog({
+        visible: true,
+        title: 'Chưa chọn khung giờ',
+        message: 'Vui lòng chọn ít nhất 1 khung giờ trống để giữ chỗ.',
+      });
+      return;
+    }
+
     try {
+      setHolding(true);
+      const first = selectedSlotObjs[0];
+      const last = selectedSlotObjs[selectedSlotObjs.length - 1];
       const booking = await api.holdSlot({
         venueId: selectedVenue._id,
-        bookingDate: selectedDate,
-        startTime: selectedSlot.startTime,
-        endTime: selectedSlot.endTime,
+        bookingDate: selectedDate || dateOptions[0].dateStr,
+        startTime: first.startTime,
+        endTime: last.endTime,
       });
-
       setActiveBooking(booking);
+
+      if (method === 'WALLET') {
+        await api.payWithWallet({
+          amount: booking.totalPrice,
+          category: 'COURT',
+          refType: 'BOOKING',
+          refId: booking._id,
+          note: `Thanh toán đặt sân ${selectedVenue.name}`,
+        });
+      }
       onProceedPayment();
-    } catch (err: any) {
-      const msg = err.message || 'Khung giờ này đã được giữ chỗ hoặc đặt!';
-      Alert.alert('Không thể giữ chỗ', msg);
-      loadAvailability();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể giữ chỗ khung giờ này.';
+      setDialog({ visible: true, title: 'Không thể giữ chỗ', message: msg });
     } finally {
       setHolding(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Top Bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-            <Text style={styles.backBtnText}>←</Text>
-          </TouchableOpacity>
-          <View style={styles.topBarInfo}>
-            <Text style={styles.topBarTitle} numberOfLines={1}>
-              {selectedFacility?.name || 'Chọn Sân'}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ScreenHeader
+        title={selectedFacility?.name || 'Đặt sân và ma trận 30 phút'}
+        onBack={onBack}
+        backIcon="close"
+        rightElement={
+          <Pressable
+            onPress={() =>
+              setDialog({
+                visible: true,
+                title: 'Quy tắc đặt sân',
+                message:
+                  'Mỗi khung dài 30 phút. Hệ thống khóa giữ chỗ trong 10 phút để thanh toán qua VietQR hoặc Ví Phanta Pay.',
+              })
+            }
+            style={styles.ruleBtn}
+          >
+            <Text style={[styles.ruleBtnText, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+              Quy định
             </Text>
-            <Text style={styles.topBarSubtitle}>
-              Giờ mở cửa: {selectedFacility?.openHour || '06:00'} - {selectedFacility?.closeHour || '23:00'} (Block 30 phút)
+          </Pressable>
+        }
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.body}>
+        {/* Venue Selector + 2D Toggle */}
+        <View style={styles.section}>
+          <View style={styles.sectionTop}>
+            <Text style={[styles.sectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+              Chọn sân thi đấu
             </Text>
-          </View>
-        </View>
-
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* View Mode Toggle (2D Pitch Map vs List) */}
-          <View style={styles.viewModeToggleRow}>
-            <TouchableOpacity
-              style={[styles.viewModeBtn, viewMode === '2D' && styles.viewModeBtnActive]}
-              onPress={() => setViewMode('2D')}
-            >
-              <Text style={[styles.viewModeBtnText, viewMode === '2D' && styles.viewModeBtnTextActive]}>
-                🏟️ Sơ Đồ 2D (Pitch Map)
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.viewModeBtn, viewMode === 'LIST' && styles.viewModeBtnActive]}
-              onPress={() => setViewMode('LIST')}
-            >
-              <Text style={[styles.viewModeBtnText, viewMode === 'LIST' && styles.viewModeBtnTextActive]}>
-                📋 Danh Sách (List)
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Venue Selection: 2D Pitch Map or List */}
-          {loadingVenues ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: 20 }} />
-          ) : viewMode === '2D' ? (
-            <PitchMap2D
-              venues={venues}
-              selectedVenue={selectedVenue}
-              onSelectVenue={setSelectedVenue}
-              sportTypes={selectedFacility?.sportTypes}
-            />
-          ) : (
-            <>
-              <Text style={styles.sectionTitle}>1. CHỌN SÂN / VỊ TRÍ CHƠI</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-                {venues.map((v) => {
-                  const isSelected = selectedVenue?._id === v._id;
-                  const price = (v as any).defaultPrice ?? v.basePricePerHour ?? 200000;
-                  return (
-                    <TouchableOpacity
-                      key={v._id}
-                      style={[
-                        styles.venuePill,
-                        v.isComposite && styles.compositeVenuePill,
-                        isSelected && styles.activeVenuePill,
-                      ]}
-                      onPress={() => setSelectedVenue(v)}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={[styles.venuePillName, isSelected && styles.activeVenuePillName]}>
-                          {v.name}
-                        </Text>
-                        {v.courtCode && (
-                          <Text style={[styles.courtCodeBadge, isSelected && { color: '#090d16', backgroundColor: '#fff' }]}>
-                            #{v.courtCode}
-                          </Text>
-                        )}
-                      </View>
-                      {v.isComposite && (
-                        <Text style={[styles.compositeNote, isSelected && { color: 'rgba(9, 13, 22, 0.8)' }]}>
-                          ⚡ Ghép ({v.baseUnitCodes?.join('+')})
-                        </Text>
-                      )}
-                      <Text style={[styles.venuePillPrice, isSelected && styles.activeVenuePillPrice]}>
-                        {price.toLocaleString('vi-VN')} đ/h
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </>
-          )}
-
-          {/* Date Picker Tabs */}
-          <Text style={styles.sectionTitle}>2. CHỌN NGÀY ĐẶT SÂN</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsRow}>
-            {dateOptions.map((opt) => {
-              const isSelected = selectedDate === opt.dateStr;
-              return (
-                <TouchableOpacity
-                  key={opt.dateStr}
-                  style={[styles.dateTab, isSelected && styles.activeDateTab]}
-                  onPress={() => setSelectedDate(opt.dateStr)}
+            <View style={[styles.modeSwitch, { backgroundColor: theme.surfaceElevated, borderColor: theme.border }]}>
+              <Pressable
+                onPress={() => setViewMode('LIST')}
+                style={[styles.modePill, viewMode === 'LIST' && { backgroundColor: theme.accent }]}
+              >
+                <Text
+                  style={[
+                    styles.modeText,
+                    { color: viewMode === 'LIST' ? theme.onAccent : theme.textSecondary, fontFamily: fonts.bodyMedium },
+                  ]}
                 >
-                  <Text style={[styles.dateDayName, isSelected && styles.activeDateText]}>
-                    {opt.dayName}
+                  Danh sách
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setViewMode('2D')}
+                style={[styles.modePill, viewMode === '2D' && { backgroundColor: theme.accent }]}
+              >
+                <Text
+                  style={[
+                    styles.modeText,
+                    { color: viewMode === '2D' ? theme.onAccent : theme.textSecondary, fontFamily: fonts.bodyMedium },
+                  ]}
+                >
+                  Sơ đồ 2D
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Sport Category Filter right below "Chọn sân thi đấu" */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.sportFilterScroll}
+            contentContainerStyle={styles.sportFilterRow}
+          >
+            {SPORT_CATEGORIES.map((sport) => {
+              const isSelected = selectedSport === sport.key;
+              const sportCount =
+                sport.key === 'ALL'
+                  ? venues.length
+                  : venues.filter((v) => detectVenueSport(v) === sport.key).length;
+              return (
+                <Pressable
+                  key={sport.key}
+                  onPress={() => setSelectedSport(sport.key)}
+                  style={[
+                    styles.sportChip,
+                    {
+                      backgroundColor: isSelected ? theme.accent : theme.surfaceElevated,
+                      borderColor: isSelected ? theme.accent : theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.sportChipCount,
+                      {
+                        color: isSelected ? theme.onAccent : theme.textSecondary,
+                        fontFamily: fonts.bodyMedium,
+                      },
+                    ]}
+                  >
+                    {sportCount} sân
                   </Text>
-                  <Text style={[styles.dateDayMonth, isSelected && styles.activeDateText]}>
-                    {opt.dayMonth}
+                  <Text
+                    style={[
+                      styles.sportChipText,
+                      {
+                        color: isSelected ? theme.onAccent : theme.textHeading,
+                        fontFamily: fonts.headingBold,
+                      },
+                    ]}
+                  >
+                    {sport.label}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               );
             })}
           </ScrollView>
 
-          {/* Dynamic Pricing BR-04 Notice Banner */}
-          <View style={styles.pricingNotice}>
-            <Text style={styles.pricingNoticeTitle}>⚡ Biểu Giá Động Theo BR-04:</Text>
-            <Text style={styles.pricingNoticeDesc}>
-              • Giá niêm yết theo block 30 phút • Giờ vàng cao điểm: Phụ thu +25.000đ/block (+50.000đ/giờ) vào 17:30 - 21:00 (T2-T6) & toàn bộ Thứ 7, CN.
-            </Text>
-          </View>
-
-          {/* Slots Grid */}
-          <View style={styles.slotHeaderRow}>
-            <Text style={styles.sectionTitle}>3. CHỌN KHUNG GIỜ HOẠT ĐỘNG</Text>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>Thời gian thực</Text>
+          {loadingVenues ? (
+            <ActivityIndicator color={theme.accent} style={{ marginVertical: spacing.md }} />
+          ) : venues.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Chưa có sân khả dụng trong cơ sở này.
+              </Text>
             </View>
-          </View>
-
-          {loadingSlots ? (
-            <View style={styles.slotsLoading}>
-              <ActivityIndicator size="large" color={colors.primary} />
-              <Text style={styles.loadingText}>Đang cập nhật lịch sân trực tiếp...</Text>
+          ) : filteredVenues.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Chưa có sân {SPORT_LABELS[selectedSport]} tại cơ sở này.
+              </Text>
             </View>
+          ) : viewMode === '2D' ? (
+            <PitchMap2D
+              venues={filteredVenues}
+              selectedVenue={selectedVenue}
+              onSelectVenue={(v) => setSelectedVenue(v)}
+              sportTypes={selectedFacility?.sportTypes || []}
+            />
           ) : (
-            <View style={styles.slotsGrid}>
-              {slots.map((s, idx) => {
-                const isSelected = selectedSlot?.startTime === s.startTime;
-                const isAvailable = s.status === 'AVAILABLE';
-                const isHeld = s.status === 'HELD';
-                const isConfirmed = s.status === 'CONFIRMED';
-
-                const isPast = s.status === 'PAST';
-
-                let cardStyle = styles.slotCardAvailable;
-                let statusLabel = 'Còn trống';
-                let labelStyle = styles.slotStatusAvailable;
-
-                if (isHeld) {
-                  cardStyle = styles.slotCardHeld;
-                  statusLabel = 'Đang giữ';
-                  labelStyle = styles.slotStatusHeld;
-                } else if (isConfirmed) {
-                  cardStyle = styles.slotCardConfirmed;
-                  statusLabel = 'Đã đặt';
-                  labelStyle = styles.slotStatusConfirmed;
-                } else if (isPast) {
-                  cardStyle = styles.slotCardConfirmed;
-                  statusLabel = 'Đã qua';
-                  labelStyle = styles.slotStatusConfirmed;
-                }
-
-                if (isSelected) {
-                  cardStyle = styles.slotCardSelected;
-                }
-
+            <View style={styles.venueGrid}>
+              {filteredVenues.map((v) => {
+                const active = selectedVenue?._id === v._id;
+                const price = v.defaultPrice ?? v.basePricePerHour ?? 0;
+                const sportLabel = SPORT_LABELS[detectVenueSport(v)];
                 return (
-                  <TouchableOpacity
-                    key={idx}
-                    disabled={!isAvailable}
-                    style={[styles.slotCard, cardStyle]}
-                    onPress={() => setSelectedSlot(s)}
+                  <Pressable
+                    key={v._id}
+                    onPress={() => setSelectedVenue(v)}
+                    style={[
+                      styles.venueCard,
+                      {
+                        backgroundColor: active ? theme.accent : theme.surfaceElevated,
+                        borderColor: active ? theme.accent : theme.border,
+                      },
+                    ]}
                   >
-                    <Text style={[styles.slotTime, isSelected && styles.textWhite]}>
-                      {s.startTime}
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.venueName,
+                        { color: active ? theme.onAccent : theme.textHeading, fontFamily: fonts.headingBold },
+                      ]}
+                    >
+                      {v.name}
                     </Text>
-                    <Text style={[styles.slotPrice, isSelected && styles.textWhite]}>
-                      {s.price.toLocaleString('vi-VN')} đ
+                    <Text
+                      style={[
+                        styles.venuePrice,
+                        { color: active ? theme.onAccent : theme.accent, fontFamily: fonts.bodySemiBold },
+                      ]}
+                    >
+                      {price.toLocaleString('vi-VN')} đ/giờ
                     </Text>
-                    <Text style={[styles.slotStatus, labelStyle, isSelected && styles.textWhite]}>
-                      {isSelected ? '✓ Đã chọn' : statusLabel}
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.venueSub,
+                        { color: active ? theme.onAccent : theme.textSecondary, fontFamily: fonts.body },
+                      ]}
+                    >
+                      {v.courtCode ? `${sportLabel} - Mã sân ${v.courtCode}` : sportLabel}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 );
               })}
             </View>
           )}
+        </View>
 
-          {/* Legend */}
+        {/* Date Selector */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Chọn ngày đặt
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
+            {dateOptions.map((d) => {
+              const active = (selectedDate || dateOptions[0].dateStr) === d.dateStr;
+              return (
+                <Pressable
+                  key={d.dateStr}
+                  onPress={() => setSelectedDate(d.dateStr)}
+                  style={[
+                    styles.dateChip,
+                    {
+                      backgroundColor: active ? theme.accent : theme.surfaceElevated,
+                      borderColor: active ? theme.accent : theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.dateDayName,
+                      { color: active ? theme.onAccent : theme.textSecondary, fontFamily: fonts.bodyMedium },
+                    ]}
+                  >
+                    {d.dayName}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.dateDayNum,
+                      { color: active ? theme.onAccent : theme.textHeading, fontFamily: fonts.headingBold },
+                    ]}
+                  >
+                    {d.dayNumber}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* 30-Minute Slot Matrix */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textHeading, fontFamily: fonts.headingBold }]}>
+            Ma trận khung giờ 30 phút
+          </Text>
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.surfaceLight }]} />
-              <Text style={styles.legendText}>Trống</Text>
+              <View style={[styles.legendDot, { backgroundColor: theme.accent }]} />
+              <Text style={[styles.legendText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Đang chọn
+              </Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
-              <Text style={styles.legendText}>Đang giữ (10p)</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.danger }]} />
-              <Text style={styles.legendText}>Đã thanh toán</Text>
+              <View style={[styles.legendDot, { backgroundColor: theme.warning }]} />
+              <Text style={[styles.legendText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Cao điểm
+              </Text>
             </View>
           </View>
-        </ScrollView>
 
-        {/* Bottom Booking Action Bar */}
-        <View style={styles.bottomBar}>
-          <View style={styles.bottomBarInfo}>
-            {selectedSlot ? (
-              <>
-                <Text style={[styles.bottomBarValue, { fontSize: 15, fontWeight: '800' }]}>
-                  {selectedVenue?.name} ({selectedSlot.startTime} - {selectedSlot.endTime})
-                </Text>
-                <Text style={[styles.bottomBarLabel, { color: colors.primary, fontWeight: '800', marginTop: 2 }]}>
-                  {selectedSlot.price.toLocaleString('vi-VN')} đ
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.bottomBarLabel}>Khung giờ đã chọn:</Text>
-                <Text style={styles.bottomBarValue}>Chưa chọn khung giờ</Text>
-              </>
-            )}
-          </View>
+          {loadingSlots ? (
+            <ActivityIndicator color={theme.accent} style={{ marginVertical: spacing.md }} />
+          ) : slots.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Chưa có dữ liệu khung giờ cho ngày này.
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.slotGrid}>
+              {slots.map((slot) => {
+                const isBooked = slot.status === 'CONFIRMED' || slot.status === 'HELD' || slot.status === 'PAST';
+                const isPeak = isPeakSlot(slot.startTime);
+                const isSelected = selectedSlotTimes.includes(slot.startTime);
 
-          <TouchableOpacity
-            disabled={!selectedSlot || holding}
-            style={[styles.holdBtn, (!selectedSlot || holding) && styles.holdBtnDisabled]}
-            onPress={handleHoldSlot}
-          >
-            {holding ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.holdBtnText}>Giữ Chỗ (10 Phút) →</Text>
-            )}
-          </TouchableOpacity>
+                return (
+                  <Pressable
+                    key={slot.startTime}
+                    disabled={isBooked}
+                    onPress={() => toggleSlot(slot)}
+                    style={[
+                      styles.slotBtn,
+                      {
+                        backgroundColor: isBooked
+                          ? theme.surface
+                          : isSelected
+                            ? theme.accent
+                            : theme.surfaceElevated,
+                        borderColor: isBooked
+                          ? theme.borderSubtle
+                          : isSelected
+                            ? theme.accent
+                            : isPeak
+                              ? theme.warning
+                              : theme.border,
+                        opacity: isBooked ? 0.5 : 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.slotText,
+                        {
+                          color: isBooked
+                            ? theme.textMuted
+                            : isSelected
+                              ? theme.onAccent
+                              : theme.textHeading,
+                          fontFamily: fonts.bodySemiBold,
+                        },
+                      ]}
+                    >
+                      {slot.startTime}
+                    </Text>
+                    {isBooked ? (
+                      <X size={12} strokeWidth={2} color={theme.danger} />
+                    ) : isPeak ? (
+                      <Star
+                        size={11}
+                        strokeWidth={1.75}
+                        color={isSelected ? theme.onAccent : theme.warning}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
         </View>
-      </View>
+
+        {/* Equipment Addons from DB */}
+        {equipments.length > 0 ? (
+          <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.cardHeader, { color: theme.textSecondary, fontFamily: fonts.bodyMedium }]}>
+              Thuê thiết bị kèm theo
+            </Text>
+            {equipments.map((eq) => {
+              const checked = selectedEquipmentIds.includes(eq._id);
+              const fee = eq.rentalFee ?? eq.depositAmount ?? 0;
+              return (
+                <Pressable
+                  key={eq._id}
+                  onPress={() => toggleEquipment(eq._id)}
+                  style={[styles.addonRow, { backgroundColor: theme.surfaceElevated, borderColor: theme.borderSubtle }]}
+                >
+                  <View style={styles.addonLeft}>
+                    <View
+                      style={[
+                        styles.checkBox,
+                        {
+                          borderColor: checked ? theme.accent : theme.borderLight,
+                          backgroundColor: checked ? theme.accent : 'transparent',
+                        },
+                      ]}
+                    >
+                      {checked ? <Text style={{ color: theme.onAccent, fontSize: 10, fontFamily: fonts.bodySemiBold }}>✓</Text> : null}
+                    </View>
+                    <Text style={[styles.addonLabel, { color: theme.textPrimary, fontFamily: fonts.bodyMedium }]}>
+                      {eq.name}
+                    </Text>
+                  </View>
+                  <Text style={[styles.addonPrice, { color: theme.accent, fontFamily: fonts.headingBold }]}>
+                    +{fee.toLocaleString('vi-VN')} đ
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
+
+        {/* Voucher Selector */}
+        <Pressable
+          onPress={onOpenVouchers}
+          style={[styles.voucherCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        >
+          <View style={styles.voucherLeft}>
+            <View style={[styles.voucherIcon, { backgroundColor: theme.accentSoft }]}>
+              <Tag size={16} strokeWidth={1.75} color={theme.accent} />
+            </View>
+            <View>
+              <Text style={[styles.voucherTag, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Mã giảm giá / Voucher
+              </Text>
+              <Text style={[styles.voucherTitle, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                {appliedVoucher ? `Đã áp dụng ${appliedVoucher.code}` : 'Chưa áp dụng mã giảm giá'}
+              </Text>
+            </View>
+          </View>
+          {appliedVoucher ? (
+            <Pressable onPress={() => setAppliedVoucher(null, 0)}>
+              <Text style={[styles.removeVoucher, { color: theme.danger, fontFamily: fonts.bodySemiBold }]}>
+                Gỡ mã
+              </Text>
+            </Pressable>
+          ) : (
+            <View style={styles.voucherChoose}>
+              <Text style={[styles.voucherChooseText, { color: theme.accent, fontFamily: fonts.bodyMedium }]}>
+                Chọn mã
+              </Text>
+              <ChevronRight size={15} strokeWidth={1.75} color={theme.accent} />
+            </View>
+          )}
+        </Pressable>
+
+        {/* Price Summary & Checkout */}
+        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.summaryRows}>
+            <View style={styles.priceRow}>
+              <Text style={[styles.priceName, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Tiền sân ({selectedSlotObjs.length * 30} phút)
+              </Text>
+              <Text style={[styles.priceVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                {fieldSubtotal.toLocaleString('vi-VN')} đ
+              </Text>
+            </View>
+            {equipSubtotal > 0 ? (
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceName, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  Thuê dụng cụ thi đấu
+                </Text>
+                <Text style={[styles.priceVal, { color: theme.textHeading, fontFamily: fonts.bodySemiBold }]}>
+                  {equipSubtotal.toLocaleString('vi-VN')} đ
+                </Text>
+              </View>
+            ) : null}
+            {appliedVoucher ? (
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceName, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                  Voucher ({appliedVoucher.code})
+                </Text>
+                <Text style={[styles.priceVal, { color: theme.accent, fontFamily: fonts.bodySemiBold }]}>
+                  -{voucherAmount.toLocaleString('vi-VN')} đ
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={[styles.totalBlock, { borderTopColor: theme.borderSubtle }]}>
+            <View>
+              <Text style={[styles.totalLabel, { color: theme.textSecondary, fontFamily: fonts.body }]}>
+                Tổng thanh toán
+              </Text>
+              <Text style={[styles.totalValue, { color: theme.accent, fontFamily: fonts.headingBold }]}>
+                {totalPayable.toLocaleString('vi-VN')} đ
+              </Text>
+            </View>
+            <View style={[styles.holdBadge, { backgroundColor: theme.accentSecondarySoft }]}>
+              <Text style={[styles.holdBadgeText, { color: theme.accentSecondary, fontFamily: fonts.bodySemiBold }]}>
+                Giữ chỗ 10:00
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.ctaGrid}>
+            <Pressable
+              onPress={() => handleConfirmHold('VIETQR')}
+              disabled={holding}
+              style={({ pressed }) => [
+                styles.ctaBtn,
+                { backgroundColor: theme.accent, opacity: holding ? 0.6 : pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={[styles.ctaText, { color: theme.onAccent, fontFamily: fonts.bodySemiBold }]}>
+                VietQR PayOS
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleConfirmHold('WALLET')}
+              disabled={holding}
+              style={({ pressed }) => [
+                styles.ctaBtn,
+                { backgroundColor: theme.accentSecondary, opacity: holding ? 0.6 : pressed ? 0.85 : 1 },
+              ]}
+            >
+              <Text style={[styles.ctaText, { color: theme.onAccentSecondary, fontFamily: fonts.bodySemiBold }]}>
+                Ví Phanta Pay
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+
+      <AppDialog
+        visible={dialog.visible}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
+  safeArea: { flex: 1 },
+  ruleBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 4 },
+  ruleBtnText: { fontSize: 12 },
+  body: {
+    padding: spacing.lg,
+    gap: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    maxWidth: 680,
+    width: '100%',
+    alignSelf: 'center',
   },
-  container: {
-    flex: 1,
-  },
-  topBar: {
+  section: { gap: spacing.sm },
+  sectionTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
+  sectionTitle: { fontSize: 16 },
+  sportFilterScroll: { width: '100%' },
+  sportFilterRow: {
     flexDirection: 'row',
+    flexWrap: 'nowrap',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    gap: spacing.sm,
+    paddingVertical: 2,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
+  sportChip: {
+    minWidth: 78,
+    minHeight: 56,
+    borderRadius: radius.md,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    gap: 2,
+    paddingHorizontal: spacing.md,
   },
-  backBtnText: {
-    fontSize: 20,
-    color: '#fff',
-  },
-  topBarInfo: {
-    flex: 1,
-  },
-  topBarTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  topBarSubtitle: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    marginTop: 1,
-  },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 110,
-  },
-  viewModeToggleRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  viewModeBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  viewModeBtnActive: {
-    backgroundColor: 'rgba(6, 182, 212, 0.2)',
-    borderColor: '#00f2fe',
-  },
-  viewModeBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  viewModeBtnTextActive: {
-    color: '#00f2fe',
-    fontWeight: '800',
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textSecondary,
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  pillsRow: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  venuePill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  compositeVenuePill: {
-    borderColor: 'rgba(245, 158, 11, 0.4)',
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-  },
-  activeVenuePill: {
-    backgroundColor: '#00f2fe',
-    borderColor: '#00f2fe',
-  },
-  venuePillName: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  activeVenuePillName: {
-    color: '#090d16',
-  },
-  courtCodeBadge: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#00f2fe',
-    backgroundColor: 'rgba(6, 182, 212, 0.2)',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-    fontFamily: 'monospace',
-  },
-  compositeNote: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#fbbf24',
-    marginTop: 2,
-  },
-  venuePillPrice: {
-    fontSize: 10,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  activeVenuePillPrice: {
-    color: 'rgba(9, 13, 22, 0.85)',
-    fontWeight: '700',
-  },
-  dateTab: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    minWidth: 68,
-  },
-  activeDateTab: {
-    backgroundColor: '#00f2fe',
-    borderColor: '#00f2fe',
-  },
-  dateDayName: {
-    fontSize: 10,
-    color: colors.textMuted,
-    fontWeight: '600',
-  },
-  dateDayMonth: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: colors.textPrimary,
-    marginTop: 2,
-  },
-  activeDateText: {
-    color: '#090d16',
-    fontWeight: '800',
-  },
-  pricingNotice: {
-    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.25)',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 16,
-  },
-  pricingNoticeTitle: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#fbbf24',
-    textTransform: 'uppercase',
-  },
-  pricingNoticeDesc: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    marginTop: 2,
-    lineHeight: 14,
-  },
-  slotHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.success,
-    marginRight: 5,
-  },
-  liveText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.success,
-  },
-  slotsLoading: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  slotsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  slotCard: {
+  sportChipCount: { fontSize: 11 },
+  sportChipText: { fontSize: 14 },
+  modeSwitch: { flexDirection: 'row', borderRadius: radius.sm, borderWidth: 1, padding: 3, gap: 2 },
+  modePill: { paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: 6 },
+  modeText: { fontSize: 11 },
+  emptyBox: { padding: spacing.lg, borderRadius: radius.md, borderWidth: 1, alignItems: 'center' },
+  emptyText: { fontSize: 12, textAlign: 'center' },
+  venueGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  venueCard: { width: '48.5%', borderRadius: radius.md, borderWidth: 1, padding: spacing.md, gap: 4 },
+  venueName: { fontSize: 13 },
+  venuePrice: { fontSize: 13 },
+  venueSub: { fontSize: 11 },
+  dateRow: { gap: spacing.sm, paddingVertical: 2 },
+  dateChip: { minWidth: 60, minHeight: 56, borderRadius: radius.md, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 2, paddingHorizontal: spacing.sm },
+  dateDayName: { fontSize: 11 },
+  dateDayNum: { fontSize: 16 },
+  legendRow: { flexDirection: 'row', gap: spacing.lg },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 12, height: 12, borderRadius: 4 },
+  legendText: { fontSize: 12 },
+  slotGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  slotBtn: {
     width: '23%',
-    aspectRatio: 1.1,
-    borderRadius: 12,
-    padding: 6,
-    justifyContent: 'space-between',
+    minHeight: 44,
+    borderRadius: radius.md,
     borderWidth: 1,
-  },
-  slotCardAvailable: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-  },
-  slotCardHeld: {
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-    borderColor: colors.warning,
-    opacity: 0.6,
-  },
-  slotCardConfirmed: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    borderColor: colors.danger,
-    opacity: 0.6,
-  },
-  slotCardSelected: {
-    backgroundColor: '#00f2fe',
-    borderColor: '#00f2fe',
-  },
-  slotTime: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  slotPrice: {
-    fontSize: 9,
-    color: colors.textSecondary,
-  },
-  slotStatus: {
-    fontSize: 8,
-    fontWeight: '800',
-  },
-  slotStatusAvailable: {
-    color: colors.success,
-  },
-  slotStatusHeld: {
-    color: colors.warning,
-  },
-  slotStatusConfirmed: {
-    color: colors.danger,
-  },
-  textWhite: {
-    color: '#090d16',
-    fontWeight: '900',
-  },
-  legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 16,
-    paddingVertical: 8,
+    gap: 4,
   },
-  legendItem: {
+  slotText: { fontSize: 13 },
+  card: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg, gap: spacing.md },
+  cardHeader: { fontSize: 12 },
+  addonRow: {
+    minHeight: 46,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  addonLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flex: 1 },
+  checkBox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  addonLabel: { fontSize: 12, flex: 1 },
+  addonPrice: { fontSize: 13 },
+  voucherCard: {
+    minHeight: 56,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  legendText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#090d16',
+  voucherLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, flex: 1 },
+  voucherIcon: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
+  voucherTag: { fontSize: 11 },
+  voucherTitle: { fontSize: 13 },
+  voucherChoose: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  voucherChooseText: { fontSize: 12 },
+  removeVoucher: { fontSize: 12 },
+  summaryRows: { gap: spacing.xs },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
+  priceName: { fontSize: 12, flex: 1 },
+  priceVal: { fontSize: 13 },
+  totalBlock: {
+    paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  bottomBarInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  bottomBarLabel: {
-    fontSize: 11,
-    color: colors.textSecondary,
-  },
-  bottomBarValue: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  holdBtn: {
-    backgroundColor: '#00f2fe',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  holdBtnDisabled: {
-    backgroundColor: colors.surfaceLight,
-    opacity: 0.5,
-  },
-  holdBtnText: {
-    fontSize: 13,
-    fontWeight: '900',
-    color: '#090d16',
-  },
+  totalLabel: { fontSize: 11 },
+  totalValue: { fontSize: 22 },
+  holdBadge: { paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: radius.sm },
+  holdBadgeText: { fontSize: 11 },
+  ctaGrid: { flexDirection: 'row', gap: spacing.sm },
+  ctaBtn: { flex: 1, minHeight: 46, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  ctaText: { fontSize: 13 },
 });
