@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { Dumbbell, QrCode, CheckCircle2, AlertCircle, Search, RefreshCw, UserCheck } from 'lucide-react';
+import { Dumbbell, QrCode, CheckCircle2, AlertCircle, Search, RefreshCw, UserCheck, ShieldCheck } from 'lucide-react';
 
 export default function GymManagementPage() {
   const [passes, setPasses] = useState<any[]>([]);
@@ -68,186 +68,177 @@ export default function GymManagementPage() {
   });
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-orange-600 text-white shadow-lg shadow-orange-500/20">
-              <Dumbbell className="w-6 h-6" />
-            </div>
-            Quản Lý Hội Viên & Soát Vé Phòng Gym
+          <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <Dumbbell className="w-6 h-6 text-[var(--burnt-orange)]" />
+            <span>Hội viên & Soát vé Phòng Gym</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Tra cứu thẻ tập, soát vé cổng quay và trừ lượt check-in tự động (Mục 6.1)
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Tra cứu thẻ tập hội viên, soát vé cửa xoay tự động và trừ lượt check-in theo thời gian thực
           </p>
         </div>
 
         <button
           onClick={loadPasses}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 shadow-sm"
+          className="phanta-btn-secondary px-3.5 py-2 flex items-center gap-2 text-xs w-fit"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Làm mới
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>Làm mới danh sách</span>
         </button>
       </div>
 
       {/* Quầy Soát Vé Nhanh */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-xl">
-        <h2 className="text-lg font-bold flex items-center gap-2 mb-2">
-          <QrCode className="w-5 h-5 text-orange-400" />
-          Quầy Soát Vé & Trừ Lượt Trực Tiếp
+      <div className="phanta-card p-6 bg-gradient-to-r from-[var(--bg-card)] to-[var(--bg-card-inner)] border border-[var(--pitch-green)]/30">
+        <h2 className="font-heading font-bold text-base text-[var(--text-heading)] flex items-center gap-2 mb-2">
+          <QrCode className="w-5 h-5 text-[var(--pitch-green)]" />
+          <span>Quầy Soát Vé & Trừ Lượt Trực Tiếp</span>
         </h2>
-        <p className="text-xs text-slate-400 mb-4">
-          Nhập mã thẻ hội viên hoặc mã JWT Dynamic QR (từ app mobile) để soát vé vào phòng tập
+        <p className="text-xs text-[var(--text-sub)] mb-4">
+          Quét mã QR động trên ứng dụng điện thoại hoặc nhập mã thẻ tập để trừ lượt qua cổng xoay tự động
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCheckin();
+          }}
+          className="flex flex-col sm:flex-row gap-2.5"
+        >
           <input
             type="text"
-            placeholder="Nhập Pass ID hoặc quét mã QR token..."
             value={checkinInput}
             onChange={(e) => setCheckinInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCheckin()}
-            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-orange-500 text-sm font-mono"
+            placeholder="Quét mã QR thẻ tập hoặc nhập mã thẻ hội viên..."
+            className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[var(--pitch-green)]"
           />
           <button
-            onClick={() => handleCheckin()}
+            type="submit"
             disabled={submitting || !checkinInput.trim()}
-            className="px-6 py-3 bg-orange-500 hover:bg-orange-600 font-bold rounded-xl text-sm flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/30"
+            className="phanta-btn-primary px-5 py-2.5 text-xs font-bold flex items-center justify-center gap-2"
           >
             <UserCheck className="w-4 h-4" />
-            {submitting ? 'Đang xử lý...' : 'Soát vé / Trừ 1 lượt'}
+            <span>{submitting ? 'Đang xác thực...' : 'Soát vé vào phòng'}</span>
           </button>
-        </div>
+        </form>
 
-        {/* Kết quả soát vé */}
         {checkinResult && (
           <div
-            className={`mt-4 p-4 rounded-xl flex items-start gap-3 text-sm font-medium ${
+            className={`mt-4 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2.5 ${
               checkinResult.success
-                ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-200'
-                : 'bg-rose-500/20 border border-rose-500/40 text-rose-200'
+                ? 'bg-emerald-500/15 text-[var(--pitch-green)] border border-emerald-500/30'
+                : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
             }`}
           >
             {checkinResult.success ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             ) : (
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
             )}
-            <div>
-              <p className="font-bold">{checkinResult.success ? 'CHECK-IN HỢP LỆ' : 'TỪ CHỐI CHECK-IN'}</p>
-              <p className="text-xs mt-0.5 opacity-90">{checkinResult.message}</p>
-            </div>
+            <span>{checkinResult.message}</span>
           </div>
         )}
       </div>
 
-      {/* Danh sách thẻ hội viên */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-slate-900 text-base">Danh Sách Thẻ Tập Hội Viên</h3>
-            <p className="text-xs text-slate-500">Tổng cộng {passes.length} thẻ trong hệ thống</p>
-          </div>
+      {/* Danh Sách Thẻ Tập */}
+      <div className="phanta-card p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="font-heading font-bold text-base text-[var(--text-heading)] flex items-center gap-2">
+            <span>Danh sách thẻ hội viên đang phát hành</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-heading font-extrabold bg-[var(--pitch-green)]/15 text-[var(--pitch-green)] border border-[var(--pitch-green)]/30 tabular-nums">
+              {filteredPasses.length}
+            </span>
+          </h2>
 
           <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <Search className="w-4 h-4 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Tìm theo tên hoặc SĐT..."
               value={searchPhone}
               onChange={(e) => setSearchPhone(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-orange-500"
+              placeholder="Tìm theo tên hoặc số điện thoại..."
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:border-[var(--pitch-green)]"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-400 uppercase text-[10px] tracking-wider font-bold border-b border-slate-100">
-              <tr>
-                <th className="px-6 py-3.5">Hội viên</th>
-                <th className="px-6 py-3.5">Loại gói</th>
-                <th className="px-6 py-3.5">Số lượt còn</th>
-                <th className="px-6 py-3.5">Hạn sử dụng</th>
-                <th className="px-6 py-3.5">Trạng thái</th>
-                <th className="px-6 py-3.5 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
-                    Đang tải danh sách thẻ...
-                  </td>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[var(--pitch-green)]" />
+            <p className="text-xs text-[var(--text-sub)]">Đang tải danh sách thẻ hội viên...</p>
+          </div>
+        ) : filteredPasses.length === 0 ? (
+          <div className="py-16 text-center text-xs text-[var(--text-sub)]">
+            Không tìm thấy hội viên nào phù hợp với bộ lọc tìm kiếm.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-sub)] uppercase tracking-wider font-semibold">
+                  <th className="pb-3 pl-2">Hội viên / SĐT</th>
+                  <th className="pb-3">Gói thẻ</th>
+                  <th className="pb-3">Lượt còn lại</th>
+                  <th className="pb-3">Hạn sử dụng</th>
+                  <th className="pb-3">Trạng thái</th>
+                  <th className="pb-3 text-right pr-2">Thao tác</th>
                 </tr>
-              ) : filteredPasses.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400 text-sm">
-                    Không tìm thấy thẻ hội viên nào
-                  </td>
-                </tr>
-              ) : (
-                filteredPasses.map((p) => {
-                  const isExpired = p.expiryDate && new Date() > new Date(p.expiryDate);
-                  const isDepleted = (p.remainingCheckIns ?? 0) <= 0;
+              </thead>
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {filteredPasses.map((pass) => (
+                  <tr key={pass._id} className="hover:bg-[var(--bg-card-inner)]/50 transition">
+                    <td className="py-3.5 pl-2">
+                      <div className="font-heading font-bold text-[var(--text-heading)]">
+                        {pass.userId?.fullName || 'Hội viên chưa đặt tên'}
+                      </div>
+                      <div className="text-[11px] text-[var(--text-sub)] mt-0.5">
+                        {pass.userId?.phone || 'Chưa có SĐT'}
+                      </div>
+                    </td>
 
-                  return (
-                    <tr key={p._id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-slate-900">{p.userId?.fullName || 'N/A'}</div>
-                        <div className="text-xs text-slate-400 font-mono">{p.userId?.phone || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-orange-50 text-orange-700 border border-orange-200">
-                          {p.type === 'SINGLE_PASS'
-                            ? 'Vé ngày (1 lượt)'
-                            : p.type === 'MONTHLY_PASS'
-                            ? 'Gói tháng (30 lượt)'
-                            : 'Gói năm (365 lượt)'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="font-mono font-bold text-slate-900 text-base">
-                          {p.remainingCheckIns ?? 0}
-                        </span>
-                        <span className="text-xs text-slate-400"> / {p.totalCheckIns ?? 0}</span>
-                      </td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-600">
-                        {p.expiryDate ? new Date(p.expiryDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}
-                      </td>
-                      <td className="px-6 py-4">
-                        {isExpired ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
-                            Hết hạn
-                          </span>
-                        ) : isDepleted ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                            Hết lượt
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Hoạt động
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => handleCheckin(p._id)}
-                          disabled={isExpired || isDepleted || submitting}
-                          className="px-3 py-1.5 bg-orange-50 text-orange-600 hover:bg-orange-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-orange-200 disabled:opacity-30 disabled:pointer-events-none"
-                        >
-                          Trừ 1 lượt
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <td className="py-3.5">
+                      <span className="font-semibold text-[var(--text-main)]">
+                        {pass.packageName || pass.passType || 'Thẻ Gym Tiêu Chuẩn'}
+                      </span>
+                    </td>
+
+                    <td className="py-3.5">
+                      <span className="font-heading font-extrabold text-sm text-[var(--pitch-green)] tabular-nums">
+                        {pass.remainingCheckIns ?? pass.remainingSessions ?? 'Không giới hạn'}
+                      </span>
+                      <span className="text-[11px] text-[var(--text-sub)] ml-1">lượt</span>
+                    </td>
+
+                    <td className="py-3.5 text-[var(--text-sub)] font-heading tabular-nums">
+                      {pass.expiresAt ? new Date(pass.expiresAt).toLocaleDateString('vi-VN') : 'Vô thời hạn'}
+                    </td>
+
+                    <td className="py-3.5">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-[var(--pitch-green)] border border-emerald-500/25">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>{pass.status || 'Đang hoạt động'}</span>
+                      </span>
+                    </td>
+
+                    <td className="py-3.5 text-right pr-2">
+                      <button
+                        type="button"
+                        onClick={() => handleCheckin(pass._id)}
+                        disabled={submitting}
+                        className="phanta-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1 ml-auto"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" />
+                        <span>Trừ lượt</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

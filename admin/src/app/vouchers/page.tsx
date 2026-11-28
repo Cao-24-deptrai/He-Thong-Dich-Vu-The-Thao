@@ -154,11 +154,11 @@ export default function VouchersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-slate-950 font-black shadow-lg shadow-amber-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-amber-500 to-rose-600 text-slate-950 font-bold shadow-lg shadow-amber-500/20">
               <Ticket className="w-6 h-6 text-slate-950" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 Quản Lý Voucher & Khuyến Mãi
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   EPIC E13 - M15
@@ -174,7 +174,7 @@ export default function VouchersPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-2xl text-xs font-black hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-amber-500/20 active:scale-95 transition"
+            className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-2xl text-xs font-bold hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-amber-500/20 active:scale-95 transition"
           >
             <Plus className="w-4 h-4 mr-1.5 text-slate-950" />
             + TẠO VOUCHER MỚI
@@ -217,7 +217,7 @@ export default function VouchersPage() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-white">{activePrograms}</span>
+            <span className="text-2xl font-bold text-white">{activePrograms}</span>
             <span className="text-xs text-slate-500 ml-1.5 font-bold">/ {totalPrograms} voucher</span>
           </div>
           <p className="text-[11px] text-cyan-400 font-bold mt-1">Đang kích hoạt trên hệ thống</p>
@@ -231,7 +231,7 @@ export default function VouchersPage() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-amber-400">{totalBudgetSum.toLocaleString('vi-VN')}</span>
+            <span className="text-2xl font-bold text-amber-400">{totalBudgetSum.toLocaleString('vi-VN')}</span>
             <span className="text-xs text-slate-300 ml-1 font-bold">đ</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">Hạn mức tối đa theo BR-13</p>
@@ -245,7 +245,7 @@ export default function VouchersPage() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-emerald-400">{totalUsedBudgetSum.toLocaleString('vi-VN')}</span>
+            <span className="text-2xl font-bold text-emerald-400">{totalUsedBudgetSum.toLocaleString('vi-VN')}</span>
             <span className="text-xs text-slate-300 ml-1 font-bold">đ</span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -261,7 +261,7 @@ export default function VouchersPage() {
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-2xl font-black text-white">{totalUsedCountSum}</span>
+            <span className="text-2xl font-bold text-white">{totalUsedCountSum}</span>
             <span className="text-xs text-slate-500 ml-1.5 font-bold">lượt áp dụng</span>
           </div>
           <p className="text-[11px] text-purple-400 font-bold mt-1">Bảo vệ Race Condition (AC-13)</p>
@@ -276,7 +276,7 @@ export default function VouchersPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo mã code (PHANTA50K) hoặc tiêu đề..."
+            placeholder="Tìm theo mã code (PHANTA50K) hoặc tiêu đề"
             className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 text-sm text-white rounded-2xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
           />
         </div>
@@ -342,15 +342,15 @@ export default function VouchersPage() {
                   {/* Card Header: Code & Status */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
-                      <span className="font-sans font-black tracking-wide text-sm px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 tracking-wider">
+                      <span className="font-sans font-bold tracking-wide text-sm px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 tracking-wider">
                         #{voucher.code}
                       </span>
                       {voucher.discountType === 'PERCENT' ? (
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">
                           GIẢM {voucher.discountValue}%
                         </span>
                       ) : (
-                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                           GIẢM {voucher.discountValue.toLocaleString('vi-VN')}đ
                         </span>
                       )}
@@ -358,15 +358,15 @@ export default function VouchersPage() {
 
                     <div>
                       {isAvailable ? (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                           ĐANG CHẠY
                         </span>
                       ) : isExpired ? (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
                           HẾT HẠN
                         </span>
                       ) : (
-                        <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40">
                           HẾT HẠN MỨC
                         </span>
                       )}
@@ -375,7 +375,7 @@ export default function VouchersPage() {
 
                   {/* Title & Description */}
                   <div className="mt-3">
-                    <h3 className="font-extrabold text-white text-base leading-snug">{voucher.title}</h3>
+                    <h3 className="font-bold text-white text-base leading-snug">{voucher.title}</h3>
                     {voucher.description && (
                       <p className="text-xs text-slate-300 mt-1 line-clamp-2">{voucher.description}</p>
                     )}
@@ -473,7 +473,7 @@ export default function VouchersPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-400" />
               Thiết Lập Chương Trình Voucher & Khuyến Mãi (M15)
             </h3>
@@ -675,9 +675,9 @@ export default function VouchersPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-xl text-xs font-black shadow-lg shadow-amber-500/20 active:scale-95 transition disabled:opacity-50"
+                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 rounded-xl text-xs font-bold shadow-lg shadow-amber-500/20 active:scale-95 transition disabled:opacity-50"
                 >
-                  {submitting ? 'Đang tạo...' : 'Lưu & Kích Hoạt Voucher'}
+                  {submitting ? 'Đang tạo' : 'Lưu & Kích Hoạt Voucher'}
                 </button>
               </div>
             </form>

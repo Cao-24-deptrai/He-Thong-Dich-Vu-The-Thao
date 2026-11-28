@@ -113,12 +113,12 @@ export default function ReviewsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading tabular-nums uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20">
               Epic E15 • Đánh Giá & Cộng Đồng
             </span>
             <span className="text-slate-400 text-xs">• Phụ trách: Nguyễn Lê Thành Trung</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-1 flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mt-1 flex items-center gap-3">
             <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
             Đánh Giá Dịch Vụ Đa Tiêu Chí
           </h1>
@@ -172,7 +172,7 @@ export default function ReviewsPage() {
             </div>
 
             <div className="my-3 flex items-baseline gap-2">
-              <span className="text-4xl md:text-5xl font-black text-amber-400">{summary.avgOverall}</span>
+              <span className="text-4xl md:text-5xl font-bold text-amber-400">{summary.avgOverall}</span>
               <span className="text-lg text-slate-500 font-bold">/ 5.0</span>
             </div>
 
@@ -185,7 +185,7 @@ export default function ReviewsPage() {
                   }`}
                 />
               ))}
-              <span className="text-xs text-slate-400 ml-2 font-mono">({summary.totalReviews} lượt)</span>
+              <span className="text-xs text-slate-400 ml-2 font-heading tabular-nums">({summary.totalReviews} lượt)</span>
             </div>
 
             {summary.needsAttentionCount > 0 && (
@@ -208,7 +208,7 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <Building className="w-4 h-4 text-cyan-400" /> Cơ Sở Vật Chất
                 </span>
-                <span className="font-black text-cyan-400 text-sm">{summary.avgFacility ?? 5.0} / 5.0</span>
+                <span className="font-bold text-cyan-400 text-sm">{summary.avgFacility ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
@@ -225,7 +225,7 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <ThumbsUp className="w-4 h-4 text-emerald-400" /> Chất Lượng Dịch Vụ
                 </span>
-                <span className="font-black text-emerald-400 text-sm">{summary.avgService ?? 5.0} / 5.0</span>
+                <span className="font-bold text-emerald-400 text-sm">{summary.avgService ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
@@ -242,7 +242,7 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <User className="w-4 h-4 text-indigo-400" /> Thái Độ Nhân Viên
                 </span>
-                <span className="font-black text-indigo-400 text-sm">{summary.avgStaff ?? 5.0} / 5.0</span>
+                <span className="font-bold text-indigo-400 text-sm">{summary.avgStaff ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
@@ -259,7 +259,7 @@ export default function ReviewsPage() {
                 <span className="font-bold text-slate-300 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-400" /> Vệ Sinh Sân Bãi
                 </span>
-                <span className="font-black text-amber-400 text-sm">{summary.avgCleanliness ?? 5.0} / 5.0</span>
+                <span className="font-bold text-amber-400 text-sm">{summary.avgCleanliness ?? 5.0} / 5.0</span>
               </div>
               <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden mt-3">
                 <div
@@ -331,7 +331,7 @@ export default function ReviewsPage() {
           <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
           <input
             type="text"
-            placeholder="Tìm theo tên, SĐT, nhận xét..."
+            placeholder="Tìm theo tên, SĐT, nhận xét"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
@@ -384,7 +384,7 @@ export default function ReviewsPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-1.5">
                     <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    <span className="font-black text-amber-400 text-sm">{r.overallRating}</span>
+                    <span className="font-bold text-amber-400 text-sm">{r.overallRating}</span>
                   </div>
 
                   <div className="text-[11px] text-slate-400 bg-slate-900 border border-slate-800 px-2 py-1 rounded-lg">
@@ -469,7 +469,7 @@ export default function ReviewsPage() {
           >
             <div className="flex justify-between items-start border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5 text-cyan-400" />
                   Phản Hồi Đánh Giá Khách Hàng
                 </h3>
@@ -498,7 +498,7 @@ export default function ReviewsPage() {
               <textarea
                 required
                 rows={4}
-                placeholder="Cảm ơn quý khách đã đóng góp ý kiến. Tổ hợp Phanta Sports đã..."
+                placeholder="Cảm ơn quý khách đã đóng góp ý kiến. Tổ hợp Phanta Sports đã"
                 value={responseContent}
                 onChange={(e) => setResponseContent(e.target.value)}
                 className="w-full mt-1.5 bg-slate-900 border border-slate-800 rounded-2xl p-3 text-xs text-white focus:outline-none focus:border-cyan-500 leading-relaxed"

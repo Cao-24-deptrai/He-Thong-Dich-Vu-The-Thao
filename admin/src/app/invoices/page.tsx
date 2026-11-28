@@ -151,7 +151,7 @@ export default function InvoicesPage() {
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-wide uppercase">
+              <h1 className="text-2xl font-bold text-white tracking-wide uppercase">
                 Thuế & Hóa Đơn Điện Tử VAT (Epic E09)
               </h1>
               <p className="text-sm text-slate-400">
@@ -187,7 +187,7 @@ export default function InvoicesPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Doanh Thu Trước Thuế</span>
             <TrendingUp className="w-5 h-5" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-bold text-white">
             {totalRevenue.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-emerald-300">đ</span>
           </div>
           <div className="mt-2 text-xs text-slate-400">
@@ -200,7 +200,7 @@ export default function InvoicesPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Thuế GTGT (VAT 8%)</span>
             <Receipt className="w-5 h-5" />
           </div>
-          <div className="text-2xl font-black text-cyan-400">
+          <div className="text-2xl font-bold text-cyan-400">
             {totalTax.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-cyan-300">đ</span>
           </div>
           <div className="mt-2 text-xs text-slate-400">
@@ -213,7 +213,7 @@ export default function InvoicesPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Tổng Doanh Số Kê Khai</span>
             <Building className="w-5 h-5" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-bold text-white">
             {totalFinal.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-purple-300">đ</span>
           </div>
           <div className="mt-2 text-xs text-slate-400">
@@ -226,7 +226,7 @@ export default function InvoicesPage() {
             <span className="text-xs font-bold uppercase tracking-wider">Cơ Quan Thuế Cấp Mã</span>
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <div className="text-2xl font-black text-emerald-400">
+          <div className="text-2xl font-bold text-emerald-400">
             {invoices.length} / {invoices.length} <span className="text-sm font-normal text-slate-400">HĐ</span>
           </div>
           <div className="mt-2 text-xs text-slate-400">
@@ -241,7 +241,7 @@ export default function InvoicesPage() {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tra cứu số hóa đơn, tên công ty, mã số thuế, mã CQT..."
+            placeholder="Tra cứu số hóa đơn, tên công ty, mã số thuế, mã CQT"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
@@ -264,7 +264,7 @@ export default function InvoicesPage() {
                 <th className="py-3.5 px-4 text-right">Tải HĐĐT</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono text-xs">
+            <tbody className="divide-y divide-slate-800/60 font-heading tabular-nums text-xs">
               {filteredInvoices.map((inv) => (
                 <tr key={inv._id} className="hover:bg-slate-800/30 transition-colors">
                   <td className="py-4 px-4">
@@ -275,7 +275,7 @@ export default function InvoicesPage() {
                   </td>
                   <td className="py-4 px-4 font-sans">
                     <div className="font-bold text-white text-xs">{inv.customerName}</div>
-                    <div className="text-xs text-slate-400 font-mono">MST: {inv.customerTaxCode || 'Cá nhân không MST'}</div>
+                    <div className="text-xs text-slate-400 font-heading tabular-nums">MST: {inv.customerTaxCode || 'Cá nhân không MST'}</div>
                   </td>
                   <td className="py-4 px-4 text-slate-200">
                     {inv.subtotal?.toLocaleString('vi-VN')} đ
@@ -344,7 +344,7 @@ export default function InvoicesPage() {
                     type="text"
                     value={customerTaxCode}
                     onChange={(e) => setCustomerTaxCode(e.target.value)}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-heading tabular-nums text-sm focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div>
@@ -385,7 +385,7 @@ export default function InvoicesPage() {
                     type="number"
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(Number(e.target.value))}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-heading tabular-nums text-sm focus:outline-none focus:border-emerald-500"
                   />
                 </div>
                 <div>
@@ -404,8 +404,8 @@ export default function InvoicesPage() {
 
               {/* Tạm tính */}
               <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex justify-between items-center text-xs">
-                <span className="text-slate-400">Tiền thuế: <strong className="text-cyan-400 font-mono">{Math.round((unitPrice * taxRate) / 100).toLocaleString('vi-VN')} đ</strong></span>
-                <span className="text-slate-400">Tổng thanh toán: <strong className="text-emerald-400 font-mono text-sm">{(unitPrice + Math.round((unitPrice * taxRate) / 100)).toLocaleString('vi-VN')} đ</strong></span>
+                <span className="text-slate-400">Tiền thuế: <strong className="text-cyan-400 font-heading tabular-nums">{Math.round((unitPrice * taxRate) / 100).toLocaleString('vi-VN')} đ</strong></span>
+                <span className="text-slate-400">Tổng thanh toán: <strong className="text-emerald-400 font-heading tabular-nums text-sm">{(unitPrice + Math.round((unitPrice * taxRate) / 100)).toLocaleString('vi-VN')} đ</strong></span>
               </div>
             </div>
 

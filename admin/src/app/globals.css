@@ -3,49 +3,87 @@
 @tailwind utilities;
 
 /* =========================================================
-   PHANTA SPORTS DESIGN TOKENS
-   Light Mode (Playo Inspired) & Dark Mode (admin.html Inspired)
+   PHANTA SPORTS DESIGN TOKENS (HIGH-ENERGY ATHLETIC V3)
+   Exact alignment with admin.html Design System
    ========================================================= */
 
 :root,
-[data-theme="light"] {
-  --bg-page: #FFFFFF;
-  --bg-surface: #F8F9FA;
+[data-theme="light"],
+body.theme-light {
+  --bg-page: #F1F5F2;
+  --bg-header: rgba(255, 255, 255, 0.96);
+  --bg-sidebar: #FFFFFF;
+  --bg-surface: #FFFFFF;
   --bg-card: #FFFFFF;
-  --bg-card-inner: #F1F3F2;
-  --bg-hover: #F2F2F4;
-  --border-subtle: #E3E8E6;
-  --border-strong: #D6DCD9;
+  --bg-card-inner: #F0FDF4;
+  --bg-card-hover: #E8F5E9;
+  --bg-hover: #E8F5E9;
   
-  --text-main: #171C1A;
+  --border-color: #CBD5E1;
+  --border-subtle: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --border-accent: rgba(194, 65, 12, 0.25);
+  
+  --text-main: #1E293B;
   --text-heading: #0B0E0B;
-  --text-sub: #3B4540;
-  --text-muted: #758A80;
+  --text-sub: #475569;
+  --text-muted: #64748B;
   
-  --color-primary: #00B562;
-  --color-primary-hover: #00914E;
-  --color-primary-light: #CCF0E0;
-  --color-primary-soft: #E6F8F0;
+  --pitch-green: #15803D;
+  --pitch-forest: #166534;
+  --color-primary: #15803D;
+  --color-primary-hover: #166534;
+  --color-primary-light: rgba(21, 128, 61, 0.12);
+  --color-primary-soft: rgba(21, 128, 61, 0.06);
+  
+  --burnt-orange: #C2410C;
+  --burnt-orange-light: #EA580C;
+  --championship-gold: #B45309;
+  
+  --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  --accent-badge: rgba(21, 128, 61, 0.12);
+  --input-bg: #F0FDF4;
+  --table-head-bg: #F0FDF4;
+  --table-row-hover: rgba(21, 128, 61, 0.05);
 }
 
-[data-theme="dark"] {
+[data-theme="dark"],
+body.theme-dark {
   --bg-page: #0C0F0C;
-  --bg-surface: #121512;
+  --bg-header: rgba(18, 21, 18, 0.95);
+  --bg-sidebar: #121512;
+  --bg-surface: #191C14;
   --bg-card: #191C14;
   --bg-card-inner: #22261E;
+  --bg-card-hover: #262C22;
   --bg-hover: #262C22;
+  
+  --border-color: rgba(156, 255, 147, 0.22);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(156, 255, 147, 0.22);
+  --border-accent: rgba(234, 88, 12, 0.35);
   
   --text-main: #F3F4F6;
   --text-heading: #FFFFFF;
-  --text-sub: #D1D5DB;
-  --text-muted: #A1A79F;
+  --text-sub: #A1A79F;
+  --text-muted: #6B7280;
   
-  --color-primary: #9CFF93;
+  --pitch-green: #9CFF93;
+  --pitch-forest: #1ED760;
+  --color-primary: #00E676;
   --color-primary-hover: #1ED760;
   --color-primary-light: rgba(156, 255, 147, 0.15);
   --color-primary-soft: rgba(156, 255, 147, 0.08);
+  
+  --burnt-orange: #EA580C;
+  --burnt-orange-light: #FB923C;
+  --championship-gold: #F59E0B;
+  
+  --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --accent-badge: rgba(156, 255, 147, 0.12);
+  --input-bg: #22261E;
+  --table-head-bg: #121512;
+  --table-row-hover: rgba(156, 255, 147, 0.05);
 }
 
 @layer base {
@@ -410,4 +448,56 @@ body {
   .no-print {
     display: none !important;
   }
+}
+
+/* =========================================================
+   CARD & BUTTON STYLES FROM ADMIN.HTML DESIGN SYSTEM
+   ========================================================= */
+.phanta-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease;
+}
+
+.phanta-card-hover:hover {
+  border-color: var(--pitch-green);
+}
+
+.phanta-btn-primary {
+  font-weight: 800 !important;
+  border-radius: 12px;
+  border: none !important;
+  transition: opacity 0.2s ease;
+  background-color: #00E676 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .phanta-btn-primary,
+body.theme-light .phanta-btn-primary {
+  background-color: #15803D !important;
+  color: #FFFFFF !important;
+}
+
+.phanta-btn-secondary {
+  background-color: var(--bg-card-inner);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+.phanta-btn-secondary:hover {
+  border-color: var(--pitch-green);
+  color: var(--pitch-green);
+}
+
+/* 17 Columns Grid for Gantt Matrix (06:00 to 23:00) */
+.grid-cols-17 {
+  display: grid !important;
+  grid-template-columns: repeat(17, minmax(0, 1fr)) !important;
+}
+.col-span-17 {
+  grid-column: span 17 / span 17 !important;
 }

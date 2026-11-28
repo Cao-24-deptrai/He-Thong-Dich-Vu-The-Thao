@@ -15,7 +15,9 @@ import {
   Check,
   Search,
   ExternalLink,
-  CreditCard
+  CreditCard,
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { api, Booking } from '@/lib/api';
 
@@ -81,7 +83,7 @@ export default function RefundsPage() {
 
     setSubmitting(true);
     try {
-      await api.autoRefund(bookingId, 'Admin kích hoạt hoàn tiền tự động qua cổng thanh toán (Mục 6.5)');
+      await api.autoRefund(bookingId, 'Admin kích hoạt hoàn tiền tự động qua cổng thanh toán');
       setSuccessMessage(`Đã hoàn tiền tự động thành công qua cổng thanh toán cho booking #${bookingId}`);
       await fetchRefundList();
     } catch (err: any) {
@@ -92,154 +94,151 @@ export default function RefundsPage() {
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <RotateCcw className="w-7 h-7 text-blue-600" />
-            Xử Lý Hoàn Tiền Chờ Xử Lý (REFUND_PENDING)
+          <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <RotateCcw className="w-6 h-6 text-[var(--burnt-orange)]" />
+            <span>Xử lý & Đối soát Hoàn tiền (REFUND_PENDING)</span>
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Mục 4.4: Quản lý các giao dịch khách thanh toán muộn (sau khi slot đã quá hạn giữ chỗ 10 phút), cần hoàn tiền thủ công.
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Quản lý và giải ngân cho các đơn khách hủy hợp lệ hoặc thanh toán muộn (Late Webhook) sau thời hạn giữ chỗ 10 phút
           </p>
         </div>
 
         <button
           onClick={fetchRefundList}
-          className="inline-flex items-center px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 shadow-xs transition"
+          className="phanta-btn-secondary px-3.5 py-2 flex items-center gap-2 text-xs w-fit"
         >
-          <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-          Tải lại danh sách
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>Tải lại danh sách</span>
         </button>
       </div>
 
       {/* Success Notification */}
       {successMessage && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--pitch-green)] text-xs flex items-center justify-between font-semibold">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="font-medium">{successMessage}</span>
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{successMessage}</span>
           </div>
-          <button
-            onClick={() => setSuccessMessage(null)}
-            className="text-xs text-emerald-700 underline font-semibold"
-          >
+          <button onClick={() => setSuccessMessage(null)} className="text-[var(--text-sub)] hover:text-white">
             Đóng
           </button>
         </div>
       )}
 
+      {/* Error state */}
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 shrink-0" />
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2 font-medium">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* Bookings Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-base font-bold text-slate-900">Danh sách cần hoàn tiền</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
-              {bookings.length} yêu cầu
+      {/* Content */}
+      <div className="phanta-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-heading font-bold text-base text-[var(--text-heading)] flex items-center gap-2">
+            <span>Danh sách yêu cầu chờ duyệt hoàn tất</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-heading font-extrabold bg-[var(--burnt-orange)]/20 text-[var(--burnt-orange-light)] border border-[var(--burnt-orange)]/30 tabular-nums">
+              {bookings.length}
             </span>
-          </div>
-          <p className="text-xs text-slate-400">
-            Tự động tạo bởi Late Webhook Handler (Mục 3.2)
-          </p>
+          </h2>
         </div>
 
         {loading ? (
-          <div className="p-16 text-center text-slate-400">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            Đang kiểm tra danh sách hoàn tiền...
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[var(--pitch-green)]" />
+            <p className="text-xs text-[var(--text-sub)]">Đang tải danh sách giao dịch cần hoàn tiền...</p>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="p-16 text-center text-slate-500">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-            <p className="font-bold text-base text-slate-800">Tuyệt vời! Không có giao dịch nào đang chờ hoàn tiền.</p>
-            <p className="text-xs text-slate-400 mt-1">
-              Tất cả các khoản thanh toán đều hợp lệ hoặc các booking quá hạn đã được đối soát xử lý xong.
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--bg-card-inner)] flex items-center justify-center mb-3">
+              <CheckCircle2 className="w-6 h-6 text-[var(--pitch-green)]" />
+            </div>
+            <h3 className="font-heading font-bold text-sm text-[var(--text-heading)]">Không có hồ sơ tồn đọng</h3>
+            <p className="text-xs text-[var(--text-sub)] mt-1 max-w-sm">
+              Tất cả giao dịch hoàn tiền hoặc cấn trừ tài khoản đã được xử lý xong và đối soát 100% khớp lệnh.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                <tr>
-                  <th className="py-3.5 px-4">Mã Booking</th>
-                  <th className="py-3.5 px-4">Khách hàng</th>
-                  <th className="py-3.5 px-4">Sân & Thời gian</th>
-                  <th className="py-3.5 px-4">Số tiền cần hoàn</th>
-                  <th className="py-3.5 px-4">Lý do</th>
-                  <th className="py-3.5 px-4 text-right">Hành động</th>
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-sub)] uppercase tracking-wider font-semibold">
+                  <th className="pb-3 pl-2">Mã đơn / Khách hàng</th>
+                  <th className="pb-3">Sân / Khung giờ</th>
+                  <th className="pb-3">Số tiền hoàn</th>
+                  <th className="pb-3">Lý do chờ hoàn</th>
+                  <th className="pb-3 text-right pr-2">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {bookings.map((b: any, index: number) => {
-                  const bId = String(b.bookingId || b._id || `booking-${index}`);
-                  const code = b.bookingCode || (b._id ? String(b._id).slice(-6).toUpperCase() : bId.slice(-6).toUpperCase());
-                  const custName = b.customerName || b.userId?.fullName || 'Khách vãng lai';
-                  const custPhone = b.customerPhone || b.userId?.phone || 'N/A';
-                  const venueTitle = b.venueName || b.venueId?.name || 'Sân thể thao';
-                  const dateText = b.bookingDate ? String(b.bookingDate).split('T')[0] : 'N/A';
-                  const timeText = b.timeSlot || (b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : 'Khung giờ');
-                  const refundAmountVal = (b.amount !== undefined ? b.amount : (b.refundAmount || b.totalPrice || 0));
+              <tbody className="divide-y divide-[var(--border-subtle)]">
+                {bookings.map((booking) => {
+                  const bId = booking.bookingId || booking._id;
+                  const amt = booking.amount !== undefined ? booking.amount : (booking.refundAmount || booking.totalPrice || 0);
 
                   return (
-                    <tr key={bId} className="hover:bg-slate-50/60 transition">
-                      <td className="py-4 px-4 font-mono font-bold text-xs text-blue-600">
-                        #{code}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-semibold text-slate-900">{custName}</div>
-                        <div className="text-xs text-slate-500 font-mono">{custPhone}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-slate-900">{venueTitle}</div>
-                        <div className="text-xs text-slate-500">{dateText} ({timeText})</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="font-bold text-rose-600 font-mono text-sm">
-                          {refundAmountVal.toLocaleString('vi-VN')} đ
-                        </span>
-                        {b.refundRate !== undefined && (
-                          <div className="text-[10px] text-slate-500 font-mono">
-                            Tỷ lệ: {Math.round(b.refundRate * 100)}%
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-xs max-w-sm break-words">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                            {b.refundNote ? 'Khách yêu cầu hoàn' : 'Thanh toán trễ (Late)'}
-                          </span>
-                          {b.refundNote && (
-                            <p className="mt-1 text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded border border-slate-200 leading-snug">
-                              {b.refundNote}
-                            </p>
-                          )}
+                    <tr key={bId} className="hover:bg-[var(--bg-card-inner)]/50 transition">
+                      <td className="py-3.5 pl-2">
+                        <div className="font-heading font-bold text-[var(--text-heading)] tabular-nums">
+                          #{booking.bookingCode || bId.substring(0, 8)}
+                        </div>
+                        <div className="text-[11px] text-[var(--text-sub)] mt-0.5 flex items-center gap-1.5">
+                          <User className="w-3 h-3" />
+                          <span>{booking.customerName || booking.userId?.fullName || 'Khách vãng lai'}</span>
+                          <span>-</span>
+                          <span>{booking.customerPhone || booking.userId?.phone || '0900000000'}</span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-right">
+
+                      <td className="py-3.5">
+                        <div className="font-medium text-[var(--text-main)]">
+                          {booking.venueName || booking.venueId?.name || 'Sân thể thao'}
+                        </div>
+                        <div className="text-[11px] text-[var(--text-sub)] mt-0.5 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span className="font-heading tabular-nums">{booking.startTime || '17:30'} - {booking.endTime || '19:00'}</span>
+                          <span>({booking.bookingDate || 'Hôm nay'})</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5">
+                        <div className="font-heading font-extrabold text-[var(--pitch-green)] text-sm tabular-nums">
+                          {amt.toLocaleString('vi-VN')} đ
+                        </div>
+                        <span className="text-[10px] text-[var(--text-sub)] font-medium">Qua cổng / STK</span>
+                      </td>
+
+                      <td className="py-3.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>{booking.refundReason || 'Thanh toán trễ quá 10 phút giữ chỗ'}</span>
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 text-right pr-2">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => handleAutoRefund(b)}
+                            type="button"
+                            onClick={() => handleAutoRefund(booking)}
                             disabled={submitting}
-                            className="inline-flex items-center px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-xs transition disabled:opacity-50"
-                            title="Tự động gọi cổng thanh toán hoàn tiền"
+                            className="phanta-btn-primary px-3 py-1.5 text-xs flex items-center gap-1"
                           >
-                            ⚡ Auto-Refund
+                            <Zap className="w-3 h-3" />
+                            <span>Hoàn tự động</span>
                           </button>
+
                           <button
-                            onClick={() => handleOpenRefundModal(b)}
+                            type="button"
+                            onClick={() => handleOpenRefundModal(booking)}
                             disabled={submitting}
-                            className="inline-flex items-center px-3 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg text-xs font-semibold transition"
+                            className="phanta-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1"
                           >
-                            <Check className="w-3.5 h-3.5 mr-1" />
-                            Thủ công
+                            <Check className="w-3 h-3" />
+                            <span>Ghi chú thủ công</span>
                           </button>
                         </div>
                       </td>
@@ -252,76 +251,44 @@ export default function RefundsPage() {
         )}
       </div>
 
-      {/* Refund Confirmation Modal */}
+      {/* Manual Refund Confirmation Modal */}
       {selectedBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
-              <RotateCcw className="w-5 h-5 text-blue-600" />
-              Xác Nhận Hoàn Tiền Thủ Công
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="phanta-card max-w-md w-full p-6 space-y-4">
+            <h3 className="font-heading font-bold text-lg text-[var(--text-heading)] flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[var(--pitch-green)]" />
+              <span>Xác nhận duyệt hoàn tiền</span>
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Xác nhận bạn đã chuyển khoản hoàn lại số tiền cho khách hàng thành công.
+
+            <p className="text-xs text-[var(--text-sub)]">
+              Vui lòng nhập ghi chú xác nhận đã chuyển khoản cho khách để cập nhật trạng thái sổ cái:
             </p>
 
-            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5 mb-4">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Khách hàng:</span>
-                <span className="font-semibold text-slate-900">
-                  {selectedBooking.customerName || selectedBooking.userId?.fullName || 'Khách hàng'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Số điện thoại:</span>
-                <span className="font-mono text-slate-900">
-                  {selectedBooking.customerPhone || selectedBooking.userId?.phone || 'N/A'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Số tiền cần hoàn:</span>
-                <span className="font-bold text-rose-600 font-mono text-sm">
-                  {(selectedBooking.amount !== undefined ? selectedBooking.amount : (selectedBooking.refundAmount || selectedBooking.totalPrice || 0)).toLocaleString('vi-VN')} đ
-                </span>
-              </div>
-              {selectedBooking.refundNote && (
-                <div className="pt-2 border-t border-slate-200">
-                  <span className="text-slate-500 block mb-1 font-semibold">Thông tin nhận tiền của khách:</span>
-                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-[11px] font-mono leading-relaxed select-all">
-                    {selectedBooking.refundNote}
-                  </div>
-                </div>
-              )}
-            </div>
-
             <form onSubmit={handleConfirmRefund} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
-                  Ghi chú hoàn tiền (Mã GD ngân hàng / UNC) *
-                </label>
-                <textarea
-                  rows={3}
-                  required
-                  value={refundNote}
-                  onChange={(e) => setRefundNote(e.target.value)}
-                  placeholder="Nhập mã giao dịch chuyển tiền hoàn lại cho khách..."
-                  className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
+              <textarea
+                value={refundNote}
+                onChange={(e) => setRefundNote(e.target.value)}
+                rows={3}
+                required
+                className="w-full p-3 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
+                placeholder="Nhập mã giao dịch ngân hàng hoặc chi tiết hoàn tất..."
+              />
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setSelectedBooking(null)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-900"
+                  className="phanta-btn-secondary px-3.5 py-2 text-xs"
                 >
-                  Hủy
+                  Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting || !refundNote.trim()}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs disabled:opacity-50 transition"
+                  disabled={submitting}
+                  className="phanta-btn-primary px-4 py-2 text-xs flex items-center gap-1.5"
                 >
-                  {submitting ? 'Đang lưu...' : 'Hoàn tất hoàn tiền'}
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Xác nhận hoàn tất</span>
                 </button>
               </div>
             </form>

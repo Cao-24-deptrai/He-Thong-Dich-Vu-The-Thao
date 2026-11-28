@@ -197,7 +197,7 @@ export default function ForgotPasswordPage() {
         </div>
         <Link
           href="/login"
-          className="block w-full text-center py-3 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider"
+          className="block w-full text-center py-3 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider"
         >
           Quay lại Đăng nhập
         </Link>
@@ -271,7 +271,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider transition disabled:opacity-50"
             >
               {loading ? 'Đang gửi mã OTP...' : 'Gửi Mã OTP Xác Thực'}
             </button>
@@ -337,7 +337,7 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider transition disabled:opacity-50"
             >
               {loading ? 'Đang cập nhật mật khẩu...' : 'Xác Nhận & Đặt Lại Mật Khẩu'}
             </button>
@@ -362,7 +362,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider transition disabled:opacity-50"
           >
             {loading
               ? 'Đang gửi liên kết...'

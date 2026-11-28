@@ -232,7 +232,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
             </span>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-extrabold text-white tracking-tight">
+                <h2 className="text-base font-bold text-white tracking-tight">
                   Bảng Lịch Timeline Gantt Chart Trực Quan
                 </h2>
                 <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border flex items-center gap-1 ${
@@ -340,7 +340,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                     {slot.endStr}
                   </div>
                   {slot.isPeak && (
-                    <span className="inline-block mt-0.5 px-1 py-0.2 text-[8px] font-extrabold uppercase rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="inline-block mt-0.5 px-1 py-0.2 text-[8px] font-bold uppercase rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       Peak
                     </span>
                   )}

@@ -262,12 +262,12 @@ export default function RentalsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading tabular-nums uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               Module M13 • Epic E07
             </span>
             <span className="text-slate-400 text-xs">• Phụ trách: Nguyễn Lê Thành Trung</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight mt-1 flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mt-1 flex items-center gap-3">
             <PackageCheck className="w-8 h-8 text-cyan-400" />
             Cho Thuê Dụng Cụ Thể Thao
           </h1>
@@ -315,7 +315,7 @@ export default function RentalsPage() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Tổng Thiết Bị</span>
             <Boxes className="w-5 h-5 text-cyan-400" />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-black text-white">{totalEquipments}</div>
+          <div className="mt-2 text-2xl md:text-3xl font-bold text-white">{totalEquipments}</div>
           <span className="text-[11px] text-slate-400">tài sản quản lý trong kho</span>
         </div>
 
@@ -324,7 +324,7 @@ export default function RentalsPage() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Đang Cho Thuê</span>
             <Clock className="w-5 h-5 text-amber-400" />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-black text-amber-400">{totalRented}</div>
+          <div className="mt-2 text-2xl md:text-3xl font-bold text-amber-400">{totalRented}</div>
           <span className="text-[11px] text-slate-400">món đang ở ngoài sân</span>
         </div>
 
@@ -333,7 +333,7 @@ export default function RentalsPage() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Hỏng / Mất Cách Ly</span>
             <ShieldAlert className="w-5 h-5 text-rose-400" />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-black text-rose-400">{totalDamaged}</div>
+          <div className="mt-2 text-2xl md:text-3xl font-bold text-rose-400">{totalDamaged}</div>
           <span className="text-[11px] text-slate-400">cách ly khỏi khả dụng</span>
         </div>
 
@@ -342,7 +342,7 @@ export default function RentalsPage() {
             <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Sẵn Sàng Cho Thuê</span>
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-black text-emerald-400">{totalAvailable}</div>
+          <div className="mt-2 text-2xl md:text-3xl font-bold text-emerald-400">{totalAvailable}</div>
           <span className="text-[11px] text-slate-400">khả dụng tức thời</span>
         </div>
       </div>
@@ -442,7 +442,7 @@ export default function RentalsPage() {
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="Tìm dụng cụ..."
+                  placeholder="Tìm dụng cụ"
                   value={searchCatalog}
                   onChange={(e) => setSearchCatalog(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
@@ -469,7 +469,7 @@ export default function RentalsPage() {
                     <div>
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                          <span className="text-[10px] font-heading tabular-nums px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
                             {eq.code}
                           </span>
                           <span className="ml-2 text-[10px] uppercase font-bold text-slate-400">
@@ -489,7 +489,7 @@ export default function RentalsPage() {
 
                       <h3 className="font-bold text-white text-base mt-2">{eq.name}</h3>
                       <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-cyan-400 font-black text-lg">
+                        <span className="text-cyan-400 font-bold text-lg">
                           {eq.price.toLocaleString()} đ
                         </span>
                         <span className="text-xs text-slate-400">
@@ -512,7 +512,7 @@ export default function RentalsPage() {
                           >
                             -
                           </button>
-                          <span className="w-8 text-center font-black text-cyan-400">{inCart.quantity}</span>
+                          <span className="w-8 text-center font-bold text-cyan-400">{inCart.quantity}</span>
                           <button
                             onClick={() => updateCartQty(eq._id, inCart.quantity + 1, eq.availableQuantity)}
                             className="w-8 h-8 rounded-xl bg-cyan-500 text-slate-950 hover:bg-cyan-400 flex items-center justify-center font-bold transition"
@@ -543,7 +543,7 @@ export default function RentalsPage() {
           {/* Right Col: Desk Checkout Panel */}
           <div className="bg-[#0d121f] border border-slate-800 rounded-3xl p-6 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
-              <h2 className="text-lg font-black text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
                 <DollarSign className="w-5 h-5 text-emerald-400" />
                 Phiếu Thuê Quầy
               </h2>
@@ -648,7 +648,7 @@ export default function RentalsPage() {
                 <span>Tiền cọc giữ đồ:</span>
                 <span className="font-bold">{cartSummary.deposit.toLocaleString()} đ</span>
               </div>
-              <div className="flex justify-between text-base font-black text-white pt-2 border-t border-slate-800/60">
+              <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-slate-800/60">
                 <span>Tổng thu tại quầy:</span>
                 <span className="text-emerald-400 text-lg">{cartSummary.total.toLocaleString()} đ</span>
               </div>
@@ -656,7 +656,7 @@ export default function RentalsPage() {
               <button
                 disabled={loading || cart.length === 0}
                 onClick={handleCreateTicket}
-                className={`w-full py-3 rounded-2xl font-black text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg mt-4 ${
+                className={`w-full py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg mt-4 ${
                   loading || cart.length === 0
                     ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.3)]'
@@ -696,7 +696,7 @@ export default function RentalsPage() {
                 >
                   <div>
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-mono font-bold text-cyan-400 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                      <span className="text-xs font-heading tabular-nums font-bold text-cyan-400 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
                         {t.ticketCode}
                       </span>
                       <span
@@ -773,7 +773,7 @@ export default function RentalsPage() {
                 <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="text"
-                  placeholder="Lọc mã hoặc tên..."
+                  placeholder="Lọc mã hoặc tên"
                   value={searchCatalog}
                   onChange={(e) => setSearchCatalog(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
@@ -798,7 +798,7 @@ export default function RentalsPage() {
                 <tbody className="divide-y divide-slate-800/60 text-slate-300">
                   {filteredEquipments.map((eq) => (
                     <tr key={eq._id} className="hover:bg-slate-900/40 transition">
-                      <td className="p-4 font-mono font-bold text-cyan-400">{eq.code}</td>
+                      <td className="p-4 font-heading tabular-nums font-bold text-cyan-400">{eq.code}</td>
                       <td className="p-4 font-bold text-white">{eq.name}</td>
                       <td className="p-4">
                         <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
@@ -862,7 +862,7 @@ export default function RentalsPage() {
           <div className="bg-[#0d121f] border border-slate-800 rounded-3xl w-full max-w-xl p-6 space-y-5 shadow-2xl">
             <div className="flex justify-between items-start border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <RotateCcw className="w-5 h-5 text-cyan-400" />
                   Quyết Toán Trả Đồ • {selectedTicketForReturn.ticketCode}
                 </h3>
@@ -889,7 +889,7 @@ export default function RentalsPage() {
                   <div key={item.equipmentId} className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-3">
                     <div className="flex justify-between items-center">
                       <span className="font-bold text-white text-sm">{item.name} (x{item.quantity})</span>
-                      <span className="text-xs text-slate-400 font-mono">{item.code}</span>
+                      <span className="text-xs text-slate-400 font-heading tabular-nums">{item.code}</span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
@@ -948,7 +948,7 @@ export default function RentalsPage() {
                   đ
                 </span>
               </div>
-              <div className="flex justify-between text-emerald-400 text-sm font-black pt-2 border-t border-slate-800">
+              <div className="flex justify-between text-emerald-400 text-sm font-bold pt-2 border-t border-slate-800">
                 <span>Số tiền hoàn cọc lại cho khách:</span>
                 <span className="text-base">
                   {Math.max(
@@ -963,7 +963,7 @@ export default function RentalsPage() {
 
             <button
               onClick={handleConfirmReturn}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black text-sm uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-sm uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
             >
               Xác Nhận Quyết Toán & Hoàn Cọc
             </button>
@@ -979,7 +979,7 @@ export default function RentalsPage() {
             className="bg-[#0d121f] border border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl"
           >
             <div className="flex justify-between items-start border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-black text-white">
+              <h3 className="text-lg font-bold text-white">
                 {editingEquipment ? 'Chỉnh Sửa Thiết Bị' : 'Thêm Thiết Bị Kho Mới'}
               </h3>
               <button
@@ -1024,7 +1024,7 @@ export default function RentalsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Vợt Tennis Pro Staff..."
+                  placeholder="Vợt Tennis Pro Staff"
                   value={equipmentForm.name}
                   onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
                   className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"

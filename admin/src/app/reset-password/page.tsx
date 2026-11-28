@@ -113,7 +113,7 @@ function ResetPasswordContent() {
           </div>
           <Link
             href="/login"
-            className="block w-full text-center py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider"
+            className="block w-full text-center py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider"
           >
             Đăng Nhập Ngay
           </Link>
@@ -125,7 +125,7 @@ function ResetPasswordContent() {
           </div>
           <Link
             href="/forgot-password"
-            className="block w-full text-center py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider"
+            className="block w-full text-center py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider"
           >
             Yêu Cầu Liên Kết Mới
           </Link>
@@ -171,7 +171,7 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-black text-sm uppercase tracking-wider transition disabled:opacity-50"
+            className="w-full py-3.5 px-4 rounded-xl bg-[#00B562] dark:bg-[#9CFF93] hover:opacity-95 text-white dark:text-[#0C0F0C] font-heading font-bold text-sm uppercase tracking-wider transition disabled:opacity-50"
           >
             {submitting ? 'Đang lưu mật khẩu...' : 'Cập Nhật Mật Khẩu Mới'}
           </button>

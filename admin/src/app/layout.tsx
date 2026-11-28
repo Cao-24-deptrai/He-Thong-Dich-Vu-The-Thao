@@ -6,14 +6,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  CalendarPlus, 
-  QrCode, 
-  RotateCcw, 
-  LogOut, 
-  User as UserIcon, 
-  Activity,
+import {
+  Building2,
+  CalendarPlus,
+  QrCode,
+  RotateCcw,
+  LogOut,
   Menu,
   X,
   Dumbbell,
@@ -30,16 +28,36 @@ import {
   Star,
   Ticket,
   ChevronDown,
-  MapPin,
-  Home,
-  HelpCircle,
-  Info
+  ChevronsLeft,
+  ChevronsRight,
+  Sun,
+  Moon,
+  Calendar,
+  Box,
+  Wallet,
 } from 'lucide-react';
 import { api, User } from '@/lib/api';
-import ThemeToggle from '@/components/ThemeToggle';
-import MobileBottomNav from '@/components/MobileBottomNav';
-import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
-import CustomerAccountMenu from '@/components/CustomerAccountMenu';
+
+const PAGE_TITLES: Record<string, string> = {
+  '/analytics': 'Tổng quan doanh thu & vận hành',
+  '/venue-3d': 'Sơ đồ 3D cụm sân tương tác',
+  '/facilities': 'Quản lý cụm sân bãi',
+  '/walk-in': 'Đặt sân tại quầy',
+  '/checkin': 'Quét check-in QR',
+  '/refunds': 'Xử lý hoàn tiền',
+  '/gym': 'Hội viên Gym & soát vé',
+  '/pt-classes': 'Huấn luyện viên & lớp học',
+  '/tournaments': 'Giải đấu thể thao',
+  '/gaming': 'Khu Cyber Gaming 100 máy',
+  '/matchmaking': 'Cáp kèo thể thao',
+  '/canteen': 'POS Canteen & F&B',
+  '/rentals': 'Cho thuê dụng cụ',
+  '/vouchers': 'Mã giảm giá & combo',
+  '/invoices': 'Sổ cái & hóa đơn điện tử',
+  '/reviews': 'Đánh giá dịch vụ',
+  '/notifications': 'Trung tâm thông báo',
+  '/bridge': 'Bridge Agent & thiết bị IoT',
+};
 
 export default function RootLayout({
   children,
@@ -51,18 +69,29 @@ export default function RootLayout({
   const [user, setUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [expandedGroupId, setExpandedGroupId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   const toggleGroup = (groupId: string) => {
+    if (sidebarCollapsed) {
+      setSidebarCollapsed(false);
+    }
     setExpandedGroupId((prev) => (prev === groupId ? null : groupId));
   };
 
   useEffect(() => {
     setMounted(true);
+    const savedTheme = (localStorage.getItem('phanta_theme') as 'light' | 'dark' | null) || 'dark';
+    setTheme(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    const savedCollapsed = localStorage.getItem('phanta_sidebar_collapsed') === 'true';
+    setSidebarCollapsed(savedCollapsed);
+
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    // Đồng bộ thông tin mới nhất từ database về thiết bị
     if (api.getToken()) {
       api
         .getMyProfile()
@@ -85,10 +114,10 @@ export default function RootLayout({
 
     const isAuthPath =
       pathname === '/login' ||
+      pathname === '/register' ||
       pathname === '/forgot-password' ||
       pathname === '/reset-password';
 
-    // 1. Nếu là tài khoản khách hàng CUSTOMER -> Chuyển sang Cổng Web Khách
     if (currentUser?.role === 'CUSTOMER') {
       const clientHome =
         typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')
@@ -98,13 +127,11 @@ export default function RootLayout({
       return;
     }
 
-    // 2. Nếu chưa đăng nhập -> Chuyển về trang đăng nhập nội bộ
     if (!currentUser && !isAuthPath) {
       router.replace('/login');
       return;
     }
 
-    // 3. Phân quyền cho nhân viên quầy (STAFF):
     if (currentUser?.role === 'STAFF') {
       const allowedStaffRoutes = ['/pos', '/walk-in', '/checkin', '/canteen', '/rentals'];
       const isAllowed = allowedStaffRoutes.some(
@@ -116,6 +143,21 @@ export default function RootLayout({
       }
     }
   }, [pathname, router]);
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('phanta_theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
+
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('phanta_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     api.logout();
@@ -134,6 +176,7 @@ export default function RootLayout({
     label: string;
     icon: any;
     description: string;
+    badge?: string;
     roles?: string[];
   }
 
@@ -147,167 +190,168 @@ export default function RootLayout({
 
   const navGroups: NavGroup[] = [
     {
-      id: 'operations',
-      label: 'Vận Hành & Đặt Sân',
-      icon: CalendarPlus,
-      description: 'Lịch sân, walk-in, check-in QR & hoàn tiền',
+      id: 'macro',
+      label: 'Quản trị vĩ mô',
+      icon: BarChart3,
+      description: 'Tổng quan doanh thu & sơ đồ 3D',
       items: [
         {
-          href: '/pos/checkin-walkin',
-          label: 'Web POS Thu Ngân (Mới)',
-          icon: QrCode,
-          description: 'Giao diện POS quầy, chốt ca, F1-F8',
-          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
+          href: '/analytics',
+          label: 'Tổng quan điều hành',
+          icon: BarChart3,
+          description: 'Báo cáo KPI & hiệu quả tổ hợp',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
+          href: '/venue-3d',
+          label: 'Sơ đồ 3D cụm sân',
+          icon: Box,
+          description: 'Không gian 3D & lịch Gantt',
+          badge: '3D',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
+        },
+        {
+          href: '/invoices',
+          label: 'Doanh thu & sổ cái',
+          icon: Receipt,
+          description: 'Hóa đơn VAT & đối soát',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
+        },
+      ],
+    },
+    {
+      id: 'operations',
+      label: 'Vận hành & Đặt sân',
+      icon: CalendarPlus,
+      description: 'Cụm sân, walk-in, check-in QR & hoàn tiền',
+      items: [
+        {
           href: '/facilities',
-          label: 'Quản Lý Sân Bãi',
+          label: 'Quản lý sân bãi',
           icon: Building2,
-          description: 'Quản lý danh sách sân, bảng giá và cơ sở',
+          description: 'Danh sách sân, bảng giá & cơ sở',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/walk-in',
-          label: 'Đặt tại Quầy (Walk-in)',
+          label: 'Đặt tại quầy',
           icon: CalendarPlus,
-          description: 'Lịch sân & đặt chỗ tại chỗ',
+          description: 'Lịch sân & đặt chỗ trực tiếp',
           roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/checkin',
-          label: 'Quét Check-in QR',
+          label: 'Quét check-in QR',
           icon: QrCode,
           description: 'Xác thực vé vào sân bằng QR',
           roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/refunds',
-          label: 'Xử lý Hoàn tiền',
+          label: 'Xử lý hoàn tiền',
           icon: RotateCcw,
-          description: 'Booking thanh toán muộn (Refund Pending)',
+          description: 'Giao dịch chờ hoàn tiền',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
     {
       id: 'services',
-      label: 'Dịch Vụ & Bộ Môn',
+      label: 'Dịch vụ & Bộ môn',
       icon: Dumbbell,
       description: 'Gym, PT, giải đấu, gaming & cáp kèo',
       items: [
         {
           href: '/gym',
-          label: 'Hội Viên Gym',
+          label: 'Hội viên Gym',
           icon: Dumbbell,
-          description: 'Quản lý gói tập & soát vé (Mục 6.1)',
+          description: 'Gói tập & kiểm soát ra vào',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/pt-classes',
-          label: 'PT & Lớp Học',
+          label: 'PT & Lớp học',
           icon: Award,
-          description: 'Hồ sơ HLV & Lớp học nhóm (M11)',
+          description: 'Hồ sơ HLV & lớp học nhóm',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/tournaments',
-          label: 'Giải Đấu Thể Thao',
+          label: 'Giải đấu thể thao',
           icon: Trophy,
-          description: 'Sơ đồ nhánh đấu & Tỷ số (M16)',
+          description: 'Sơ đồ nhánh đấu & tỷ số',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/gaming',
-          label: 'Khu Gaming 100 Máy',
+          label: 'Khu Gaming 100 máy',
           icon: Gamepad2,
-          description: 'Sơ đồ sàn 2D & Điều khiển (M14)',
+          description: 'Sơ đồ sàn 2D & điều khiển',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/matchmaking',
-          label: 'Cáp Kèo Thể Thao',
+          label: 'Cáp kèo thể thao',
           icon: Users,
-          description: 'Giao lưu & tìm đồng đội (Mục 6.3)',
+          description: 'Giao lưu & tìm đồng đội',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
     {
       id: 'retail',
-      label: 'Bán Lẻ & Tiện Ích',
+      label: 'Bán lẻ & Tiện ích',
       icon: Coffee,
-      description: 'POS Canteen, dụng cụ & vouchers',
+      description: 'Canteen, cho thuê & khuyến mãi',
       items: [
         {
           href: '/canteen',
-          label: 'POS Canteen',
+          label: 'Quản lý Canteen',
           icon: Coffee,
-          description: 'Bán lẻ & ca thu ngân (M12)',
+          description: 'Sản phẩm F&B & tồn kho',
           roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/rentals',
-          label: 'Cho Thuê Dụng Cụ',
+          label: 'Cho thuê dụng cụ',
           icon: PackageCheck,
-          description: 'Thuê dụng cụ theo slot (M13)',
+          description: 'Thuê vợt, bóng & phụ kiện',
           roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
         },
         {
           href: '/vouchers',
-          label: 'Mã Giảm Giá & Combo',
+          label: 'Mã giảm giá & combo',
           icon: Ticket,
-          description: 'Vouchers & gói ưu đãi (M15)',
-          roles: ['ADMIN', 'OWNER', 'MANAGER'],
-        },
-      ],
-    },
-    {
-      id: 'finance',
-      label: 'Tài Chính & CSKH',
-      icon: Receipt,
-      description: 'Hóa đơn VAT, đánh giá & thông báo',
-      items: [
-        {
-          href: '/invoices',
-          label: 'Hóa Đơn Điện Tử',
-          icon: Receipt,
-          description: 'Hóa đơn VAT & tra cứu (M08)',
-          roles: ['ADMIN', 'OWNER', 'MANAGER'],
-        },
-        {
-          href: '/reviews',
-          label: 'Đánh Giá Dịch Vụ',
-          icon: Star,
-          description: 'Phản hồi khách hàng (FR-16)',
-          roles: ['ADMIN', 'OWNER', 'MANAGER'],
-        },
-        {
-          href: '/notifications',
-          label: 'Thông Báo',
-          icon: Bell,
-          description: 'Push FCM & Zalo ZNS (M09)',
+          description: 'Voucher & gói ưu đãi',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
       ],
     },
     {
       id: 'system',
-      label: 'Hệ Thống & Báo Cáo',
-      icon: BarChart3,
-      description: 'Thống kê doanh thu & thiết bị IoT',
+      label: 'Hệ thống & CSKH',
+      icon: Cpu,
+      description: 'Đánh giá, thông báo & IoT',
       items: [
         {
-          href: '/analytics',
-          label: 'Báo Cáo & Thống Kê',
-          icon: BarChart3,
-          description: 'Doanh thu & tỷ lệ lấp đầy (M17)',
-          roles: ['ADMIN', 'OWNER'],
+          href: '/reviews',
+          label: 'Đánh giá dịch vụ',
+          icon: Star,
+          description: 'Phản hồi từ khách hàng',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
+        },
+        {
+          href: '/notifications',
+          label: 'Thông báo hệ thống',
+          icon: Bell,
+          description: 'Cảnh báo & gửi tin FCM',
+          roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/bridge',
           label: 'Bridge Agent & IoT',
           icon: Cpu,
-          description: 'Thiết bị quầy & Cửa xoay (M22)',
+          description: 'Thiết bị quầy & cửa xoay',
           roles: ['ADMIN', 'OWNER'],
         },
       ],
@@ -341,15 +385,43 @@ export default function RootLayout({
     }
   }, [pathname, user?.role]);
 
+  const currentPageTitle =
+    Object.entries(PAGE_TITLES).find(([route]) => pathname.startsWith(route))?.[1] ||
+    'Trung tâm quản trị hệ thống Phanta';
+
+  const todayFormatted = new Intl.DateTimeFormat('vi-VN', {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date());
+
+  const userInitials = user?.fullName
+    ? user.fullName
+        .trim()
+        .split(/\s+/)
+        .slice(-2)
+        .map((w) => w[0])
+        .join('')
+        .toUpperCase()
+    : 'AD';
+
+  const roleLabelMap: Record<string, string> = {
+    OWNER: 'Chủ cơ sở (Owner)',
+    ADMIN: 'Quản trị viên (Admin)',
+    MANAGER: 'Quản lý cơ sở (Manager)',
+    STAFF: 'Nhân viên quầy (Staff)',
+  };
+
   return (
-    <html lang="vi" data-theme="light">
+    <html lang="vi" data-theme="dark">
       <head>
         <title>
           {isPosPortal
             ? 'Phanta Sports - Hệ Thống Web POS Quầy Thu Ngân'
             : isAuthPage
             ? 'Sports & Esports Booking - Đăng nhập'
-            : 'Hệ Thống Quản Trị Sân Thể Thao & Esports'}
+            : 'Phanta Sports OS - Trung tâm quản trị hệ thống'}
         </title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/Phanta Sports Booking Emblem.png" />
@@ -361,102 +433,144 @@ export default function RootLayout({
         />
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('phanta_theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('phanta_theme')||'dark';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();`,
           }}
         />
       </head>
       <body
         className={
           isPosPortal
-            ? 'min-h-screen bg-[#0C0F0C] text-[#F3F4F6] font-body'
+            ? 'min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] font-sans'
             : isAuthPage
-            ? 'bg-slate-900 text-slate-100 min-h-screen font-body'
-            : 'bg-[#0C0F0C] text-[#F3F4F6] flex min-h-screen relative font-body'
+            ? 'bg-slate-900 text-slate-100 min-h-screen font-sans'
+            : 'bg-[var(--bg-page)] text-[var(--text-main)] flex h-screen w-screen overflow-hidden font-sans'
         }
       >
-        {isPosPortal ? (
-          children
-        ) : isAuthPage ? (
+        {isPosPortal || isAuthPage ? (
           children
         ) : (
           <>
-            {/* Desktop Sidebar (Admin Operations) */}
-            <aside className="hidden md:flex flex-col w-72 bg-[#121512] border-r border-white/10 shrink-0 z-20">
-              {/* Brand Header */}
-              <div className="p-6 border-b border-white/10 flex items-center space-x-3.5">
-                <div className="w-10 h-10 relative shrink-0">
-                  <Image
-                    src="/Phanta Sports Booking Emblem.png"
-                    alt="Phanta Sports Logo"
-                    width={40}
-                    height={40}
-                    className="object-contain"
-                  />
+            {/* =========================================================
+                COLLAPSIBLE SIDEBAR (ADMIN.HTML DESIGN SYSTEM)
+                ========================================================= */}
+            <aside
+              id="main-sidebar"
+              className={`hidden md:flex flex-col bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] shrink-0 z-40 transition-all duration-300 ${
+                sidebarCollapsed ? 'w-[76px]' : 'w-64'
+              }`}
+            >
+              {/* Brand Header & Collapse Arrow Underneath */}
+              <div className="p-3 border-b border-[var(--border-color)] flex flex-col items-center">
+                <div
+                  className={`w-full flex items-center overflow-hidden px-1 py-1 ${
+                    sidebarCollapsed ? 'justify-center' : 'gap-3'
+                  }`}
+                >
+                  <div className="w-10 h-10 relative shrink-0 rounded-xl overflow-hidden bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex items-center justify-center">
+                    <Image
+                      src="/Phanta Sports Booking Emblem.png"
+                      alt="Phanta Sports Emblem"
+                      width={40}
+                      height={40}
+                      className="object-contain"
+                    />
+                  </div>
+                  {!sidebarCollapsed && (
+                    <div className="min-w-0">
+                      <div className="font-heading font-black text-xl text-[var(--text-heading)] tracking-wider leading-none mb-1">
+                        PHANTA
+                      </div>
+                      <div className="text-[10px] font-bold text-[var(--pitch-green)] tracking-wider uppercase leading-none whitespace-nowrap">
+                        ADMIN DASHBOARD
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <h1 className="font-heading font-black text-base text-white tracking-tight leading-tight flex items-center gap-1.5">
-                    PHANTA SPORTS
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#9CFF93]/20 text-[#9CFF93] border border-[#9CFF93]/30">
-                      OPS
-                    </span>
-                  </h1>
-                  <p className="text-[11px] text-slate-400 font-medium tracking-wide">
-                    Quản Trị Vận Hành & POS
-                  </p>
-                </div>
+
+                {/* Arrow Toggle Button PLACED UNDER LOGO */}
+                <button
+                  type="button"
+                  onClick={handleToggleSidebar}
+                  title={sidebarCollapsed ? 'Mở rộng menu' : 'Thu gọn menu'}
+                  className={`mt-2 flex items-center justify-center py-1.5 px-2 rounded-xl text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:bg-[var(--accent-badge)] border border-transparent hover:border-[var(--border-subtle)] transition-colors ${
+                    sidebarCollapsed ? 'w-11 mx-auto' : 'w-full'
+                  }`}
+                >
+                  {sidebarCollapsed ? (
+                    <ChevronsRight className="w-4 h-4 shrink-0" />
+                  ) : (
+                    <>
+                      <ChevronsLeft className="w-4 h-4 shrink-0" />
+                      <span className="text-[11px] font-semibold ml-1.5">Thu gọn menu</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Navigation Links */}
-              <nav className="flex-1 p-3.5 space-y-1.5 overflow-y-auto">
-                <div className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 font-heading">
-                  DANH MỤC QUẢN TRỊ
-                </div>
+              <nav className="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto">
+                {!sidebarCollapsed && (
+                  <div className="px-2.5 pb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                    Danh mục quản trị
+                  </div>
+                )}
+
                 {filteredNavGroups.map((group) => {
                   const GroupIcon = group.icon;
                   const isExpanded = expandedGroupId === group.id;
                   const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
+
+                  if (sidebarCollapsed) {
+                    return (
+                      <div key={group.id} className="space-y-1">
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(group.id)}
+                          title={group.label}
+                          className={`w-full flex items-center justify-center p-2.5 rounded-xl transition-colors ${
+                            isGroupActive
+                              ? 'bg-[var(--accent-badge)] text-[var(--pitch-green)] border-l-[3px] border-[var(--pitch-green)]'
+                              : 'text-[var(--text-sub)] hover:bg-[var(--bg-card-inner)] hover:text-[var(--text-heading)]'
+                          }`}
+                        >
+                          <GroupIcon className="w-4 h-4 shrink-0" />
+                        </button>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div key={group.id} className="space-y-1">
                       <button
                         type="button"
                         onClick={() => toggleGroup(group.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors text-left ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors text-left ${
                           isGroupActive
-                            ? 'bg-[#191C14] text-white font-bold border border-[#9CFF93]/30'
+                            ? 'bg-[var(--bg-card-inner)] text-[var(--text-heading)] font-bold border border-[var(--border-color)]'
                             : isExpanded
-                            ? 'bg-[#191C14]/60 text-slate-200 border border-white/10'
-                            : 'text-slate-400 hover:text-slate-200 hover:bg-[#191C14]/40 border border-transparent'
+                            ? 'bg-[var(--bg-card-inner)]/60 text-[var(--text-main)] border border-[var(--border-subtle)]'
+                            : 'text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-card-inner)] border border-transparent'
                         }`}
                       >
-                        <div className="flex items-center space-x-2.5 min-w-0">
-                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
-                            isGroupActive
-                              ? 'bg-[#9CFF93] text-black font-black'
-                              : isExpanded
-                              ? 'bg-[#9CFF93]/20 text-[#9CFF93] border border-[#9CFF93]/30'
-                              : 'bg-white/5 text-slate-400'
-                          }`}>
-                            <GroupIcon className="w-4 h-4" />
-                          </div>
-                          <div className="truncate">
-                            <div className="text-xs font-bold tracking-tight truncate">
-                              {group.label}
-                            </div>
-                            <div className="text-[10px] text-slate-500 truncate font-normal">
-                              {group.items.length} mục chức năng
-                            </div>
-                          </div>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <GroupIcon
+                            className={`w-4 h-4 shrink-0 ${
+                              isGroupActive ? 'text-[var(--pitch-green)]' : 'text-[var(--text-sub)]'
+                            }`}
+                          />
+                          <span className="text-xs font-semibold truncate">{group.label}</span>
                         </div>
                         <ChevronDown
-                          className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
-                            isExpanded ? 'rotate-180 text-[#9CFF93]' : 'text-slate-500'
+                          className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                            isExpanded
+                              ? 'rotate-180 text-[var(--pitch-green)]'
+                              : 'text-[var(--text-muted)]'
                           }`}
                         />
                       </button>
 
                       {isExpanded && (
-                        <div className="ml-3.5 pl-3 border-l-2 border-white/10 space-y-1 py-1">
+                        <div className="ml-2.5 pl-2.5 border-l border-[var(--border-subtle)] space-y-1 py-0.5">
                           {group.items.map((item) => {
                             const Icon = item.icon;
                             const isActive = pathname.startsWith(item.href);
@@ -464,19 +578,21 @@ export default function RootLayout({
                               <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`flex items-start space-x-2.5 px-3 py-2 rounded-lg transition-colors ${
+                                className={`flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg text-xs transition-colors ${
                                   isActive
-                                    ? 'bg-[#9CFF93]/15 text-[#9CFF93] font-bold border-l-2 border-[#9CFF93]'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    ? 'bg-[var(--accent-badge)] text-[var(--pitch-green)] font-bold border-l-[3px] border-[var(--pitch-green)]'
+                                    : 'text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-card-inner)]'
                                 }`}
                               >
-                                <Icon className={`w-4 h-4 mt-0.5 shrink-0 transition-colors ${isActive ? 'text-[#9CFF93]' : 'text-slate-500'}`} />
-                                <div className="min-w-0">
-                                  <div className="text-xs tracking-tight truncate leading-tight">{item.label}</div>
-                                  <div className={`text-[10px] truncate mt-0.5 ${isActive ? 'text-[#9CFF93]/70' : 'text-slate-500'}`}>
-                                    {item.description}
-                                  </div>
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <Icon className="w-4 h-4 shrink-0" />
+                                  <span className="truncate">{item.label}</span>
                                 </div>
+                                {item.badge && (
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--pitch-green)] text-black font-bold font-heading shrink-0">
+                                    {item.badge}
+                                  </span>
+                                )}
                               </Link>
                             );
                           })}
@@ -487,154 +603,236 @@ export default function RootLayout({
                 })}
               </nav>
 
-              {/* User info & logout */}
-              <div className="p-4 border-t border-white/10 bg-[#0C0F0C]">
+              {/* Bottom User Profile Card */}
+              <div
+                id="sidebar-user-card"
+                className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-card)]"
+              >
                 {mounted && user ? (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 overflow-hidden">
-                      <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#9CFF93] border border-white/10 shrink-0">
-                        <UserIcon className="w-4 h-4" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="text-sm font-bold truncate text-white">{user.fullName || user.phone}</p>
-                        <span className="inline-block px-2 py-0.5 text-[9px] font-mono font-black tracking-wider uppercase bg-[#9CFF93]/20 text-[#9CFF93] rounded-md border border-[#9CFF93]/30">
-                          [{user.role}]
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      title="Đăng xuất"
-                      className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                  <div
+                    className={`flex items-center ${
+                      sidebarCollapsed ? 'justify-center' : 'justify-between gap-2'
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center overflow-hidden ${
+                        sidebarCollapsed ? 'justify-center' : 'gap-2.5'
+                      }`}
                     >
-                      <LogOut className="w-4 h-4" />
-                    </button>
+                      <div
+                        title={user.fullName || user.phone}
+                        className="w-9 h-9 rounded-full bg-[var(--pitch-green)] text-[#0C0F0C] font-extrabold flex items-center justify-center text-xs font-heading shrink-0"
+                      >
+                        {userInitials}
+                      </div>
+                      {!sidebarCollapsed && (
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-[var(--text-heading)] truncate">
+                            {user.fullName || user.phone}
+                          </div>
+                          <div className="text-[10px] text-[var(--text-sub)] truncate">
+                            {roleLabelMap[user.role] || user.role}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!sidebarCollapsed && (
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        title="Đăng xuất"
+                        className="p-1.5 text-[var(--text-sub)] hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0"
+                      >
+                        <LogOut className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-400">Đang tải tài khoản...</div>
+                  <div className="text-xs text-[var(--text-muted)] text-center">
+                    {sidebarCollapsed ? '--' : 'Đang tải thông tin tài khoản'}
+                  </div>
                 )}
               </div>
             </aside>
 
-            {/* Mobile menu header */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#121512]/95 backdrop-blur-md text-white p-4 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center space-x-2.5">
-                <Image
-                  src="/Phanta Sports Booking Emblem.png"
-                  alt="Phanta Sports Logo"
-                  width={28}
-                  height={28}
-                  className="object-contain"
-                />
-                <span className="font-heading font-black text-sm tracking-tight">PHANTA OPS</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-slate-300 hover:text-white"
-                aria-label="Mở menu quản trị"
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
-
-            {/* Mobile Navigation Drawer */}
-            {mobileMenuOpen && (
-              <div className="md:hidden fixed inset-0 z-40 bg-[#0C0F0C]/98 pt-20 p-6 flex flex-col justify-between overflow-y-auto">
-                <nav className="space-y-2 overflow-y-auto pb-4">
-                  {filteredNavGroups.map((group) => {
-                    const GroupIcon = group.icon;
-                    const isExpanded = expandedGroupId === group.id;
-                    const isGroupActive = group.items.some((it) => pathname.startsWith(it.href));
-
-                    return (
-                      <div key={group.id} className="space-y-1">
-                        <button
-                          type="button"
-                          onClick={() => toggleGroup(group.id)}
-                          className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors text-left ${
-                            isGroupActive
-                              ? 'bg-[#191C14] text-white font-bold border border-[#9CFF93]/40'
-                              : isExpanded
-                              ? 'bg-[#191C14]/60 text-slate-200 border border-white/10'
-                              : 'text-slate-300 bg-[#191C14]/40 border border-white/5'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3 min-w-0">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                              isGroupActive
-                                ? 'bg-[#9CFF93] text-black font-black'
-                                : 'bg-white/10 text-[#9CFF93]'
-                            }`}>
-                              <GroupIcon className="w-4 h-4" />
-                            </div>
-                            <div className="truncate">
-                              <div className="text-sm font-semibold tracking-tight truncate">
-                                {group.label}
-                              </div>
-                              <div className="text-[10px] text-slate-400 truncate">
-                                {group.items.length} mục chức năng
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronDown
-                            className={`w-5 h-5 shrink-0 transition-transform duration-200 ${
-                              isExpanded ? 'rotate-180 text-[#9CFF93]' : 'text-slate-500'
-                            }`}
-                          />
-                        </button>
-
-                        {isExpanded && (
-                          <div className="ml-4 pl-3 border-l-2 border-white/10 space-y-1.5 py-1">
-                            {group.items.map((item) => {
-                              const Icon = item.icon;
-                              const isActive = pathname.startsWith(item.href);
-                              return (
-                                <Link
-                                  key={item.href}
-                                  href={item.href}
-                                  onClick={() => setMobileMenuOpen(false)}
-                                  className={`flex items-center space-x-3 p-3 rounded-lg ${
-                                    isActive
-                                      ? 'bg-[#9CFF93]/15 border border-[#9CFF93]/40 text-[#9CFF93] font-bold'
-                                      : 'text-slate-300 bg-white/5 border border-white/5'
-                                  }`}
-                                >
-                                  <Icon className="w-4 h-4 text-[#9CFF93] shrink-0" />
-                                  <div className="min-w-0">
-                                    <div className="text-xs font-semibold truncate">{item.label}</div>
-                                    <div className="text-[10px] text-slate-500 truncate">{item.description}</div>
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </nav>
-                <div className="pt-6 border-t border-white/10 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-white text-sm">{user?.fullName || user?.phone}</p>
-                    <p className="text-[10px] text-[#9CFF93] font-mono">[{user?.role}]</p>
-                  </div>
+            {/* =========================================================
+                MAIN CONTENT CONTAINER (STICKY HEADER + FLUID BODY)
+                ========================================================= */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-y-auto bg-[var(--bg-page)]">
+              {/* Topbar */}
+              <header className="min-h-[72px] sticky top-0 z-30 bg-[var(--bg-header)] backdrop-blur-md border-b border-[var(--border-color)] px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
                   <button
                     type="button"
-                    onClick={handleLogout}
-                    className="px-4 py-2 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-lg text-xs font-bold"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="md:hidden p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-main)]"
+                    aria-label="Mở menu quản trị"
                   >
-                    Đăng xuất
+                    {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                   </button>
+                  <h1 className="font-heading font-black text-base sm:text-xl text-[var(--text-heading)] uppercase tracking-wider truncate">
+                    {currentPageTitle}
+                  </h1>
                 </div>
-              </div>
-            )}
 
-            {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-20 md:pt-8 max-w-7xl mx-auto w-full relative z-10">
-              {children}
-            </main>
+                {/* Right Action Cluster */}
+                <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                  <div className="hidden 2xl:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs text-[var(--text-main)]">
+                    <Calendar className="w-4 h-4 text-[var(--pitch-green)]" />
+                    <span className="font-medium">{todayFormatted}</span>
+                  </div>
+
+                  {/* Theme Toggle */}
+                  <button
+                    type="button"
+                    onClick={handleToggleTheme}
+                    aria-label="Chuyển chế độ giao diện"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-bold text-[var(--text-main)] hover:border-[var(--pitch-green)] transition-colors"
+                  >
+                    {theme === 'dark' ? (
+                      <>
+                        <Moon className="w-4 h-4 text-[var(--pitch-green)]" />
+                        <span className="hidden sm:inline">Chế độ tối</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="w-4 h-4 text-[var(--burnt-orange)]" />
+                        <span className="hidden sm:inline">Chế độ sáng</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Notifications Shortcut */}
+                  <Link
+                    href="/notifications"
+                    title="Thông báo hệ thống"
+                    className="p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:border-[var(--pitch-green)] transition-colors"
+                  >
+                    <Bell className="w-4 h-4 text-[var(--burnt-orange)]" />
+                  </Link>
+
+                  {/* Switch to Web POS */}
+                  <Link
+                    href="/pos/checkin-walkin"
+                    className="phanta-btn-primary flex items-center gap-2 px-3.5 py-2 text-xs font-heading shadow-sm"
+                  >
+                    <Wallet className="w-4 h-4" />
+                    <span className="hidden sm:inline">Sang web thu ngân</span>
+                  </Link>
+                </div>
+              </header>
+
+              {/* Mobile Navigation Drawer */}
+              {mobileMenuOpen && (
+                <div className="md:hidden fixed inset-0 z-50 bg-[var(--bg-sidebar)] pt-4 p-5 flex flex-col justify-between overflow-y-auto">
+                  <div>
+                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-[var(--border-color)]">
+                      <div className="flex items-center gap-2.5">
+                        <Image
+                          src="/Phanta Sports Booking Emblem.png"
+                          alt="Phanta Sports Logo"
+                          width={32}
+                          height={32}
+                          className="object-contain rounded-lg"
+                        />
+                        <span className="font-heading font-black text-base text-[var(--text-heading)]">
+                          PHANTA ADMIN
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2 rounded-xl bg-[var(--bg-card-inner)] text-[var(--text-main)]"
+                        aria-label="Đóng menu"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <nav className="space-y-2 pb-6">
+                      {filteredNavGroups.map((group) => {
+                        const GroupIcon = group.icon;
+                        const isExpanded = expandedGroupId === group.id;
+                        const isGroupActive = group.items.some((it) =>
+                          pathname.startsWith(it.href)
+                        );
+
+                        return (
+                          <div key={group.id} className="space-y-1">
+                            <button
+                              type="button"
+                              onClick={() => toggleGroup(group.id)}
+                              className={`w-full flex items-center justify-between p-3 rounded-xl transition-colors text-left ${
+                                isGroupActive
+                                  ? 'bg-[var(--bg-card-inner)] text-[var(--text-heading)] font-bold border border-[var(--border-color)]'
+                                  : 'text-[var(--text-main)] bg-[var(--bg-card)] border border-[var(--border-subtle)]'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <GroupIcon className="w-4 h-4 text-[var(--pitch-green)] shrink-0" />
+                                <span className="text-sm font-semibold truncate">{group.label}</span>
+                              </div>
+                              <ChevronDown
+                                className={`w-4 h-4 shrink-0 transition-transform ${
+                                  isExpanded ? 'rotate-180 text-[var(--pitch-green)]' : ''
+                                }`}
+                              />
+                            </button>
+
+                            {isExpanded && (
+                              <div className="ml-4 pl-3 border-l border-[var(--border-subtle)] space-y-1 py-1">
+                                {group.items.map((item) => {
+                                  const Icon = item.icon;
+                                  const isActive = pathname.startsWith(item.href);
+                                  return (
+                                    <Link
+                                      key={item.href}
+                                      href={item.href}
+                                      onClick={() => setMobileMenuOpen(false)}
+                                      className={`flex items-center gap-3 p-2.5 rounded-lg text-xs ${
+                                        isActive
+                                          ? 'bg-[var(--accent-badge)] text-[var(--pitch-green)] font-bold'
+                                          : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
+                                      }`}
+                                    >
+                                      <Icon className="w-4 h-4 shrink-0" />
+                                      <span className="truncate">{item.label}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </nav>
+                  </div>
+
+                  <div className="pt-4 border-t border-[var(--border-color)] flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-[var(--text-heading)] text-sm">
+                        {user?.fullName || user?.phone}
+                      </p>
+                      <p className="text-[11px] text-[var(--pitch-green)] font-semibold">
+                        {user?.role ? roleLabelMap[user.role] || user.role : ''}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="px-4 py-2 bg-rose-500/15 border border-rose-500/30 text-rose-500 rounded-xl text-xs font-bold"
+                    >
+                      Đăng xuất
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Page Content */}
+              <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto w-full">
+                {children}
+              </main>
+            </div>
           </>
         )}
       </body>

@@ -525,7 +525,7 @@ export default function FacilitiesPage() {
         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-xl font-black text-white tracking-tight mb-2">Truy Cập Bị Từ Chối</h2>
+        <h2 className="text-xl font-bold text-white tracking-tight mb-2">Truy Cập Bị Từ Chối</h2>
         <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
           Tài khoản Nhân viên quầy không có quyền hạn truy cập hoặc chỉnh sửa khu vực <span className="text-rose-400 font-semibold">Quản Lý Sân Bãi & Biểu Giá</span>. Đang chuyển hướng về trang làm việc...
         </p>
@@ -545,13 +545,13 @@ export default function FacilitiesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-black shadow-lg shadow-cyan-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
               <Building2 className="w-6 h-6 text-slate-950" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 Quản Lý Sân Bãi & Biểu Giá
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-mono">
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-heading tabular-nums">
                   SINGLE FACILITY
                 </span>
               </h1>
@@ -570,7 +570,7 @@ export default function FacilitiesPage() {
             className="inline-flex items-center px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-2xl text-xs font-bold transition disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 text-cyan-400 ${isConsolidating ? 'animate-spin' : ''}`} />
-            <span>{isConsolidating ? 'Đang đồng bộ...' : 'Đồng Bộ 1 Cơ Sở'}</span>
+            <span>{isConsolidating ? 'Đang đồng bộ' : 'Đồng Bộ 1 Cơ Sở'}</span>
           </button>
 
           {courtVenues.length > 0 && (
@@ -586,7 +586,7 @@ export default function FacilitiesPage() {
 
           <button
             onClick={() => setShowVenueModal(true)}
-            className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-slate-950 font-black rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
+            className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-slate-950 font-bold rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             + THÊM SÂN MỚI
@@ -638,14 +638,14 @@ export default function FacilitiesPage() {
                 </span>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-xl font-black text-white tracking-tight">
+                    <h2 className="text-xl font-bold text-white tracking-tight">
                       {facility.name}
                     </h2>
-                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    <span className="px-2 py-0.5 text-[10px] font-heading tabular-nums font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                       CƠ SỞ DUY NHẤT
                     </span>
                     {facility.isActive === false && (
-                      <span className="px-2 py-0.5 text-[10px] font-black rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                         TẠM ĐÓNG
                       </span>
                     )}
@@ -666,15 +666,15 @@ export default function FacilitiesPage() {
               {/* Quick stats */}
               <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Tổng số sân</span>
-                <span className="text-lg font-black text-white font-mono">{courtVenues.length}</span>
+                <span className="text-lg font-bold text-white font-heading tabular-nums">{courtVenues.length}</span>
               </div>
               <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Đang mở</span>
-                <span className="text-lg font-black text-emerald-400 font-mono">{activeVenuesCount}</span>
+                <span className="text-lg font-bold text-emerald-400 font-heading tabular-nums">{activeVenuesCount}</span>
               </div>
               <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[110px]">
                 <span className="block text-[10px] uppercase font-bold text-slate-400">Giờ hoạt động</span>
-                <span className="text-xs font-black text-cyan-300 font-mono mt-1 block">
+                <span className="text-xs font-bold text-cyan-300 font-heading tabular-nums mt-1 block">
                   {facility.openHour || '06:00'} - {facility.closeHour || '23:00'}
                 </span>
               </div>
@@ -702,16 +702,16 @@ export default function FacilitiesPage() {
                 onClick={() => setSelectedSport(st.value)}
                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
                   selectedSport === st.value
-                    ? 'bg-cyan-500 text-slate-950 font-black shadow-md shadow-cyan-500/20'
+                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
                     : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
                 }`}
               >
                 <span>{st.icon}</span>
                 <span>{st.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-heading tabular-nums font-bold ${
                     selectedSport === st.value
-                      ? 'bg-slate-950/30 text-slate-950 font-black'
+                      ? 'bg-slate-950/30 text-slate-950 font-bold'
                       : 'bg-slate-800 text-slate-300'
                   }`}
                 >
@@ -729,7 +729,7 @@ export default function FacilitiesPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm kiếm sân..."
+                placeholder="Tìm kiếm sân"
                 className="w-full pl-9 pr-3 py-2 text-xs bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
               />
             </div>
@@ -759,13 +759,13 @@ export default function FacilitiesPage() {
             <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">
               🏟️
             </div>
-            <p className="font-black text-white text-lg">Hệ Thống Sân Bãi Đang Trống</p>
+            <p className="font-bold text-white text-lg">Hệ Thống Sân Bãi Đang Trống</p>
             <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
               Toàn bộ các sân cũ đã được dọn sạch. Bạn có thể bắt đầu tự thêm các sân thể thao mới (Bóng đá, Bóng rổ, Cầu lông, Pickleball, Tennis, Bóng chuyền...) vào cơ sở duy nhất.
             </p>
             <button
               onClick={() => setShowVenueModal(true)}
-              className="mt-5 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-black rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
+              className="mt-5 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
             >
               <Plus className="w-4 h-4 mr-1.5" />
               + THÊM SÂN ĐẦU TIÊN
@@ -801,9 +801,9 @@ export default function FacilitiesPage() {
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-black text-white text-base leading-snug">{venue.name}</h3>
+                          <h3 className="font-bold text-white text-base leading-snug">{venue.name}</h3>
                           {!isVenueActive && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-black rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
                               TẠM ĐÓNG
                             </span>
                           )}
@@ -811,7 +811,7 @@ export default function FacilitiesPage() {
                         {(() => {
                           const badgeInfo = getCourtSportBadge(venue);
                           return (
-                            <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-mono font-black px-2 py-0.5 rounded-md border ${badgeInfo.color}`}>
+                            <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-heading tabular-nums font-bold px-2 py-0.5 rounded-md border ${badgeInfo.color}`}>
                               {badgeInfo.badge}
                             </span>
                           );
@@ -845,11 +845,11 @@ export default function FacilitiesPage() {
 
                     {/* Operating Details */}
                     <div className="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-                      <div className="flex items-center gap-1 font-mono">
+                      <div className="flex items-center gap-1 font-heading tabular-nums">
                         <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                         <span>{opHours.openTime} - {opHours.closeTime}</span>
                       </div>
-                      <div className="flex items-center gap-1 font-mono justify-end">
+                      <div className="flex items-center gap-1 font-heading tabular-nums justify-end">
                         <RotateCcw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <span>Hoàn 100%: &gt;{cancelPol.hoursBeforeForFullRefund}h</span>
                       </div>
@@ -863,7 +863,7 @@ export default function FacilitiesPage() {
                         <DollarSign className="w-3.5 h-3.5 text-slate-500" />
                         Giá giờ chuẩn:
                       </span>
-                      <span className="font-mono font-black text-emerald-400">
+                      <span className="font-heading tabular-nums font-bold text-emerald-400">
                         {((venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ/h
                       </span>
                     </div>
@@ -878,7 +878,7 @@ export default function FacilitiesPage() {
                             <Sparkles className="w-3 h-3 text-amber-400" />
                             Giờ vàng ({rule.startTime} - {rule.endTime}):
                           </span>
-                          <span className="font-mono font-black text-amber-300 text-[11px]">
+                          <span className="font-heading tabular-nums font-bold text-amber-300 text-[11px]">
                             {(rule.price ?? 0).toLocaleString('vi-VN')} đ/h
                           </span>
                         </div>
@@ -907,7 +907,7 @@ export default function FacilitiesPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Edit2 className="w-5 h-5 text-cyan-400" />
               Chỉnh Sửa Thông Tin Tổ Hợp Thể Thao
             </h3>
@@ -947,7 +947,7 @@ export default function FacilitiesPage() {
                   rows={3}
                   value={editFacilityForm.description}
                   onChange={(e) => setEditFacilityForm({ ...editFacilityForm, description: e.target.value })}
-                  placeholder="Mô tả các dịch vụ thể thao tích hợp..."
+                  placeholder="Mô tả các dịch vụ thể thao tích hợp"
                   className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 />
               </div>
@@ -961,7 +961,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editFacilityForm.openHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, openHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums"
                   />
                 </div>
                 <div>
@@ -972,7 +972,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editFacilityForm.closeHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, closeHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums"
                   />
                 </div>
               </div>
@@ -1001,7 +1001,7 @@ export default function FacilitiesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-500/20 active:scale-95 transition"
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition"
                 >
                   Lưu Thay Đổi
                 </button>
@@ -1022,7 +1022,7 @@ export default function FacilitiesPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-emerald-400" />
               Thêm Sân Mới Vào Tổ Hợp
             </h3>
@@ -1068,7 +1068,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={venueForm.openTime}
                     onChange={(e) => setVenueForm({ ...venueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1079,7 +1079,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={venueForm.closeTime}
                     onChange={(e) => setVenueForm({ ...venueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1094,7 +1094,7 @@ export default function FacilitiesPage() {
                   required
                   value={venueForm.defaultPrice}
                   onChange={(e) => setVenueForm({ ...venueForm, defaultPrice: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-mono font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-heading tabular-nums font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 />
               </div>
 
@@ -1103,7 +1103,7 @@ export default function FacilitiesPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-black uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
+                    <span className="text-xs font-bold uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
                   </div>
                   <input
                     type="checkbox"
@@ -1122,7 +1122,7 @@ export default function FacilitiesPage() {
                           type="time"
                           value={venueForm.peakStart}
                           onChange={(e) => setVenueForm({ ...venueForm, peakStart: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-mono focus:outline-none"
+                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
                         />
                       </div>
                       <div>
@@ -1131,7 +1131,7 @@ export default function FacilitiesPage() {
                           type="time"
                           value={venueForm.peakEnd}
                           onChange={(e) => setVenueForm({ ...venueForm, peakEnd: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-mono focus:outline-none"
+                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1142,7 +1142,7 @@ export default function FacilitiesPage() {
                         step="10000"
                         value={venueForm.peakPrice}
                         onChange={(e) => setVenueForm({ ...venueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-mono font-bold rounded-lg focus:outline-none"
+                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-heading tabular-nums font-bold rounded-lg focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1153,7 +1153,7 @@ export default function FacilitiesPage() {
               <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
                 <div className="flex items-center gap-1.5">
                   <RotateCcw className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-black uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
+                  <span className="text-xs font-bold uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
@@ -1162,7 +1162,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={venueForm.hoursBeforeForFullRefund}
                       onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
                     />
                   </div>
                   <div>
@@ -1171,7 +1171,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={venueForm.hoursBeforeForNoRefund}
                       onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
                     />
                   </div>
                 </div>
@@ -1187,7 +1187,7 @@ export default function FacilitiesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/20 active:scale-95 transition"
+                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition"
                 >
                   Lưu Sân Mới
                 </button>
@@ -1208,7 +1208,7 @@ export default function FacilitiesPage() {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-black text-white mb-4 flex items-center gap-2">
+            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Edit2 className="w-5 h-5 text-cyan-400" />
               Chỉnh Sửa Thông Tin Sân
             </h3>
@@ -1253,7 +1253,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editVenueForm.openTime}
                     onChange={(e) => setEditVenueForm({ ...editVenueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -1264,7 +1264,7 @@ export default function FacilitiesPage() {
                     type="time"
                     value={editVenueForm.closeTime}
                     onChange={(e) => setEditVenueForm({ ...editVenueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -1279,7 +1279,7 @@ export default function FacilitiesPage() {
                   required
                   value={editVenueForm.defaultPrice}
                   onChange={(e) => setEditVenueForm({ ...editVenueForm, defaultPrice: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-mono font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-heading tabular-nums font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 />
               </div>
 
@@ -1288,7 +1288,7 @@ export default function FacilitiesPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-black uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
+                    <span className="text-xs font-bold uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
                   </div>
                   <input
                     type="checkbox"
@@ -1307,7 +1307,7 @@ export default function FacilitiesPage() {
                           type="time"
                           value={editVenueForm.peakStart}
                           onChange={(e) => setEditVenueForm({ ...editVenueForm, peakStart: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-mono focus:outline-none"
+                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
                         />
                       </div>
                       <div>
@@ -1316,7 +1316,7 @@ export default function FacilitiesPage() {
                           type="time"
                           value={editVenueForm.peakEnd}
                           onChange={(e) => setEditVenueForm({ ...editVenueForm, peakEnd: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-mono focus:outline-none"
+                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
                         />
                       </div>
                     </div>
@@ -1327,7 +1327,7 @@ export default function FacilitiesPage() {
                         step="10000"
                         value={editVenueForm.peakPrice}
                         onChange={(e) => setEditVenueForm({ ...editVenueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-mono font-bold rounded-lg focus:outline-none"
+                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-heading tabular-nums font-bold rounded-lg focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1338,7 +1338,7 @@ export default function FacilitiesPage() {
               <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
                 <div className="flex items-center gap-1.5">
                   <RotateCcw className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-black uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
+                  <span className="text-xs font-bold uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
@@ -1347,7 +1347,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={editVenueForm.hoursBeforeForFullRefund}
                       onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
                     />
                   </div>
                   <div>
@@ -1356,7 +1356,7 @@ export default function FacilitiesPage() {
                       type="number"
                       value={editVenueForm.hoursBeforeForNoRefund}
                       onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-mono"
+                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
                     />
                   </div>
                 </div>
@@ -1386,7 +1386,7 @@ export default function FacilitiesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-black shadow-lg shadow-blue-500/20 active:scale-95 transition"
+                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition"
                 >
                   Lưu Thay Đổi
                 </button>
@@ -1400,7 +1400,7 @@ export default function FacilitiesPage() {
       {deleteDialog.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
-            <h3 className="text-base font-black text-rose-400 mb-2 flex items-center gap-2">
+            <h3 className="text-base font-bold text-rose-400 mb-2 flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-rose-400" />
               Xác Nhận Xóa Sân Bãi
             </h3>
@@ -1455,7 +1455,7 @@ export default function FacilitiesPage() {
       {showPurgeModal && facility && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
           <div className="bg-slate-950 border border-rose-500/40 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
-            <h3 className="text-base font-black text-rose-400 mb-2 flex items-center gap-2">
+            <h3 className="text-base font-bold text-rose-400 mb-2 flex items-center gap-2">
               <Trash2 className="w-5 h-5 text-rose-400" />
               Xác Nhận Xóa Sạch Toàn Bộ Sân Bãi
             </h3>
@@ -1482,10 +1482,10 @@ export default function FacilitiesPage() {
                 type="button"
                 disabled={purging}
                 onClick={handlePurgeAllVenues}
-                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-600/30 transition disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30 transition disabled:opacity-50 flex items-center gap-1.5"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>{purging ? 'Đang Xóa...' : 'Xác Nhận Xóa Sạch'}</span>
+                <span>{purging ? 'Đang Xóa' : 'Xác Nhận Xóa Sạch'}</span>
               </button>
             </div>
           </div>

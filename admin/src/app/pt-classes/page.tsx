@@ -10,7 +10,9 @@ import {
   Clock, 
   Award,
   Sparkles,
-  FileSpreadsheet
+  FileSpreadsheet,
+  RefreshCw,
+  DollarSign
 } from 'lucide-react';
 
 export default function PtClassesAdminPage() {
@@ -89,211 +91,157 @@ export default function PtClassesAdminPage() {
   };
 
   const handleExportPayroll = () => {
-    alert('Xuất bảng tổng hợp ca dạy HLV & Lớp học thành công theo chuẩn kế toán (AC-89)!');
+    alert('Xuất bảng tổng hợp ca dạy HLV & Lớp học thành công theo chuẩn kế toán!');
   };
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-            <Users className="w-7 h-7 text-emerald-400" />
-            Quản Lý Huấn Luyện Viên & Lớp Học (M11)
+          <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <Users className="w-6 h-6 text-[var(--burnt-orange)]" />
+            <span>HLV Cá Nhân (PT) & Lớp Học Thể Thao</span>
           </h1>
-          <p className="text-slate-400 text-sm">
-            Điều phối ca làm việc HLV, hồ sơ chuyên môn, mẫu lớp học và bảng tổng hợp buổi dạy
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Quản trị đội ngũ huấn luyện viên chuyên nghiệp, lên lịch lớp học nhóm (Yoga, Zumba) và kết xuất bảng lương ca dạy
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleExportPayroll}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 rounded-lg text-sm font-medium transition"
+            className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
           >
-            <FileSpreadsheet className="w-4 h-4" />
-            Xuất Bảng Lương (AC-89)
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[var(--pitch-green)]" />
+            <span>Xuất bảng lương HLV</span>
           </button>
 
-          {activeTab === 'TRAINERS' ? (
-            <button
-              onClick={() => setShowTrainerModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-emerald-900/30"
-            >
-              <Plus className="w-4 h-4" />
-              Thêm Huấn Luyện Viên
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowClassModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-cyan-900/30"
-            >
-              <Plus className="w-4 h-4" />
-              Tạo Lớp Học Mới
-            </button>
-          )}
+          <button
+            onClick={() => (activeTab === 'TRAINERS' ? setShowTrainerModal(true) : setShowClassModal(true))}
+            className="phanta-btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{activeTab === 'TRAINERS' ? 'Thêm HLV' : 'Thêm lớp học'}</span>
+          </button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800">
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-color)] text-xs w-fit">
         <button
+          type="button"
           onClick={() => setActiveTab('TRAINERS')}
-          className={`px-5 py-2.5 font-medium text-sm border-b-2 transition flex items-center gap-2 ${
+          className={`py-1.5 px-4 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'TRAINERS'
-              ? 'border-emerald-500 text-emerald-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
+              ? 'phanta-btn-primary'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-card-inner)]'
           }`}
         >
-          <Award className="w-4 h-4" />
-          Hồ Sơ Huấn Luyện Viên ({trainers.length})
+          Danh sách HLV cá nhân
         </button>
-
         <button
+          type="button"
           onClick={() => setActiveTab('CLASSES')}
-          className={`px-5 py-2.5 font-medium text-sm border-b-2 transition flex items-center gap-2 ${
+          className={`py-1.5 px-4 rounded-xl text-xs font-bold transition-all ${
             activeTab === 'CLASSES'
-              ? 'border-cyan-500 text-cyan-400'
-              : 'border-transparent text-slate-400 hover:text-slate-300'
+              ? 'phanta-btn-primary'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)] hover:bg-[var(--bg-card-inner)]'
           }`}
         >
-          <Calendar className="w-4 h-4" />
-          Lịch Lớp Học Nhóm ({classes.length})
+          Lịch lớp nhóm (Yoga / Pilates)
         </button>
       </div>
 
-      {/* Content */}
-      {loading ? (
-        <div className="flex justify-center p-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-        </div>
-      ) : activeTab === 'TRAINERS' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {trainers.map((t) => (
-            <div key={t._id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white text-lg">{t.fullName}</h3>
-                  <p className="text-slate-400 text-sm">📞 {t.phone}</p>
-                </div>
-                <span className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-md">
-                  {t.employmentStatus}
-                </span>
-              </div>
-
-              <div className="text-sm">
-                <span className="text-slate-400">Đơn giá PT 1-1: </span>
-                <span className="text-emerald-400 font-bold">{t.hourlyRate?.toLocaleString('vi-VN')} đ/h</span>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {t.specialties?.map((s: string, idx: number) => (
-                  <span key={idx} className="px-2 py-0.5 bg-slate-800 text-slate-300 text-xs rounded">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {classes.map((c) => (
-            <div key={c._id} className="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-white text-lg">{c.name}</h3>
-                  <p className="text-slate-400 text-sm">HLV: {c.trainerName}</p>
-                </div>
-                <span className="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold rounded-md">
-                  {c.classType}
-                </span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm border-t border-slate-800/80 pt-2">
-                <span className="text-slate-400">Sức chứa:</span>
-                <span className="text-white font-bold">{c.bookedCount}/{c.capacity}</span>
-              </div>
-
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-400">Thời gian:</span>
-                <span className="text-slate-300">{c.startTime} - {c.endTime}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal Add Trainer */}
-      {showTrainerModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4">
-            <h2 className="text-lg font-bold text-white">Thêm Huấn Luyện Viên / Nhân Sự</h2>
-            <form onSubmit={handleCreateTrainer} className="space-y-3">
-              <div>
-                <label className="text-xs text-slate-400">Họ và tên</label>
-                <input
-                  required
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
-                  placeholder="Nguyễn Văn Huấn"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400">Số điện thoại</label>
-                <input
-                  required
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
-                  placeholder="0988776655"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400">Chuyên môn (ngăn cách bằng dấu phẩy)</label>
-                <input
-                  type="text"
-                  value={specialties}
-                  onChange={(e) => setSpecialties(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
-                  placeholder="Gym, Yoga, Boxing"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-400">Đơn giá PT 1-1 (VND/giờ)</label>
-                <input
-                  required
-                  type="number"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(Number(e.target.value))}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowTrainerModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-400 hover:text-white rounded-lg text-sm"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold"
-                >
-                  Lưu Hồ Sơ
-                </button>
-              </div>
-            </form>
+      {/* Main Content */}
+      <div className="phanta-card p-6">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[var(--pitch-green)]" />
+            <p className="text-xs text-[var(--text-sub)]">Đang tải dữ liệu HLV và lớp học...</p>
           </div>
-        </div>
-      )}
+        ) : activeTab === 'TRAINERS' ? (
+          trainers.length === 0 ? (
+            <div className="py-16 text-center text-xs text-[var(--text-sub)]">
+              Chưa có hồ sơ huấn luyện viên nào. Nhấn &quot;Thêm HLV&quot; để tạo mới.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {trainers.map((t) => (
+                <div
+                  key={t._id}
+                  className="p-5 rounded-2xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-heading font-bold text-base text-[var(--text-heading)]">
+                      {t.fullName}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-[var(--pitch-green)]">
+                      Sẵn sàng
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs">
+                    <div className="text-[var(--text-sub)] flex items-center justify-between">
+                      <span>Chuyên môn:</span>
+                      <span className="font-semibold text-[var(--text-main)]">{Array.isArray(t.specialties) ? t.specialties.join(', ') : t.specialties}</span>
+                    </div>
+                    <div className="text-[var(--text-sub)] flex items-center justify-between">
+                      <span>Chứng chỉ:</span>
+                      <span className="font-semibold text-[var(--text-main)]">{Array.isArray(t.certifications) ? t.certifications.join(', ') : t.certifications}</span>
+                    </div>
+                    <div className="text-[var(--text-sub)] flex items-center justify-between pt-2 border-t border-[var(--border-subtle)]">
+                      <span>Mức giá theo giờ:</span>
+                      <span className="font-heading font-extrabold text-sm text-[var(--pitch-green)] tabular-nums">
+                        {Number(t.hourlyRate || 250000).toLocaleString('vi-VN')} đ/h
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : classes.length === 0 ? (
+          <div className="py-16 text-center text-xs text-[var(--text-sub)]">
+            Chưa có lớp học nhóm nào trong tuần này.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {classes.map((c) => (
+              <div
+                key={c._id}
+                className="p-5 rounded-2xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading font-bold text-base text-[var(--text-heading)]">
+                    {c.className}
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-400">
+                    {c.classType || 'YOGA'}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <div className="text-[var(--text-sub)] flex items-center justify-between">
+                    <span>Phòng tập:</span>
+                    <span className="font-semibold text-[var(--text-main)]">{c.roomName || 'Studio A'}</span>
+                  </div>
+                  <div className="text-[var(--text-sub)] flex items-center justify-between">
+                    <span>Sĩ số tối đa:</span>
+                    <span className="font-heading font-bold text-[var(--text-heading)] tabular-nums">{c.capacity || 20} học viên</span>
+                  </div>
+                  <div className="text-[var(--text-sub)] flex items-center justify-between pt-2 border-t border-[var(--border-subtle)]">
+                    <span>Học phí mỗi buổi:</span>
+                    <span className="font-heading font-extrabold text-sm text-[var(--pitch-green)] tabular-nums">
+                      {Number(c.pricePerSession || 120000).toLocaleString('vi-VN')} đ
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

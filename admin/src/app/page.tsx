@@ -21,7 +21,7 @@ export default function HomePage() {
       } else if (user.role === 'STAFF') {
         router.replace('/pos/checkin-walkin');
       } else {
-        router.replace('/facilities');
+        router.replace('/analytics');
       }
     } else {
       router.replace('/login');

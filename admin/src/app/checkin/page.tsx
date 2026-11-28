@@ -287,13 +287,13 @@ export default function CheckinPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20">
+            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
               <QrCode className="w-6 h-6 text-slate-950" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                 Trạm Soát Vé & Quét Check-in QR
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-heading tabular-nums">
                   EPIC E05
                 </span>
               </h1>
@@ -313,7 +313,7 @@ export default function CheckinPage() {
                 : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}
           >
-            <Radio className={`w-3.5 h-3.5 ${socketConnected ? 'animate-pulse text-emerald-400' : ''}`} />
+            <Radio className={`w-3.5 h-3.5 ${socketConnected ? ' text-emerald-400' : ''}`} />
             <span>{socketConnected ? 'Live Socket.io' : 'Live Sync'}</span>
           </div>
         </div>
@@ -372,19 +372,19 @@ export default function CheckinPage() {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3.5">
               {scanResult.status === 'SUCCESS' ? (
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-black">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-bold">
                   <CheckCircle2 className="w-7 h-7" />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/40 font-black">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/40 font-bold">
                   <XCircle className="w-7 h-7" />
                 </div>
               )}
               <div>
-                <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
+                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
                   {scanResult.status === 'SUCCESS' ? 'XÁC THỰC THÀNH CÔNG • VÉ HỢP LỆ' : 'VÉ KHÔNG HỢP LỆ'}
                   {scanResult.status === 'SUCCESS' && scanResult.checkinMethod && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-heading tabular-nums font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                       {scanResult.checkinMethod}
                     </span>
                   )}
@@ -411,10 +411,10 @@ export default function CheckinPage() {
                   <User className="w-3.5 h-3.5 text-emerald-400" />
                   Khách hàng
                 </span>
-                <span className="font-extrabold text-white block truncate text-base">
+                <span className="font-bold text-white block truncate text-base">
                   {scanResult.booking.customerName || scanResult.booking.userId?.fullName || 'Khách hàng'}
                 </span>
-                <span className="text-xs font-mono text-slate-400">
+                <span className="text-xs font-heading tabular-nums text-slate-400">
                   {scanResult.booking.customerPhone || scanResult.booking.userId?.phone || 'N/A'}
                 </span>
               </div>
@@ -424,10 +424,10 @@ export default function CheckinPage() {
                   <Layers className="w-3.5 h-3.5 text-emerald-400" />
                   Sân & Mã Vé
                 </span>
-                <span className="font-extrabold text-white block truncate text-base">
+                <span className="font-bold text-white block truncate text-base">
                   {scanResult.booking.venueId?.name || 'Sân thể thao'}
                 </span>
-                <span className="text-xs text-emerald-400 font-mono font-bold">
+                <span className="text-xs text-emerald-400 font-heading tabular-nums font-bold">
                   {scanResult.ticketCode || scanResult.bookingCode || `#${scanResult.booking._id.slice(-6).toUpperCase()}`}
                 </span>
               </div>
@@ -437,10 +437,10 @@ export default function CheckinPage() {
                   <Clock className="w-3.5 h-3.5 text-emerald-400" />
                   Khung giờ thi đấu
                 </span>
-                <span className="font-black text-cyan-400 font-mono block text-base">
+                <span className="font-bold text-cyan-400 font-heading tabular-nums block text-base">
                   {scanResult.booking.startTime} - {scanResult.booking.endTime}
                 </span>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-slate-400 font-heading tabular-nums">
                   {scanResult.booking.bookingDate ? new Date(scanResult.booking.bookingDate).toLocaleDateString('vi-VN') : ''}
                 </span>
               </div>
@@ -450,7 +450,7 @@ export default function CheckinPage() {
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                   Giờ vào cổng
                 </span>
-                <span className="font-mono font-bold text-emerald-400 block text-base">
+                <span className="font-heading tabular-nums font-bold text-emerald-400 block text-base">
                   {scanResult.booking.checkedInAt
                     ? new Date(scanResult.booking.checkedInAt).toLocaleTimeString('vi-VN')
                     : 'Vừa xong'}
@@ -470,7 +470,7 @@ export default function CheckinPage() {
           {/* Camera Scanner View */}
           <div className="md:col-span-7 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 backdrop-blur-md">
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h2 className="font-black text-white text-base flex items-center gap-2">
+              <h2 className="font-bold text-white text-base flex items-center gap-2">
                 <Camera className="w-4 h-4 text-cyan-400" />
                 Camera Quét Trực Tiếp (HUD Scanner)
               </h2>
@@ -478,7 +478,7 @@ export default function CheckinPage() {
                 {!scannerActive ? (
                   <button
                     onClick={startScanner}
-                    className="inline-flex items-center px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl text-xs font-black hover:from-emerald-700 hover:to-cyan-700 shadow-sm active:scale-95 transition"
+                    className="inline-flex items-center px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl text-xs font-bold hover:from-emerald-700 hover:to-cyan-700 shadow-sm active:scale-95 transition"
                   >
                     <Camera className="w-3.5 h-3.5 mr-1" />
                     Bật Camera Quét
@@ -524,7 +524,7 @@ export default function CheckinPage() {
           {/* Manual Input Form on Right */}
           <div className="md:col-span-5 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-5 backdrop-blur-md">
             <div className="pb-3 border-b border-slate-800">
-              <h2 className="font-black text-white text-base flex items-center gap-2">
+              <h2 className="font-bold text-white text-base flex items-center gap-2">
                 <Search className="w-4 h-4 text-emerald-400" />
                 Nhập Mã Token Thủ Công
               </h2>
@@ -542,15 +542,15 @@ export default function CheckinPage() {
                   rows={5}
                   value={manualToken}
                   onChange={(e) => setManualToken(e.target.value)}
-                  placeholder="Dán chuỗi token mã hóa từ vé QR của khách hàng tại đây..."
-                  className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-mono resize-none"
+                  placeholder="Dán chuỗi token mã hóa từ vé QR của khách hàng tại đây"
+                  className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums resize-none"
                 />
               </div>
 
               <button
                 onClick={() => handleProcessQr(manualToken)}
                 disabled={loading || !manualToken.trim()}
-                className={`w-full py-3.5 rounded-2xl font-black text-xs transition flex items-center justify-center gap-2 ${
+                className={`w-full py-3.5 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-2 ${
                   loading || !manualToken.trim()
                     ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                     : 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
@@ -559,7 +559,7 @@ export default function CheckinPage() {
                 {loading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Đang xác thực mã...</span>
+                    <span>Đang xác thực mã</span>
                   </>
                 ) : (
                   <>
@@ -588,7 +588,7 @@ export default function CheckinPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Nhập SĐT khách (VD: 0988...), tên khách, mã BK-... hoặc TCK-..."
+                  placeholder="Nhập SĐT khách (VD: 0988), tên khách, mã BK - TCK"
                   className="w-full px-4 py-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
                 />
               </div>
@@ -610,12 +610,12 @@ export default function CheckinPage() {
                 <button
                   type="submit"
                   disabled={searching}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-black transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
                 >
                   {searching ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Đang tìm...</span>
+                      <span>Đang tìm</span>
                     </>
                   ) : (
                     <>
@@ -632,7 +632,7 @@ export default function CheckinPage() {
           <div className="bg-slate-900/90 rounded-3xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-md">
             <div className="p-5 border-b border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="font-black text-white text-base flex items-center gap-2">
+                <h3 className="font-bold text-white text-base flex items-center gap-2">
                   <FileText className="w-4 h-4 text-emerald-400" />
                   Danh Sách Đơn Đặt Hợp Lệ Cần Check-in ({lookupResults.length})
                 </h3>
@@ -663,7 +663,7 @@ export default function CheckinPage() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/70 text-slate-400 uppercase font-mono border-b border-slate-800">
+                  <thead className="bg-slate-950/70 text-slate-400 uppercase font-heading tabular-nums border-b border-slate-800">
                     <tr>
                       <th className="py-3 px-4">Mã Đơn / Vé</th>
                       <th className="py-3 px-4">Khách hàng</th>
@@ -677,7 +677,7 @@ export default function CheckinPage() {
                   <tbody className="divide-y divide-slate-800/60 text-slate-300">
                     {lookupResults.map((item) => (
                       <tr key={item.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3 px-4 font-mono font-bold text-white">
+                        <td className="py-3 px-4 font-heading tabular-nums font-bold text-white">
                           <div>{item.bookingCode || `#${item.id.slice(-6).toUpperCase()}`}</div>
                           {item.ticketCode && (
                             <div className="text-[10px] text-cyan-400">{item.ticketCode}</div>
@@ -696,7 +696,7 @@ export default function CheckinPage() {
                         <td className="py-3 px-4 font-semibold text-slate-200">
                           {item.venueName}
                         </td>
-                        <td className="py-3 px-4 font-mono">
+                        <td className="py-3 px-4 font-heading tabular-nums">
                           <div className="font-bold text-cyan-400">
                             {item.startTime} - {item.endTime}
                           </div>
@@ -704,7 +704,7 @@ export default function CheckinPage() {
                             {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString('vi-VN') : ''}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-white">
+                        <td className="py-3 px-4 font-heading tabular-nums font-bold text-white">
                           {Number(item.totalPrice).toLocaleString('vi-VN')} đ
                         </td>
                         <td className="py-3 px-4">
@@ -723,7 +723,7 @@ export default function CheckinPage() {
                         </td>
                         <td className="py-3 px-4 text-right">
                           {item.isCheckedIn ? (
-                            <span className="text-[11px] font-mono text-slate-500">
+                            <span className="text-[11px] font-heading tabular-nums text-slate-500">
                               {item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString('vi-VN') : 'Đã check-in'}
                             </span>
                           ) : (
@@ -755,11 +755,11 @@ export default function CheckinPage() {
           <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
             <div className="flex items-start justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center font-black">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center font-bold">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-white">Xác Nhận Check-in Thủ Công</h3>
+                  <h3 className="text-base font-bold text-white">Xác Nhận Check-in Thủ Công</h3>
                   <p className="text-xs text-slate-400">Quy trình dự phòng ngoại lệ (US-041)</p>
                 </div>
               </div>
@@ -785,7 +785,7 @@ export default function CheckinPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Khung giờ:</span>
-                <span className="font-mono font-bold text-white">
+                <span className="font-heading tabular-nums font-bold text-white">
                   {selectedBookingForCheckin.startTime} - {selectedBookingForCheckin.endTime} (
                   {selectedBookingForCheckin.bookingDate ? new Date(selectedBookingForCheckin.bookingDate).toLocaleDateString('vi-VN') : ''}
                   )
@@ -793,7 +793,7 @@ export default function CheckinPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Mã đặt chỗ:</span>
-                <span className="font-mono font-bold text-emerald-400">
+                <span className="font-heading tabular-nums font-bold text-emerald-400">
                   {selectedBookingForCheckin.bookingCode || selectedBookingForCheckin.id}
                 </span>
               </div>
@@ -824,7 +824,7 @@ export default function CheckinPage() {
                 rows={3}
                 value={manualNote}
                 onChange={(e) => setManualNote(e.target.value)}
-                placeholder="Nhập ghi chú chi tiết lý do lễ tân check-in thủ công..."
+                placeholder="Nhập ghi chú chi tiết lý do lễ tân check-in thủ công"
                 className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none resize-none mt-2"
               />
             </div>
@@ -842,12 +842,12 @@ export default function CheckinPage() {
                 type="button"
                 disabled={submittingManual}
                 onClick={handleConfirmManualCheckin}
-                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-black shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2 disabled:opacity-50"
               >
                 {submittingManual ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Đang xác nhận...</span>
+                    <span>Đang xác nhận</span>
                   </>
                 ) : (
                   <>

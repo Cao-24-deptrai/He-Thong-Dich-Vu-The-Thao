@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 import {
   Bell,
   CheckCheck,
-  ArrowLeft,
   CalendarCheck,
   CreditCard,
   Info,
   Clock,
+  RefreshCw,
+  ShieldCheck,
+  Trash2
 } from 'lucide-react';
 import { api } from '@/lib/api';
 
@@ -60,7 +62,7 @@ export default function CustomerNotificationsPage() {
       setItems((prev) => prev.map((it) => (it._id === id ? { ...it, isRead: true } : it)));
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch {
-      // ignore silent failure
+      // ignore
     }
   };
 
@@ -70,110 +72,110 @@ export default function CustomerNotificationsPage() {
       setItems((prev) => prev.map((it) => ({ ...it, isRead: true })));
       setUnreadCount(0);
     } catch {
-      // ignore silent failure
+      // ignore
     }
   };
 
   const renderIcon = (type: string) => {
-    if (type === 'PAYMENT') return <CreditCard className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93]" />;
-    if (type === 'BOOKING') return <CalendarCheck className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93]" />;
-    return <Info className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93]" />;
+    if (type === 'PAYMENT') return <CreditCard className="w-4 h-4 text-[var(--pitch-green)]" />;
+    if (type === 'BOOKING') return <CalendarCheck className="w-4 h-4 text-[var(--burnt-orange)]" />;
+    return <Info className="w-4 h-4 text-sky-400" />;
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-1">
-          <Link
-            href="/home"
-            className="inline-flex items-center space-x-1.5 text-xs font-medium text-[#758A80] dark:text-[#A1A79F] hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Quay lại trang chủ</span>
-          </Link>
-          <div className="flex items-center space-x-3">
-            <h1 className="font-heading font-bold text-2xl sm:text-3xl uppercase tracking-tight text-[#171C1A] dark:text-white">
-              Thông báo
-            </h1>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#00B562] text-white dark:bg-[#9CFF93] dark:text-[#0C0F0C]">
-                {unreadCount} chưa đọc
-              </span>
-            )}
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <Bell className="w-6 h-6 text-[var(--burnt-orange)]" />
+            <span>Thông Báo Hệ Thống & Cảnh Báo Khẩn</span>
+          </h1>
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Trung tâm kiểm soát thông báo giao dịch, cảnh báo xung đột lịch và tin tức vận hành gửi tới người dùng
+          </p>
         </div>
 
-        {items.length > 0 && unreadCount > 0 && (
+        <div className="flex items-center gap-2">
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllRead}
+              className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
+            >
+              <CheckCheck className="w-3.5 h-3.5 text-[var(--pitch-green)]" />
+              <span>Đánh dấu đã đọc tất cả</span>
+            </button>
+          )}
+
           <button
-            type="button"
-            onClick={handleMarkAllRead}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-[#E3E8E6] dark:border-white/15 bg-white dark:bg-[#191C14] hover:border-[#00B562] dark:hover:border-[#9CFF93] text-xs font-semibold text-[#171C1A] dark:text-white transition-colors"
+            onClick={loadNotifications}
+            className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
           >
-            <CheckCheck className="w-4 h-4 text-[#00B562] dark:text-[#9CFF93]" />
-            <span>Đánh dấu đã đọc tất cả</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Làm mới</span>
           </button>
-        )}
+        </div>
       </div>
 
-      {error && (
-        <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs text-rose-600 dark:text-rose-400">
-          {error}
+      {/* Main Content */}
+      <div className="phanta-card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-heading font-bold text-base text-[var(--text-heading)] flex items-center gap-2">
+            <span>Hộp thư thông báo</span>
+            <span className="px-2 py-0.5 rounded-full text-xs font-heading font-extrabold bg-[var(--pitch-green)]/15 text-[var(--pitch-green)] border border-[var(--pitch-green)]/30 tabular-nums">
+              {unreadCount} chưa đọc
+            </span>
+          </h2>
         </div>
-      )}
 
-      {loading ? (
-        <div className="p-12 text-center text-sm text-[#758A80] dark:text-[#A1A79F]">
-          Đang tải thông báo...
-        </div>
-      ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] p-10 text-center space-y-2.5">
-          <Bell className="w-9 h-9 mx-auto text-[#758A80] dark:text-[#A1A79F] opacity-60" />
-          <p className="font-heading font-bold text-base text-[#171C1A] dark:text-white">
-            Chưa có thông báo nào
-          </p>
-          <p className="text-xs text-[#758A80] dark:text-[#A1A79F] max-w-md mx-auto">
-            Khi vé đặt sân được xác nhận thanh toán, hủy vé hoặc check-in thành công tại sân, thông báo sẽ xuất hiện tại đây.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {items.map((item) => (
-            <button
-              key={item._id}
-              type="button"
-              onClick={() => handleMarkRead(item._id, item.isRead)}
-              className={`w-full text-left p-4 sm:p-5 rounded-2xl border transition-colors flex items-start space-x-3.5 ${
-                item.isRead
-                  ? 'border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#191C14] opacity-80'
-                  : 'border-[#00B562]/40 dark:border-[#9CFF93]/40 bg-[#E6F8F0]/40 dark:bg-[#121512]'
-              }`}
-            >
-              <div className="w-9 h-9 rounded-xl bg-[#E6F8F0] dark:bg-[#22261E] flex items-center justify-center shrink-0 mt-0.5">
-                {renderIcon(item.type)}
-              </div>
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-heading font-bold text-sm text-[#171C1A] dark:text-white">
-                    {item.title}
-                  </p>
-                  {!item.isRead && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#00B562] text-white dark:bg-[#9CFF93] dark:text-[#0C0F0C] shrink-0">
-                      Mới
-                    </span>
-                  )}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[var(--pitch-green)]" />
+            <p className="text-xs text-[var(--text-sub)]">Đang tải danh sách thông báo...</p>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="py-16 text-center text-xs text-[var(--text-sub)]">
+            Hộp thư trống, không có thông báo mới nào.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {items.map((it) => (
+              <div
+                key={it._id}
+                onClick={() => handleMarkRead(it._id, it.isRead)}
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
+                  it.isRead
+                    ? 'bg-[var(--bg-card-inner)]/50 border-[var(--border-subtle)] opacity-75'
+                    : 'bg-[var(--bg-card-inner)] border-[var(--pitch-green)]/40 shadow-xs'
+                }`}
+              >
+                <div className="w-8 h-8 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {renderIcon(it.type)}
                 </div>
-                <p className="text-xs text-[#3B4540] dark:text-[#D1D5DB] leading-relaxed">
-                  {item.body}
-                </p>
-                <p className="text-[11px] text-[#758A80] dark:text-[#A1A79F] flex items-center space-x-1 pt-0.5">
-                  <Clock className="w-3 h-3" />
-                  <span>{new Date(item.createdAt).toLocaleString('vi-VN')}</span>
-                </p>
+
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-heading font-bold text-xs text-[var(--text-heading)]">
+                      {it.title}
+                    </h4>
+                    <span className="text-[10px] text-[var(--text-sub)] flex items-center gap-1 font-heading tabular-nums">
+                      <Clock className="w-3 h-3" />
+                      <span>{new Date(it.createdAt).toLocaleString('vi-VN')}</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--text-main)] leading-relaxed">
+                    {it.body}
+                  </p>
+                </div>
+
+                {!it.isRead && (
+                  <span className="w-2 h-2 rounded-full bg-[var(--pitch-green)] flex-shrink-0 mt-2" />
+                )}
               </div>
-            </button>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
