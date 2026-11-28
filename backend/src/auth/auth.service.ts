@@ -186,8 +186,14 @@ export class AuthService {
       throw new UnauthorizedException('Số điện thoại, email hoặc mật khẩu không chính xác');
     }
 
-    // 1. Kiểm tra tài khoản có đang bị tạm khóa do nhập sai 5 lần không
-    if (user.lockedUntil) {
+    const isInternalStaffOrAdmin =
+      user.role === UserRole.STAFF ||
+      user.role === UserRole.ADMIN ||
+      user.role === UserRole.OWNER ||
+      user.role === UserRole.MANAGER;
+
+    // 1. Kiểm tra tài khoản có đang bị tạm khóa do nhập sai 5 lần không (chỉ áp dụng với CUSTOMER)
+    if (!isInternalStaffOrAdmin && user.lockedUntil) {
       const now = new Date();
       if (user.lockedUntil > now) {
         const remainingMinutes = Math.ceil(
@@ -253,6 +259,10 @@ export class AuthService {
     }
 
     if (!isPasswordValid) {
+      if (isInternalStaffOrAdmin) {
+        throw new UnauthorizedException('Số điện thoại, email hoặc mật khẩu không chính xác');
+      }
+
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
 
       if (user.failedLoginAttempts >= 5) {

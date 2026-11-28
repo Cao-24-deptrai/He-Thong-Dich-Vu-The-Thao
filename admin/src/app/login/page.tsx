@@ -12,26 +12,13 @@ import ThemeToggle from '@/components/ThemeToggle';
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [inputsUnlocked, setInputsUnlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lockedInfo, setLockedInfo] = useState<{ remainingMinutes?: number; lockedUntil?: string } | null>(null);
-  const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
   const [isCustomerDomain, setIsCustomerDomain] = useState(false);
   const [pendingGoogleUser, setPendingGoogleUser] = useState<User | null>(null);
 
   useEffect(() => {
     setIsCustomerDomain(false);
-    if (typeof window !== 'undefined') {
-      const remembered = api.getRememberMe();
-      setRememberMe(remembered);
-      if (remembered) {
-        const savedLogin = api.getRememberedLogin();
-        if (savedLogin) setIdentifier(savedLogin);
-        setInputsUnlocked(true);
-      }
-    }
   }, []);
 
   const redirectAfterLogin = (user?: User) => {
@@ -53,31 +40,14 @@ export default function LoginPage() {
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError(null);
-    setLockedInfo(null);
-    setAttemptsLeft(null);
     setLoading(true);
 
     try {
-      const res = await api.login(identifier, password, rememberMe);
+      const res = await api.login(identifier, password, false);
       redirectAfterLogin(res?.user);
     } catch (err: any) {
       console.error('Login error:', err);
-      const errData = err.data || {};
-
-      if (errData.errorCode === 'ACCOUNT_LOCKED') {
-        setLockedInfo({
-          remainingMinutes: errData.remainingMinutes || 15,
-          lockedUntil: errData.lockedUntil,
-        });
-        setError(`Tài khoản tạm thời bị khóa do nhập sai mật khẩu 5 lần. Vui lòng thử lại sau ${errData.remainingMinutes || 15} phút.`);
-      } else {
-        if (typeof errData.attemptsLeft === 'number') {
-          setAttemptsLeft(errData.attemptsLeft);
-          setError(`Số điện thoại, email hoặc mật khẩu không chính xác. Bạn còn ${errData.attemptsLeft} lần thử trước khi tài khoản bị khóa 15 phút.`);
-        } else {
-          setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin đăng nhập hoặc mật khẩu.');
-        }
-      }
+      setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin đăng nhập hoặc mật khẩu.');
     } finally {
       setLoading(false);
     }
@@ -159,53 +129,26 @@ export default function LoginPage() {
             />
           ) : (
             <>
-              {/* Cảnh báo khóa tài khoản do Brute-force */}
-              {lockedInfo && (
-                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs space-y-1">
-                  <div className="font-heading font-bold uppercase tracking-wider">
-                    Tài khoản tạm thời bị khóa bảo vệ
-                  </div>
-                  <p className="leading-relaxed">
-                    Hệ thống tạm khóa tài khoản trong {lockedInfo.remainingMinutes} phút để bảo mật chống đăng nhập trái phép.
-                  </p>
-                </div>
-              )}
-
-              {/* Cảnh báo số lần thử còn lại */}
-              {!lockedInfo && attemptsLeft !== null && (
-                <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 text-xs">
-                  Mật khẩu chưa chính xác. Bạn còn <strong>{attemptsLeft} lần thử</strong> trước khi tài khoản bị khóa tạm thời.
-                </div>
-              )}
-
               {/* Thông báo lỗi */}
-              {error && !lockedInfo && attemptsLeft === null && (
+              {error && (
                 <div className="p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400 text-xs">
                   {error}
                 </div>
               )}
 
-              {/* Form đăng nhập - Tinh gọn, không icon rườm rà trong ô input */}
-              <form onSubmit={handleLogin} autoComplete={rememberMe ? 'on' : 'off'} className="space-y-5">
+              {/* Form đăng nhập - Tinh gọn */}
+              <form onSubmit={handleLogin} className="space-y-5">
                 <div>
                   <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-2">
-                    {isCustomerDomain ? 'Số điện thoại hoặc Email' : 'Số điện thoại, Email hoặc mã tài khoản'}
+                    Số điện thoại, Email hoặc mã tài khoản
                   </label>
                   <input
                     type="text"
                     name="login_identifier"
                     required
                     value={identifier}
-                    readOnly={!rememberMe && !inputsUnlocked}
-                    onPointerDown={() => setInputsUnlocked(true)}
-                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    autoComplete={rememberMe ? 'username' : 'off'}
-                    placeholder={
-                      isCustomerDomain
-                        ? 'Nhập số điện thoại hoặc email (vd: 0988240106 hoặc email@gmail.com)'
-                        : 'Nhập SĐT, email hoặc mã tài khoản (vd: 240106)'
-                    }
+                    placeholder="Nhập SĐT, email hoặc mã tài khoản (vd: 240106)"
                     className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
                 </div>
@@ -215,48 +158,16 @@ export default function LoginPage() {
                     <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white">
                       Mật khẩu
                     </label>
-                    {isCustomerDomain && (
-                      <Link
-                        href="/forgot-password"
-                        className="text-xs font-medium text-[#00B562] dark:text-[#9CFF93] hover:underline transition"
-                      >
-                        Quên mật khẩu?
-                      </Link>
-                    )}
                   </div>
                   <input
                     type="password"
                     name="login_password"
                     required
                     value={password}
-                    readOnly={!rememberMe && !inputsUnlocked}
-                    onPointerDown={() => setInputsUnlocked(true)}
-                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setPassword(e.target.value)}
-                    autoComplete={rememberMe ? 'current-password' : 'new-password'}
                     placeholder="Nhập mật khẩu của bạn"
                     className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="remember-me"
-                    className="inline-flex items-center gap-2 cursor-pointer select-none text-xs text-[#3B4540] dark:text-[#D1D5DB]"
-                  >
-                    <input
-                      id="remember-me"
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => {
-                        const next = e.target.checked;
-                        setRememberMe(next);
-                        if (next) setInputsUnlocked(true);
-                      }}
-                      className="rounded border-[#E3E8E6] text-[#00B562] focus:ring-[#00B562]"
-                    />
-                    <span>Ghi nhớ tôi</span>
-                  </label>
                 </div>
 
                 <button
