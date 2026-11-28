@@ -83,48 +83,35 @@ export default function RootLayout({
     const currentUser = api.getUser();
     setUser(currentUser);
 
-    const isCustomerDomain =
-      typeof window !== 'undefined' &&
-      !window.location.hostname.startsWith('admin.');
+    const isAuthPath =
+      pathname === '/login' ||
+      pathname === '/forgot-password' ||
+      pathname === '/reset-password';
 
-    const customerRoutesList = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
-    const isCustomerRoute = customerRoutesList.some(
-      (route) => pathname === route || pathname.startsWith(route + '/')
-    );
-    const authPublicRoutes = ['/login', '/register', '/forgot-password', '/reset-password'];
-    const isPublicAuthPath = authPublicRoutes.includes(pathname);
-
-    // 1. Nếu đang ở domain khách hàng (phanta.id.vn):
-    if (isCustomerDomain) {
-      if (!isCustomerRoute && !isPublicAuthPath) {
-        router.replace('/home');
-        return;
-      }
+    // 1. Nếu là tài khoản khách hàng CUSTOMER -> Chuyển sang Cổng Web Khách
+    if (currentUser?.role === 'CUSTOMER') {
+      const clientHome =
+        typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')
+          ? 'https://phanta.id.vn/home'
+          : 'http://localhost:3001/home';
+      window.location.href = clientHome;
       return;
     }
 
-    // 2. Nếu đang ở domain quản trị (admin.phanta.id.vn):
-    if (!currentUser && pathname !== '/login' && pathname !== '/forgot-password') {
+    // 2. Nếu chưa đăng nhập -> Chuyển về trang đăng nhập nội bộ
+    if (!currentUser && !isAuthPath) {
       router.replace('/login');
       return;
     }
 
-    // Tài khoản CUSTOMER đăng nhập vào trang admin -> chuyển hướng sang domain khách hàng
-    if (currentUser?.role === 'CUSTOMER') {
-      if (typeof window !== 'undefined' && window.location.hostname.includes('phanta.id.vn')) {
-        window.location.href = 'https://phanta.id.vn/home';
-        return;
-      }
-    }
-
-    // Phân quyền cho nhân viên quầy (STAFF):
+    // 3. Phân quyền cho nhân viên quầy (STAFF):
     if (currentUser?.role === 'STAFF') {
-      const allowedStaffRoutes = ['/walk-in', '/checkin', '/canteen', '/rentals'];
+      const allowedStaffRoutes = ['/pos', '/walk-in', '/checkin', '/canteen', '/rentals'];
       const isAllowed = allowedStaffRoutes.some(
         (r) => pathname === r || pathname.startsWith(r + '/')
       );
-      if (!isAllowed && pathname !== '/login') {
-        router.replace('/walk-in');
+      if (!isAllowed && !isAuthPath) {
+        router.replace('/pos/checkin-walkin');
         return;
       }
     }
@@ -140,18 +127,7 @@ export default function RootLayout({
     pathname === '/register' ||
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
-  const customerRoutes = ['/home', '/booking', '/my-tickets', '/support', '/about', '/profile', '/settings', '/notifications', '/policies', '/rules'];
-  const isCustomerPortal =
-    pathname === '/' ||
-    customerRoutes.some((route) => pathname === route || pathname.startsWith(route + '/'));
-
-  const customerNavLinks = [
-    { href: '/home', label: 'Trang chính' },
-    { href: '/booking', label: 'Đặt sân' },
-    { href: '/my-tickets', label: 'Vé của tôi' },
-    { href: '/support', label: 'Hỗ trợ' },
-    { href: '/about', label: 'Giới thiệu' },
-  ];
+  const isPosPortal = pathname === '/pos' || pathname.startsWith('/pos/');
 
   interface NavSubItem {
     href: string;
@@ -176,6 +152,13 @@ export default function RootLayout({
       icon: CalendarPlus,
       description: 'Lịch sân, walk-in, check-in QR & hoàn tiền',
       items: [
+        {
+          href: '/pos/checkin-walkin',
+          label: 'Web POS Thu Ngân (Mới)',
+          icon: QrCode,
+          description: 'Giao diện POS quầy, chốt ca, F1-F8',
+          roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],
+        },
         {
           href: '/facilities',
           label: 'Quản Lý Sân Bãi',
@@ -362,8 +345,8 @@ export default function RootLayout({
     <html lang="vi" data-theme="light">
       <head>
         <title>
-          {isCustomerPortal
-            ? 'Phanta Sports - Đặt Sân Thể Thao Trực Tuyến'
+          {isPosPortal
+            ? 'Phanta Sports - Hệ Thống Web POS Quầy Thu Ngân'
             : isAuthPage
             ? 'Sports & Esports Booking - Đăng nhập'
             : 'Hệ Thống Quản Trị Sân Thể Thao & Esports'}
@@ -384,197 +367,17 @@ export default function RootLayout({
       </head>
       <body
         className={
-          isAuthPage
+          isPosPortal
+            ? 'min-h-screen bg-[#0C0F0C] text-[#F3F4F6] font-body'
+            : isAuthPage
             ? 'bg-slate-900 text-slate-100 min-h-screen font-body'
-            : isCustomerPortal
-            ? 'bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col min-h-screen relative font-body transition-colors duration-200'
             : 'bg-[#0C0F0C] text-[#F3F4F6] flex min-h-screen relative font-body'
         }
       >
-        {isAuthPage ? (
+        {isPosPortal ? (
           children
-        ) : isCustomerPortal ? (
-          <>
-            {/* Playo-Style Customer Header */}
-            <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0C0F0C]/95 border-b border-[#E3E8E6] dark:border-white/10 backdrop-blur-md transition-colors">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
-                {/* Brand Logo & Geolocation */}
-                <div className="flex items-center space-x-3 sm:space-x-4 shrink-0">
-                  <Link href="/home" className="flex items-center space-x-2.5">
-                    <div className="w-10 h-10 relative shrink-0 dark:bg-[#F3F4F6] dark:rounded-lg dark:p-1 flex items-center justify-center">
-                      <Image
-                        src="/PHANTAtransparent.png"
-                        alt="Phanta Sports Logo"
-                        width={40}
-                        height={40}
-                        className="object-contain"
-                        priority
-                      />
-                    </div>
-                    <div className="leading-none">
-                      <span className="font-heading font-black text-xl tracking-tight text-[#171C1A] dark:text-white uppercase">
-                        PHANTA
-                      </span>
-                      <span className="font-heading font-bold text-xs tracking-wider text-[#00B562] dark:text-[#9CFF93] block">
-                        SPORTS
-                      </span>
-                    </div>
-                  </Link>
-
-                  {/* Geolocation pill (Playo style) */}
-                  <div className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border border-[#E3E8E6] dark:border-white/10 text-xs text-[#3B4540] dark:text-[#D1D5DB] bg-[#F8F9FA] dark:bg-[#191C14]">
-                    <MapPin className="w-3.5 h-3.5 text-[#00B562] dark:text-[#9CFF93]" />
-                    <span className="font-medium">TP. Hồ Chí Minh</span>
-                  </div>
-                </div>
-
-                {/* Desktop Navigation Links */}
-                <nav className="hidden md:flex items-center space-x-6 lg:space-x-8">
-                  {customerNavLinks.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      (item.href !== '/home' && pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={`text-sm tracking-tight transition-colors py-1 relative ${
-                          isActive
-                            ? 'text-[#00B562] dark:text-[#9CFF93] font-semibold'
-                            : 'text-[#3B4540] dark:text-[#D1D5DB] hover:text-[#171C1A] dark:hover:text-white font-normal'
-                        }`}
-                      >
-                        {item.label}
-                        {isActive && (
-                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#00B562] dark:bg-[#9CFF93] rounded-full" />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
-
-                {/* Right Controls: Theme Toggle + Auth */}
-                <div className="flex items-center space-x-3">
-                  <ThemeToggle />
-
-                  <div className="hidden sm:block w-px h-5 bg-[#E3E8E6] dark:bg-white/10" />
-
-                  {mounted && user ? (
-                    <CustomerAccountMenu user={user} onLogout={handleLogout} />
-                  ) : (
-                    <Link
-                      href="/login"
-                      className="font-heading font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-lg bg-[#00B562] hover:bg-[#00914E] text-white dark:bg-[#9CFF93] dark:hover:bg-[#1ED760] dark:text-[#0C0F0C] transition-colors"
-                    >
-                      Đăng nhập
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </header>
-
-            {/* Customer Page Body */}
-            <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8 relative z-10 pb-20 md:pb-8">
-              {mounted && user && user.role === 'CUSTOMER' && !user.phone && (
-                <PhoneCompletionBanner
-                  user={user}
-                  onUpdated={(updatedUser) => setUser(updatedUser)}
-                />
-              )}
-              {children}
-            </main>
-
-            {/* Mobile Bottom Navigation (Sticky 5 Tabs) */}
-            <MobileBottomNav user={user} />
-
-            {/* Customer Footer (Unslop & Humanizer) */}
-            <footer className="border-t border-[#E3E8E6] dark:border-white/10 bg-white dark:bg-[#0C0F0C] text-[#3B4540] dark:text-[#A1A79F] transition-colors py-10 px-4 sm:px-6 lg:px-8 pb-24 md:pb-10">
-              <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
-                {/* Brand info */}
-                <div className="md:col-span-1 space-y-3">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-8 h-8 relative shrink-0 dark:bg-[#F3F4F6] dark:rounded-lg dark:p-1">
-                      <Image
-                        src="/PHANTAtransparent.png"
-                        alt="Phanta Sports Logo"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <span className="font-heading font-black text-lg text-[#171C1A] dark:text-white uppercase tracking-tight">
-                      PHANTA SPORTS
-                    </span>
-                  </div>
-                </div>
-
-                {/* Quick links */}
-                <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
-                    Dịch vụ
-                  </h3>
-                  <ul className="space-y-1.5 text-xs">
-                    <li>
-                      <Link href="/booking" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Đặt sân trực tuyến
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/my-tickets" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Tra cứu vé đã đặt
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/home#sports" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Danh mục các bộ môn
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Policies & Support */}
-                <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
-                    Chính sách & Hỗ trợ
-                  </h3>
-                  <ul className="space-y-1.5 text-xs">
-                    <li>
-                      <Link href="/support" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Trung tâm trợ giúp
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/policies" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Chính sách của Phanta
-                      </Link>
-                    </li>
-                    <li>
-                      <Link href="/rules" className="hover:text-[#00B562] dark:hover:text-[#9CFF93] transition-colors">
-                        Quy định sân bãi
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Facilities & Contact */}
-                <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-[#171C1A] dark:text-white">
-                    Liên hệ
-                  </h3>
-                  <div className="text-xs space-y-1 text-[#758A80] dark:text-[#A1A79F]">
-                    <p>Hotline: <strong className="text-[#171C1A] dark:text-white">0988 240 106</strong></p>
-                    <p>Giờ hoạt động: 06:00 - 23:00</p>
-                    <p>Địa điểm: Quận 7 và TP. Thủ Đức, TP. Hồ Chí Minh</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Copyright (Hyphen only, no floating dot) */}
-              <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-[#E3E8E6] dark:border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#758A80] dark:text-[#A1A79F]">
-                <p>© 2026 Phanta Sports - Bản quyền thuộc về Phanta Sports.</p>
-                <p className="mt-2 sm:mt-0">Tiêu chuẩn kỹ thuật BWF - FIFA - FIBA</p>
-              </div>
-            </footer>
-          </>
+        ) : isAuthPage ? (
+          children
         ) : (
           <>
             {/* Desktop Sidebar (Admin Operations) */}

@@ -1,6 +1,8 @@
 // admin/src/lib/api.ts
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
+export type UserRole = 'CUSTOMER' | 'STAFF' | 'MANAGER' | 'OWNER' | 'ADMIN' | 'PT';
+
 export interface User {
   _id: string;
   id?: string;
@@ -12,7 +14,7 @@ export interface User {
   bio?: string;
   favoriteSports?: string[];
   authProviders?: string[];
-  role: 'CUSTOMER' | 'STAFF' | 'MANAGER' | 'OWNER' | 'ADMIN' | 'PT';
+  role: UserRole;
   permissions?: string[];
   isPhoneVerified?: boolean;
   isEmailVerified?: boolean;
@@ -159,6 +161,36 @@ export interface WalkInRecurringDto extends CheckRecurringDto {
 }
 
 // --- RENTALS ---
+export interface CanteenProduct {
+  _id: string;
+  name: string;
+  price: number;
+  stock: number;
+  category?: string;
+  active?: boolean;
+}
+
+export interface CanteenShift {
+  _id: string;
+  cashierId: string;
+  openingCash: number;
+  closingCash?: number;
+  status: 'OPEN' | 'CLOSED';
+  openedAt?: string;
+  createdAt?: string;
+  closedAt?: string;
+}
+
+export interface GamingMachine {
+  _id: string;
+  machineCode: string;
+  zone: string;
+  hourlyRate: number;
+  status: 'AVAILABLE' | 'OCCUPIED' | 'IN_USE' | 'MAINTENANCE';
+  specs?: string;
+  activeSession?: any;
+}
+
 export interface Equipment {
   _id: string;
   code: string;
@@ -855,7 +887,7 @@ class ApiService {
   async processRefund(bookingId: string, note?: string): Promise<any> {
     return this.request<any>(`/admin/refund/${bookingId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ note }),
+      body: JSON.stringify({ refundNote: note, note }),
     });
   }
 
@@ -976,6 +1008,98 @@ class ApiService {
     return this.request('/vouchers', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  // --- CANTEEN & POS SHIFT ---
+  async getCanteenProducts(): Promise<CanteenProduct[]> {
+    return this.request<CanteenProduct[]>('/canteen/products');
+  }
+
+  async createCanteenOrder(payload: {
+    items: Array<{ productId: string; quantity: number }>;
+    paymentMethod: 'CASH' | 'TRANSFER';
+  }): Promise<any> {
+    return this.request<any>('/canteen/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async getCurrentShift(): Promise<CanteenShift | null> {
+    const shift = await this.request<CanteenShift | null>('/canteen/shifts/current');
+    return shift && shift._id ? shift : null;
+  }
+
+  async openShift(openingCash: number): Promise<CanteenShift> {
+    return this.request<CanteenShift>('/canteen/shifts/open', {
+      method: 'POST',
+      body: JSON.stringify({ openingCash }),
+    });
+  }
+
+  async closeShift(shiftId: string, closingCash: number): Promise<CanteenShift> {
+    return this.request<CanteenShift>(`/canteen/shifts/${shiftId}/close`, {
+      method: 'POST',
+      body: JSON.stringify({ closingCash }),
+    });
+  }
+
+  // --- GAMING 100 PC ---
+  async getGamingMachines(zone?: string): Promise<GamingMachine[]> {
+    const q = zone && zone !== 'ALL' ? `?zone=${encodeURIComponent(zone)}` : '';
+    return this.request<GamingMachine[]>(`/gaming/machines${q}`);
+  }
+
+  async startGamingSession(payload: { machineCode: string; customerName?: string; prepaidHours?: number }): Promise<any> {
+    return this.request<any>('/gaming/sessions/start', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async endGamingSession(payload: { sessionCode: string; reason?: string }): Promise<any> {
+    return this.request<any>('/gaming/sessions/end', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async switchGamingMachine(payload: { sessionCode: string; targetMachineCode: string }): Promise<any> {
+    return this.request<any>('/gaming/sessions/switch-machine', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async remoteControlGaming(payload: { machineCode: string; command: string; message?: string }): Promise<any> {
+    return this.request<any>('/gaming/remote-control', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  // --- BRIDGE & HARDWARE EDGE (M22) ---
+  async getBridgeAgents(): Promise<any[]> {
+    return this.request<any[]>('/bridge/agents');
+  }
+
+  async sendBridgeCommand(payload: {
+    agentId: string;
+    deviceId?: string;
+    commandType: string;
+    payload?: Record<string, any>;
+    params?: Record<string, any>;
+  }): Promise<any> {
+    return this.request<any>('/bridge/commands', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async seedBridgeAgents(): Promise<any> {
+    return this.request<any>('/bridge/agents/seed-default', {
+      method: 'POST',
     });
   }
 }

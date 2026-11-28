@@ -16,28 +16,26 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [lockedInfo, setLockedInfo] = useState<{ remainingMinutes?: number; lockedUntil?: string } | null>(null);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
-  const [isCustomerDomain, setIsCustomerDomain] = useState(true);
+  const [isCustomerDomain, setIsCustomerDomain] = useState(false);
   const [pendingGoogleUser, setPendingGoogleUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsCustomerDomain(!window.location.hostname.startsWith('admin.'));
-    }
+    setIsCustomerDomain(false);
   }, []);
 
   const redirectAfterLogin = (user?: User) => {
-    const customerDomain =
-      typeof window !== 'undefined' &&
-      !window.location.hostname.startsWith('admin.');
-
     if (user?.role === 'CUSTOMER') {
-      if (!customerDomain && window.location.hostname.includes('phanta.id.vn')) {
-        window.location.href = 'https://phanta.id.vn/home';
-      } else {
-        window.location.href = '/home';
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('admin_user');
+        const clientLoginUrl = window.location.hostname.includes('phanta.id.vn')
+          ? 'https://phanta.id.vn/login?notice=customer_redirect'
+          : 'http://localhost:3001/login?notice=customer_redirect';
+        window.location.href = clientLoginUrl;
       }
     } else if (user?.role === 'STAFF') {
-      window.location.href = '/walk-in';
+      window.location.href = '/pos/checkin-walkin';
     } else {
       window.location.href = '/facilities';
     }

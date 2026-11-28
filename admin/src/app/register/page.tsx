@@ -89,12 +89,12 @@ export default function RegisterPage() {
       {/* CỘT TRÁI: SPLIT SCREEN ẢNH THỂ THAO THỰC TẾ (CỐ ĐỊNH CHIỀU CAO THEO TRÌNH DUYỆT, KHÔNG CUỘN) */}
       <div className="hidden lg:flex lg:w-1/2 h-screen sticky top-0 relative bg-[#121512] flex-col justify-between p-12 overflow-hidden shrink-0 select-none">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-luminosity"
+          className="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity"
           style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1600&q=80')`,
+            backgroundImage: `url('/auth-bg.jpg')`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0F0C] via-[#0C0F0C]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0C0F0C] via-[#0C0F0C]/50 to-transparent" />
 
         <div className="relative z-10">
           <span className="font-heading font-bold text-xs uppercase tracking-widest text-[#00B562] dark:text-[#9CFF93]">
@@ -104,7 +104,7 @@ export default function RegisterPage() {
 
         <div className="relative z-10 space-y-4 max-w-md">
           <h2 className="text-3xl sm:text-4xl font-heading font-black uppercase text-white leading-tight tracking-tight">
-            Gia Nhập Cộng Đồng Phanta Sports
+            Gia Nhập Cộng Đồng <br /> Phanta Sports
           </h2>
           <p className="text-sm text-slate-300 leading-relaxed">
             Đăng ký tài khoản để giữ chỗ trực tuyến trong 10 phút, tích lũy điểm thi đấu và nhận vé điện tử QR vào sân tức thì.

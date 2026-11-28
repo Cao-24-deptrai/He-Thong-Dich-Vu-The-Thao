@@ -13,6 +13,8 @@ const config: Config = {
         sans: ["Lexend", "sans-serif"],
         heading: ["Barlow", "sans-serif"],
         body: ["Lexend", "sans-serif"],
+        barlow: ["var(--font-barlow)", "Barlow", "sans-serif"],
+        lexend: ["var(--font-lexend)", "Lexend", "sans-serif"],
       },
       colors: {
         brand: {

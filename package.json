@@ -6,6 +6,7 @@
     "start:mongo": "node backend/scripts/start-mongo.js",
     "seed": "npm --prefix backend run seed",
     "start:backend": "npm --prefix backend run start:dev",
+    "start:client": "npm --prefix client run dev",
     "start:admin": "npm --prefix admin run dev",
     "build": "npm --prefix backend run build",
     "test": "npm --prefix backend test",

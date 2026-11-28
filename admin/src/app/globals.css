@@ -98,3 +98,316 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   background: #9CFF93;
   color: #0C0F0C;
 }
+
+
+/* =========================================================
+   PHANTA WEB POS & AUTH DESIGN SYSTEM (DARK & LIGHT THEMES)
+   Only Barlow (headings/key figures) & Lexend (body/tabular)
+   ========================================================= */
+.phanta-pos-theme,
+.phanta-pos-theme[data-pos-theme="dark"] {
+  --pos-bg-page: #0c0f0c;
+  --pos-bg-header: rgba(18, 21, 18, 0.96);
+  --pos-bg-sidebar: #121512;
+  --pos-bg-card: #191c14;
+  --pos-bg-card-inner: #22261e;
+  --pos-bg-card-hover: #2a3025;
+
+  --pos-border: rgba(156, 255, 147, 0.24);
+  --pos-border-subtle: rgba(255, 255, 255, 0.1);
+
+  --pos-text-heading: #ffffff;
+  --pos-text-main: #f3f4f6;
+  --pos-text-sub: #b0b8ae;
+
+  --pos-accent: #9cff93;
+  --pos-accent-hover: #82fa78;
+  --pos-accent-fg: #121512;
+  --pos-accent-soft: rgba(156, 255, 147, 0.14);
+
+  --pos-orange: #fb923c;
+  --pos-orange-soft: rgba(234, 88, 12, 0.18);
+  --pos-orange-border: rgba(251, 146, 60, 0.35);
+
+  --pos-danger: #fb7185;
+  --pos-danger-soft: rgba(244, 63, 94, 0.15);
+  --pos-danger-border: rgba(251, 113, 133, 0.35);
+
+  --pos-warning: #fbbf24;
+  --pos-warning-soft: rgba(245, 158, 11, 0.15);
+  --pos-warning-border: rgba(251, 191, 36, 0.35);
+
+  --pos-info: #38bdf8;
+  --pos-info-soft: rgba(56, 189, 248, 0.14);
+  --pos-info-border: rgba(56, 189, 248, 0.35);
+
+  --pos-input-bg: #22261e;
+  --pos-table-head: #121512;
+  --pos-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+  background-color: var(--pos-bg-page);
+  color: var(--pos-text-main);
+  font-family: var(--font-lexend), sans-serif;
+  letter-spacing: 0;
+}
+
+.phanta-pos-theme[data-pos-theme="light"] {
+  --pos-bg-page: #f1f5f2;
+  --pos-bg-header: rgba(255, 255, 255, 0.96);
+  --pos-bg-sidebar: #ffffff;
+  --pos-bg-card: #ffffff;
+  --pos-bg-card-inner: #f0fdf4;
+  --pos-bg-card-hover: #e2f5e9;
+
+  --pos-border: #cbd5e1;
+  --pos-border-subtle: #e2e8f0;
+
+  --pos-text-heading: #0b0e0b;
+  --pos-text-main: #1e293b;
+  --pos-text-sub: #475569;
+
+  --pos-accent: #16a34a;
+  --pos-accent-hover: #15803d;
+  --pos-accent-fg: #ffffff;
+  --pos-accent-soft: rgba(22, 163, 74, 0.12);
+
+  --pos-orange: #c2410c;
+  --pos-orange-soft: rgba(194, 65, 12, 0.1);
+  --pos-orange-border: rgba(194, 65, 12, 0.3);
+
+  --pos-danger: #be123c;
+  --pos-danger-soft: rgba(190, 18, 60, 0.1);
+  --pos-danger-border: rgba(190, 18, 60, 0.3);
+
+  --pos-warning: #b45309;
+  --pos-warning-soft: rgba(180, 83, 9, 0.1);
+  --pos-warning-border: rgba(180, 83, 9, 0.3);
+
+  --pos-info: #0369a1;
+  --pos-info-soft: rgba(3, 105, 161, 0.1);
+  --pos-info-border: rgba(3, 105, 161, 0.3);
+
+  --pos-input-bg: #f8fafc;
+  --pos-table-head: #f0fdf4;
+  --pos-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+}
+
+html,
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-lexend), sans-serif;
+}
+
+.phanta-pos-theme ::selection {
+  background: var(--pos-accent);
+  color: var(--pos-accent-fg);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.phanta-pos-theme ::-webkit-scrollbar-track {
+  background: var(--pos-bg-page);
+}
+
+.phanta-pos-theme ::-webkit-scrollbar-thumb {
+  background: var(--pos-border);
+  border-radius: 4px;
+}
+
+.phanta-pos-theme ::-webkit-scrollbar-thumb:hover {
+  background: var(--pos-accent);
+}
+
+.font-barlow {
+  font-family: var(--font-barlow), sans-serif;
+  letter-spacing: 0.02em;
+}
+
+.font-lexend,
+.font-tabular {
+  font-family: var(--font-lexend), sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.phanta-card {
+  background-color: var(--pos-bg-card);
+  border: 1px solid var(--pos-border);
+  border-radius: 1rem;
+  box-shadow: var(--pos-shadow);
+}
+
+.phanta-subcard {
+  background-color: var(--pos-bg-card-inner);
+  border: 1px solid var(--pos-border-subtle);
+  border-radius: 0.75rem;
+}
+
+.phanta-btn-primary {
+  background-color: var(--pos-accent);
+  color: var(--pos-accent-fg);
+  font-weight: 700;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.phanta-btn-primary:hover:not(:disabled) {
+  background-color: var(--pos-accent-hover);
+}
+
+.phanta-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.phanta-btn-secondary {
+  background-color: var(--pos-bg-card-inner);
+  color: var(--pos-text-heading);
+  border: 1px solid var(--pos-border);
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.phanta-btn-secondary:hover:not(:disabled) {
+  background-color: var(--pos-bg-card-hover);
+  border-color: var(--pos-accent);
+}
+
+.phanta-input {
+  background-color: var(--pos-input-bg);
+  border: 1px solid var(--pos-border);
+  color: var(--pos-text-heading);
+  border-radius: 0.75rem;
+  font-family: var(--font-lexend), sans-serif;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.phanta-input::placeholder {
+  color: var(--pos-text-sub);
+  opacity: 0.85;
+}
+
+.phanta-input:focus {
+  outline: none;
+  border-color: var(--pos-accent);
+  box-shadow: 0 0 0 2px var(--pos-accent-soft);
+}
+
+.phanta-input:-webkit-autofill,
+.phanta-input:-webkit-autofill:hover,
+.phanta-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--pos-input-bg) inset !important;
+  -webkit-text-fill-color: var(--pos-text-heading) !important;
+  caret-color: var(--pos-text-heading);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Thermal Receipt 80mm Paper Simulator */
+.thermal-paper {
+  background: #fafaf7;
+  color: #111827;
+  font-family: var(--font-lexend), sans-serif;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  position: relative;
+}
+
+.thermal-paper::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 8' width='16' height='8'%3E%3Cpolygon points='0,8 8,0 16,8' fill='%23FAFAF7'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 16px 8px;
+  pointer-events: none;
+}
+
+.thermal-paper::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 8' width='16' height='8'%3E%3Cpolygon points='0,0 8,8 16,0' fill='%23FAFAF7'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 16px 8px;
+  pointer-events: none;
+}
+
+@page {
+  size: 80mm 297mm;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    min-width: 80mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #modal-thermal-receipt,
+  #modal-thermal-receipt * {
+    visibility: visible !important;
+  }
+
+  #modal-thermal-receipt {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    min-width: 80mm !important;
+    height: auto !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    z-index: 999999 !important;
+  }
+
+  #thermal-receipt-paper {
+    width: 80mm !important;
+    max-width: 80mm !important;
+    min-width: 80mm !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 4mm 3.5mm !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+  }
+
+  #thermal-receipt-paper::before,
+  #thermal-receipt-paper::after,
+  .no-print {
+    display: none !important;
+  }
+}
