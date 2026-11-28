@@ -1,11 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, ValidateIf } from 'class-validator';
 
 export class LoginDto {
-  @ApiProperty({ description: 'Số điện thoại đăng nhập', example: '0912345678' })
-  @IsNotEmpty({ message: 'Số điện thoại không được để trống' })
+  @ApiProperty({
+    description: 'Số điện thoại, email hoặc mã tài khoản đăng nhập',
+    example: '0912345678',
+    required: false,
+  })
+  @ValidateIf((o) => !o.identifier)
+  @IsNotEmpty({ message: 'Số điện thoại hoặc email không được để trống' })
   @IsString()
-  phone: string;
+  phone?: string;
+
+  @ApiProperty({
+    description: 'Số điện thoại hoặc email đăng nhập (tương đương phone)',
+    example: 'khachhang@gmail.com',
+    required: false,
+  })
+  @ValidateIf((o) => !o.phone)
+  @IsNotEmpty({ message: 'Số điện thoại hoặc email không được để trống' })
+  @IsString()
+  identifier?: string;
 
   @ApiProperty({ description: 'Mật khẩu đăng nhập', example: 'Password123' })
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })

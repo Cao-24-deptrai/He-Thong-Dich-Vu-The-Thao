@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pendingGoogleUser, setPendingGoogleUser] = useState<User | null>(null);
+  const [inputsUnlocked, setInputsUnlocked] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,17 +196,22 @@ export default function RegisterPage() {
                 <span className="flex-1 min-w-[16px] border-t border-[#E3E8E6] dark:border-white/10" />
               </div>
 
-              {/* Form đăng ký - Không dùng icon rườm rà */}
-              <form onSubmit={handleRegister} className="space-y-4">
+              {/* Form đăng ký - Không dùng icon rườm rà, chặn trình duyệt tự điền sẵn */}
+              <form onSubmit={handleRegister} autoComplete="off" className="space-y-4">
                 <div>
                   <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-1.5">
                     Số điện thoại liên hệ *
                   </label>
                   <input
                     type="tel"
+                    name="reg_phone_no_autofill"
                     required
                     value={phone}
+                    readOnly={!inputsUnlocked}
+                    onPointerDown={() => setInputsUnlocked(true)}
+                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setPhone(e.target.value)}
+                    autoComplete="off"
                     placeholder="vd: 0988 240 106"
                     className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
@@ -217,9 +223,14 @@ export default function RegisterPage() {
                   </label>
                   <input
                     type="text"
+                    name="reg_fullname_no_autofill"
                     required
                     value={fullName}
+                    readOnly={!inputsUnlocked}
+                    onPointerDown={() => setInputsUnlocked(true)}
+                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="off"
                     placeholder="vd: Nguyễn Văn A"
                     className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
@@ -231,8 +242,13 @@ export default function RegisterPage() {
                   </label>
                   <input
                     type="email"
+                    name="reg_email_no_autofill"
                     value={email}
+                    readOnly={!inputsUnlocked}
+                    onPointerDown={() => setInputsUnlocked(true)}
+                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setEmail(e.target.value)}
+                    autoComplete="off"
                     placeholder="vd: nguyenvana@gmail.com"
                     className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
@@ -245,9 +261,14 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="password"
+                      name="reg_password_no_autofill"
                       required
                       value={password}
+                      readOnly={!inputsUnlocked}
+                      onPointerDown={() => setInputsUnlocked(true)}
+                      onFocus={() => setInputsUnlocked(true)}
                       onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
                       placeholder="Ít nhất 6 ký tự"
                       className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                     />
@@ -259,9 +280,14 @@ export default function RegisterPage() {
                     </label>
                     <input
                       type="password"
+                      name="reg_confirm_password_no_autofill"
                       required
                       value={confirmPassword}
+                      readOnly={!inputsUnlocked}
+                      onPointerDown={() => setInputsUnlocked(true)}
+                      onFocus={() => setInputsUnlocked(true)}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      autoComplete="new-password"
                       placeholder="Nhập lại mật khẩu"
                       className="w-full px-4 py-2.5 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                     />

@@ -111,7 +111,35 @@ export class AuthService {
     return null;
   }
 
-  private async applyPasswordReset(user: UserDocument, newPassword: string) {
+  private async findUserByLoginIdentifier(rawIdentifier: string): Promise<UserDocument | null> {
+    const trimmed = rawIdentifier.trim();
+    if (!trimmed) return null;
+
+    if (trimmed.includes('@')) {
+      return this.usersService.findByEmail(trimmed.toLowerCase());
+    }
+
+    return this.findByNormalizedPhone(trimmed);
+  }
+
+  private async applyPasswordReset(
+    user: UserDocument,
+    newPassword: string,
+    options?: { syncToFirebase?: boolean },
+  ) {
+    if (options?.syncToFirebase && (user.firebaseUid || user.email)) {
+      const syncedUid = await this.firebaseAdminService.syncUserPassword(
+        {
+          firebaseUid: user.firebaseUid,
+          email: user.email,
+        },
+        newPassword,
+      );
+      if (syncedUid && !user.firebaseUid) {
+        user.firebaseUid = syncedUid;
+      }
+    }
+
     user.passwordHash = await bcrypt.hash(newPassword, 10);
     user.failedLoginAttempts = 0;
     user.lockedUntil = null as any;
@@ -145,12 +173,17 @@ export class AuthService {
   }
 
   /**
-   * Đăng nhập người dùng kèm cơ chế bảo vệ Brute-force 15 phút (F02.2)
+   * Đăng nhập người dùng bằng SĐT hoặc Email kèm cơ chế bảo vệ Brute-force 15 phút (F02.2)
    */
   async login(dto: LoginDto) {
-    const user = await this.usersService.findByPhone(dto.phone);
+    const rawIdentifier = (dto.identifier || dto.phone || '').trim();
+    if (!rawIdentifier) {
+      throw new BadRequestException('Số điện thoại hoặc email không được để trống');
+    }
+
+    const user = await this.findUserByLoginIdentifier(rawIdentifier);
     if (!user) {
-      throw new UnauthorizedException('Số điện thoại hoặc mật khẩu không chính xác');
+      throw new UnauthorizedException('Số điện thoại, email hoặc mật khẩu không chính xác');
     }
 
     // 1. Kiểm tra tài khoản có đang bị tạm khóa do nhập sai 5 lần không
@@ -177,22 +210,55 @@ export class AuthService {
       }
     }
 
-    // Tài khoản Google chưa đặt mật khẩu cục bộ
-    if (!user.passwordHash) {
+    // 2. Kiểm tra mật khẩu trong MongoDB; nếu chưa khớp và là CUSTOMER có email -> thử xác thực đồng bộ từ Firebase Auth
+    let isPasswordValid = false;
+    if (user.passwordHash) {
+      isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    }
+
+    if (
+      !isPasswordValid &&
+      user.role === UserRole.CUSTOMER &&
+      user.email &&
+      this.firebaseAdminService.isWebApiKeyConfigured()
+    ) {
+      const firebaseAuthResult = await this.firebaseAdminService.verifyPasswordWithFirebase(
+        user.email,
+        dto.password,
+      );
+      if (firebaseAuthResult) {
+        isPasswordValid = true;
+        user.passwordHash = await bcrypt.hash(dto.password, 10);
+        if (!user.firebaseUid && firebaseAuthResult.uid) {
+          user.firebaseUid = firebaseAuthResult.uid;
+        }
+        if (!user.isEmailVerified && firebaseAuthResult.emailVerified) {
+          user.isEmailVerified = true;
+        }
+        const providers = new Set(user.authProviders || []);
+        providers.add('local');
+        user.authProviders = Array.from(providers);
+        user.failedLoginAttempts = 0;
+        user.lockedUntil = null as any;
+        await user.save();
+        this.logger.log(`Đã đồng bộ mật khẩu từ Firebase về MongoDB cho tài khoản ${user.email}.`);
+      }
+    }
+
+    // Tài khoản Google chưa đặt mật khẩu cục bộ và không khớp Firebase password
+    if (!isPasswordValid && !user.passwordHash) {
       throw new UnauthorizedException(
         'Tài khoản này đăng nhập bằng Google. Vui lòng chọn "Tiếp tục với Google" hoặc dùng Quên mật khẩu để thiết lập mật khẩu.',
       );
     }
 
-    // 2. Kiểm tra mật khẩu
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordValid) {
       user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
 
       if (user.failedLoginAttempts >= 5) {
         user.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
-        this.logger.warn(`Tài khoản ${user.phone} đã bị tạm khóa 15 phút do nhập sai 5 lần.`);
+        this.logger.warn(`Tài khoản ${user.phone || user.email} đã bị tạm khóa 15 phút do nhập sai 5 lần.`);
 
         throw new HttpException(
           {
@@ -210,7 +276,7 @@ export class AuthService {
       const attemptsLeft = 5 - user.failedLoginAttempts;
       throw new UnauthorizedException({
         statusCode: 401,
-        message: 'Số điện thoại hoặc mật khẩu không chính xác',
+        message: 'Số điện thoại, email hoặc mật khẩu không chính xác',
         attemptsLeft,
       });
     }
@@ -338,7 +404,7 @@ export class AuthService {
     }
 
     user.isPhoneVerified = true;
-    await this.applyPasswordReset(user, dto.newPassword);
+    await this.applyPasswordReset(user, dto.newPassword, { syncToFirebase: true });
 
     return {
       success: true,

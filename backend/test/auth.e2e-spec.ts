@@ -17,6 +17,13 @@ describe('Auth & RBAC (e2e)', () => {
   let customerToken: string;
   let adminToken: string;
   const ensureEmailUserExistsMock = jest.fn().mockResolvedValue(undefined);
+  const syncUserPasswordMock = jest.fn().mockResolvedValue('fb-uid-synced-1');
+  const verifyPasswordWithFirebaseMock = jest.fn(async (email: string, password: string) => {
+    if (email === 'nguyenvana@gmail.com' && password === 'FirebaseHostedReset@123') {
+      return { uid: 'fb-uid-email-1', emailVerified: true };
+    }
+    return null;
+  });
   const verifyIdTokenMock = jest.fn(async (token: string) => {
     switch (token) {
       case 'google-new-user':
@@ -86,8 +93,11 @@ describe('Auth & RBAC (e2e)', () => {
       .overrideProvider(FirebaseAdminService)
       .useValue({
         isConfigured: () => true,
+        isWebApiKeyConfigured: () => true,
         verifyIdToken: verifyIdTokenMock,
         ensureEmailUserExists: ensureEmailUserExistsMock,
+        verifyPasswordWithFirebase: verifyPasswordWithFirebaseMock,
+        syncUserPassword: syncUserPasswordMock,
       })
       .compile();
 
@@ -170,6 +180,30 @@ describe('Auth & RBAC (e2e)', () => {
 
       expect(res.body).toHaveProperty('accessToken');
       expect(res.body.user.phone).toBe('0912345678');
+    });
+
+    it('Đăng nhập thành công với Email và mật khẩu đúng (qua phone hoặc identifier)', async () => {
+      const resByPhoneField = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: 'NguyenVanA@gmail.com',
+          password: 'Password@123',
+        })
+        .expect(200);
+
+      expect(resByPhoneField.body).toHaveProperty('accessToken');
+      expect(resByPhoneField.body.user.email).toBe('nguyenvana@gmail.com');
+
+      const resByIdentifier = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          identifier: 'nguyenvana@gmail.com',
+          password: 'Password@123',
+        })
+        .expect(200);
+
+      expect(resByIdentifier.body).toHaveProperty('accessToken');
+      expect(resByIdentifier.body.user.phone).toBe('0912345678');
     });
 
     it('Đăng nhập thất bại khi sai mật khẩu -> 401 Unauthorized', async () => {
@@ -286,6 +320,10 @@ describe('Auth & RBAC (e2e)', () => {
         .expect(200);
 
       expect(res.body.success).toBe(true);
+      expect(syncUserPasswordMock).toHaveBeenCalledWith(
+        expect.objectContaining({ email: 'nguyenvana@gmail.com' }),
+        'ResetPhone@123',
+      );
 
       await request(app.getHttpServer())
         .post('/auth/login')
@@ -330,6 +368,39 @@ describe('Auth & RBAC (e2e)', () => {
         .send({
           phone: '0912345678',
           password: 'ResetEmail@123',
+        })
+        .expect(200);
+    });
+
+    it('Tự đồng bộ mật khẩu mới từ Firebase về MongoDB khi đăng nhập bằng SĐT hoặc Email', async () => {
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: 'nguyenvana@gmail.com',
+          password: 'FirebaseHostedReset@123',
+        })
+        .expect(200);
+
+      expect(verifyPasswordWithFirebaseMock).toHaveBeenCalledWith(
+        'nguyenvana@gmail.com',
+        'FirebaseHostedReset@123',
+      );
+
+      // Mật khẩu cũ không còn hợp lệ sau khi đồng bộ
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: '0912345678',
+          password: 'ResetEmail@123',
+        })
+        .expect(401);
+
+      // Mật khẩu mới đăng nhập được bằng SĐT
+      await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          phone: '0912345678',
+          password: 'FirebaseHostedReset@123',
         })
         .expect(200);
     });

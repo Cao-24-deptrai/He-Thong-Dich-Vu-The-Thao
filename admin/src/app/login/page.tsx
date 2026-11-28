@@ -10,8 +10,10 @@ import PhoneCompletionBanner from '@/components/PhoneCompletionBanner';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LoginPage() {
-  const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [inputsUnlocked, setInputsUnlocked] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lockedInfo, setLockedInfo] = useState<{ remainingMinutes?: number; lockedUntil?: string } | null>(null);
@@ -21,14 +23,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     setIsCustomerDomain(false);
+    if (typeof window !== 'undefined') {
+      const remembered = api.getRememberMe();
+      setRememberMe(remembered);
+      if (remembered) {
+        const savedLogin = api.getRememberedLogin();
+        if (savedLogin) setIdentifier(savedLogin);
+        setInputsUnlocked(true);
+      }
+    }
   }, []);
 
   const redirectAfterLogin = (user?: User) => {
     if (user?.role === 'CUSTOMER') {
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('admin_user');
+        api.clearAuthTokens();
         const clientLoginUrl = window.location.hostname.includes('phanta.id.vn')
           ? 'https://phanta.id.vn/login?notice=customer_redirect'
           : 'http://localhost:3001/login?notice=customer_redirect';
@@ -49,7 +58,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await api.login(phone, password);
+      const res = await api.login(identifier, password, rememberMe);
       redirectAfterLogin(res?.user);
     } catch (err: any) {
       console.error('Login error:', err);
@@ -64,9 +73,9 @@ export default function LoginPage() {
       } else {
         if (typeof errData.attemptsLeft === 'number') {
           setAttemptsLeft(errData.attemptsLeft);
-          setError(`Số điện thoại hoặc mật khẩu không chính xác. Bạn còn ${errData.attemptsLeft} lần thử trước khi tài khoản bị khóa 15 phút.`);
+          setError(`Số điện thoại, email hoặc mật khẩu không chính xác. Bạn còn ${errData.attemptsLeft} lần thử trước khi tài khoản bị khóa 15 phút.`);
         } else {
-          setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại số điện thoại hoặc mật khẩu.');
+          setError(err.message || 'Đăng nhập không thành công. Vui lòng kiểm tra lại thông tin đăng nhập hoặc mật khẩu.');
         }
       }
     } finally {
@@ -133,8 +142,8 @@ export default function LoginPage() {
               </h1>
               <p className="text-xs sm:text-sm text-[#3B4540] dark:text-[#D1D5DB] mt-1">
                 {isCustomerDomain
-                  ? 'Nhập số điện thoại hoặc tiếp tục bằng Google để quản lý lịch đặt sân.'
-                  : 'Đăng nhập bằng tài khoản nội bộ dành cho Quản trị viên & Nhân viên.'}
+                  ? 'Nhập số điện thoại, email hoặc tiếp tục bằng Google để quản lý lịch đặt sân.'
+                  : 'Đăng nhập bằng số điện thoại, email hoặc tài khoản nội bộ dành cho Quản trị viên & Nhân viên.'}
               </p>
             </div>
           </div>
@@ -177,17 +186,26 @@ export default function LoginPage() {
               )}
 
               {/* Form đăng nhập - Tinh gọn, không icon rườm rà trong ô input */}
-              <form onSubmit={handleLogin} className="space-y-5">
+              <form onSubmit={handleLogin} autoComplete={rememberMe ? 'on' : 'off'} className="space-y-5">
                 <div>
                   <label className="block text-xs font-heading font-bold uppercase tracking-wider text-[#171C1A] dark:text-white mb-2">
-                    Số điện thoại hoặc tài khoản
+                    {isCustomerDomain ? 'Số điện thoại hoặc Email' : 'Số điện thoại, Email hoặc mã tài khoản'}
                   </label>
                   <input
                     type="text"
+                    name="login_identifier"
                     required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Nhập số điện thoại (vd: 0988240106 hoặc 240106)"
+                    value={identifier}
+                    readOnly={!rememberMe && !inputsUnlocked}
+                    onPointerDown={() => setInputsUnlocked(true)}
+                    onFocus={() => setInputsUnlocked(true)}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    autoComplete={rememberMe ? 'username' : 'off'}
+                    placeholder={
+                      isCustomerDomain
+                        ? 'Nhập số điện thoại hoặc email (vd: 0988240106 hoặc email@gmail.com)'
+                        : 'Nhập SĐT, email hoặc mã tài khoản (vd: 240106)'
+                    }
                     className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
                 </div>
@@ -208,12 +226,37 @@ export default function LoginPage() {
                   </div>
                   <input
                     type="password"
+                    name="login_password"
                     required
                     value={password}
+                    readOnly={!rememberMe && !inputsUnlocked}
+                    onPointerDown={() => setInputsUnlocked(true)}
+                    onFocus={() => setInputsUnlocked(true)}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete={rememberMe ? 'current-password' : 'new-password'}
                     placeholder="Nhập mật khẩu của bạn"
                     className="w-full px-4 py-3 rounded-xl border border-[#E3E8E6] dark:border-white/10 bg-[#F8F9FA] dark:bg-[#191C14] text-[#171C1A] dark:text-white text-sm placeholder-[#9CA3AF] focus:outline-none focus:border-[#00B562] transition"
                   />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="remember-me"
+                    className="inline-flex items-center gap-2 cursor-pointer select-none text-xs text-[#3B4540] dark:text-[#D1D5DB]"
+                  >
+                    <input
+                      id="remember-me"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => {
+                        const next = e.target.checked;
+                        setRememberMe(next);
+                        if (next) setInputsUnlocked(true);
+                      }}
+                      className="rounded border-[#E3E8E6] text-[#00B562] focus:ring-[#00B562]"
+                    />
+                    <span>Ghi nhớ tôi</span>
+                  </label>
                 </div>
 
                 <button

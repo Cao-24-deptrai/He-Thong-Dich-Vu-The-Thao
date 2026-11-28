@@ -27,5 +27,6 @@ export default () => ({
     projectId: process.env.FIREBASE_PROJECT_ID || '',
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
     privateKey: process.env.FIREBASE_PRIVATE_KEY || '',
+    webApiKey: process.env.FIREBASE_WEB_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
   },
 });
