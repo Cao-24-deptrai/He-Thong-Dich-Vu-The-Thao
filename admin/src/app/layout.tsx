@@ -221,7 +221,7 @@ export default function RootLayout({
     },
     {
       id: 'operations',
-      label: 'Vận hành & Đặt sân',
+      label: 'Vận hành & đặt sân',
       icon: CalendarPlus,
       description: 'Cụm sân, walk-in, check-in QR & hoàn tiền',
       items: [
@@ -257,20 +257,20 @@ export default function RootLayout({
     },
     {
       id: 'services',
-      label: 'Dịch vụ & Bộ môn',
+      label: 'Dịch vụ & bộ môn',
       icon: Dumbbell,
       description: 'Gym, PT, giải đấu, gaming & cáp kèo',
       items: [
         {
           href: '/gym',
-          label: 'Hội viên Gym',
+          label: 'Hội viên gym',
           icon: Dumbbell,
           description: 'Gói tập & kiểm soát ra vào',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
         },
         {
           href: '/pt-classes',
-          label: 'PT & Lớp học',
+          label: 'PT & lớp học',
           icon: Award,
           description: 'Hồ sơ HLV & lớp học nhóm',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
@@ -284,7 +284,7 @@ export default function RootLayout({
         },
         {
           href: '/gaming',
-          label: 'Khu Gaming 100 máy',
+          label: 'Khu gaming 100 máy',
           icon: Gamepad2,
           description: 'Sơ đồ sàn 2D & điều khiển',
           roles: ['ADMIN', 'OWNER', 'MANAGER'],
@@ -300,13 +300,13 @@ export default function RootLayout({
     },
     {
       id: 'retail',
-      label: 'Bán lẻ & Tiện ích',
+      label: 'Bán lẻ & tiện ích',
       icon: Coffee,
       description: 'Canteen, cho thuê & khuyến mãi',
       items: [
         {
           href: '/canteen',
-          label: 'Quản lý Canteen',
+          label: 'Quản lý canteen',
           icon: Coffee,
           description: 'Sản phẩm F&B & tồn kho',
           roles: ['ADMIN', 'OWNER', 'MANAGER', 'STAFF'],

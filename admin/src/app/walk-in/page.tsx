@@ -1,39 +1,33 @@
 // admin/src/app/walk-in/page.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  CalendarPlus, 
-  Calendar, 
-  Clock, 
-  User, 
-  Phone, 
-  CreditCard, 
-  AlertTriangle, 
+import React, { useState, useEffect } from 'react';
+import {
+  CalendarPlus,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  CreditCard,
+  AlertTriangle,
   AlertCircle,
-  CheckCircle2, 
   RefreshCw,
   Building2,
-  Layers,
   Banknote,
   QrCode,
   Printer,
-  Sparkles,
   Zap,
-  ChevronRight,
-  ShieldCheck,
   Receipt,
   X,
   Maximize2,
   Repeat,
   Check,
-  CalendarRange
+  CalendarRange,
 } from 'lucide-react';
 import { api, Facility, Venue, SlotAvailability, Booking, findLinkedVenues, CheckRecurringResult } from '@/lib/api';
 import { GanttTimelineChart } from '@/components/GanttTimelineChart';
 import QRCode from 'qrcode';
 
-// Web Audio API chimes
 const playSound = (type: 'success' | 'conflict') => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -44,8 +38,8 @@ const playSound = (type: 'success' | 'conflict') => {
 
     if (type === 'success') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
       osc.start();
@@ -59,9 +53,7 @@ const playSound = (type: 'success' | 'conflict') => {
       osc.start();
       osc.stop(ctx.currentTime + 0.4);
     }
-  } catch (e) {
-    // Ignore audio error if browser blocks autoplay
-  }
+  } catch (e) {}
 };
 
 export default function WalkInBookingPage() {
@@ -70,35 +62,26 @@ export default function WalkInBookingPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
-  // Date selection (defaults to today YYYY-MM-DD)
   const todayStr = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
-
-  // Slot selection
   const [selectedSlot, setSelectedSlot] = useState<SlotAvailability | null>(null);
 
-  // Customer form
-  const [customerName, setCustomerName] = useState('Khách Lẻ Tại Quầy');
+  const [customerName, setCustomerName] = useState('Khách lẻ tại quầy');
   const [customerPhone, setCustomerPhone] = useState('0900000000');
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PAYOS_VIETQR' | 'CARD'>('CASH');
   const [note, setNote] = useState('Khách đặt trực tiếp tại quầy lễ tân');
-
-  // Cashier quick tender
   const [cashTendered, setCashTendered] = useState<number>(0);
 
-  // Modals
   const [showKioskModal, setShowKioskModal] = useState(false);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [kioskQrUrl, setKioskQrUrl] = useState<string>('');
   const [receiptQrUrl, setReceiptQrUrl] = useState<string>('');
 
-  // Submit states
   const [submitting, setSubmitting] = useState(false);
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [conflictError, setConflictError] = useState<string | null>(null);
   const [generalError, setGeneralError] = useState<string | null>(null);
 
-  // Recurring booking modal state (FR-04, US-027)
   const [showRecurringModal, setShowRecurringModal] = useState(false);
   const [recurringWeeks, setRecurringWeeks] = useState<number>(4);
   const [recurringDays, setRecurringDays] = useState<number[]>([new Date().getDay()]);
@@ -109,7 +92,6 @@ export default function WalkInBookingPage() {
   const [submittingRecurring, setSubmittingRecurring] = useState(false);
   const [recurringSuccess, setRecurringSuccess] = useState<any | null>(null);
 
-  // Load facilities on mount
   useEffect(() => {
     const loadFacilities = async () => {
       try {
@@ -125,7 +107,6 @@ export default function WalkInBookingPage() {
     loadFacilities();
   }, []);
 
-  // Load venues when facility changes
   useEffect(() => {
     if (!selectedFacilityId) {
       setVenues([]);
@@ -149,7 +130,6 @@ export default function WalkInBookingPage() {
     loadVenues();
   }, [selectedFacilityId]);
 
-  // Update default cash tendered when slot changes
   useEffect(() => {
     if (selectedSlot) {
       setCashTendered(selectedSlot.price);
@@ -157,15 +137,9 @@ export default function WalkInBookingPage() {
     }
   }, [selectedSlot, selectedVenue]);
 
-  // Generate VietQR for Kiosk Display
   const generateKioskQr = async (amount: number) => {
     try {
-      const bankCode = 'MB';
-      const accountNo = '0999999999';
       const memo = `SPORT${Date.now().toString().slice(-6)}`;
-      const vietQrData = `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=SPORTS%20ARENA`;
-      
-      // Also generate local QR data URL as reliable fallback
       const dataUrl = await QRCode.toDataURL(
         `00020101021238540010A00000072701240006970422011009999999990208QRIBFTTA5303704540${amount}5802VN62${memo.length.toString().padStart(2, '0')}${memo}6304`,
         { width: 320, margin: 2, color: { dark: '#0f172a', light: '#ffffff' } }
@@ -176,7 +150,6 @@ export default function WalkInBookingPage() {
     }
   };
 
-  // Generate Receipt QR when booking succeeds
   const generateReceiptQr = async (booking: Booking) => {
     try {
       const dataUrl = await QRCode.toDataURL(
@@ -194,7 +167,6 @@ export default function WalkInBookingPage() {
     }
   };
 
-  // Handle slot selection from Gantt chart
   const handleSelectSlotFromGantt = (venue: Venue, slot: SlotAvailability) => {
     setSelectedVenue(venue);
     setSelectedSlot(slot);
@@ -202,15 +174,13 @@ export default function WalkInBookingPage() {
     setGeneralError(null);
   };
 
-  // Cash change calculation
   const priceToPay = selectedSlot ? selectedSlot.price : 0;
   const cashChange = cashTendered >= priceToPay ? cashTendered - priceToPay : 0;
 
-  // Handle Walk-in Booking Submission
   const handleWalkInSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVenue || !selectedSlot) {
-      alert('Vui lòng chọn khung giờ trên bảng Timeline trước.');
+      alert('Vui lòng chọn khung giờ trên bảng lịch sân trước.');
       return;
     }
 
@@ -224,7 +194,7 @@ export default function WalkInBookingPage() {
         bookingDate: selectedDate,
         startTime: selectedSlot.startTime,
         endTime: selectedSlot.endTime,
-        customerName: customerName.trim() || 'Khách Lẻ',
+        customerName: customerName.trim() || 'Khách lẻ',
         customerPhone: customerPhone.trim() || '0900000000',
         paymentMethod,
         note,
@@ -234,8 +204,6 @@ export default function WalkInBookingPage() {
       setSuccessBooking(res);
       await generateReceiptQr(res);
       setShowReceiptModal(true);
-
-      // Reset selection
       setSelectedSlot(null);
     } catch (err: any) {
       console.error('Walk-in booking error:', err);
@@ -248,7 +216,7 @@ export default function WalkInBookingPage() {
         (typeof errorData.message === 'string' && errorData.message.includes('online'))
       ) {
         setConflictError(
-          '⚠️ CẢNH BÁO XUNG ĐỘT: Khung giờ này vừa được khách hàng đặt online qua ứng dụng! Hệ thống đã tự động khóa slot để bảo vệ khách hàng. Vui lòng chọn khung giờ khác trên Timeline.'
+          'Khung giờ này vừa được khách hàng đặt trực tuyến. Hệ thống đã khóa khung giờ để tránh trùng lịch. Vui lòng chọn khung giờ khác.'
         );
       } else {
         setGeneralError(err.message || 'Đặt sân tại quầy thất bại. Vui lòng thử lại.');
@@ -285,11 +253,7 @@ export default function WalkInBookingPage() {
         endTime: recurringEndTime,
       });
       setRecurringDryRun(res);
-      if (res.hasConflict) {
-        playSound('conflict');
-      } else {
-        playSound('success');
-      }
+      playSound(res.hasConflict ? 'conflict' : 'success');
     } catch (err: any) {
       console.error('Check recurring error:', err);
       alert(err.message || 'Lỗi kiểm tra tính khả dụng của chuỗi định kỳ');
@@ -309,10 +273,10 @@ export default function WalkInBookingPage() {
         daysOfWeek: recurringDays,
         startTime: recurringStartTime,
         endTime: recurringEndTime,
-        customerName: customerName.trim() || 'Khách Định Kỳ',
+        customerName: customerName.trim() || 'Khách định kỳ',
         customerPhone: customerPhone.trim() || '0900000000',
         paymentMethod,
-        note: `Định kỳ ${recurringWeeks} tuần tại quầy lễ tân`,
+        note: `Đặt định kỳ ${recurringWeeks} tuần tại quầy lễ tân`,
       });
       playSound('success');
       setRecurringSuccess(res);
@@ -330,63 +294,52 @@ export default function WalkInBookingPage() {
   const linkedVenues = selectedVenue ? findLinkedVenues(selectedVenue, venues) : [];
 
   return (
-    <div className="space-y-8 pb-20">
-      {/* Top Page Header */}
+    <div className="space-y-6 pb-16">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-lg shadow-blue-500/20">
-              <CalendarPlus className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                Trung Tâm Điều Hành POS & Lịch Sân Trực Quan
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                  Luxury Edition
-                </span>
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Bảng ma trận Timeline Gantt Chart kéo-thả đa sân kết hợp Quầy POS thu ngân bán vé 1-chạm
-              </p>
-            </div>
-          </div>
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <CalendarPlus className="w-6 h-6 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Đặt sân tại quầy & Lịch sân trực quan</span>
+          </h1>
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Theo dõi lịch trống theo khung giờ và tạo đơn đặt sân trực tiếp cho khách tại quầy
+          </p>
         </div>
 
-        {/* Global Facility & Date Selector Toolbar */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="bg-white px-3.5 py-2 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-blue-600 shrink-0" />
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="bg-[var(--bg-card)] px-3 py-2 rounded-xl border border-[var(--border-color)] flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
             <select
               value={selectedFacilityId}
               onChange={(e) => setSelectedFacilityId(e.target.value)}
-              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-2"
+              className="text-xs font-medium text-[var(--text-heading)] bg-transparent focus:outline-none cursor-pointer pr-2"
             >
               {facilities.map((fac) => (
-                <option key={fac._id} value={fac._id}>
+                <option key={fac._id} value={fac._id} className="bg-[var(--bg-card)] text-[var(--text-main)]">
                   {fac.name} ({fac.sportTypes?.[0] || fac.sportType || 'Thể thao'})
                 </option>
               ))}
             </select>
           </div>
 
-          <div className="bg-white px-3.5 py-2 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+          <div className="bg-[var(--bg-card)] px-3 py-2 rounded-xl border border-[var(--border-color)] flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="text-xs font-bold text-slate-800 bg-transparent focus:outline-none cursor-pointer font-heading tabular-nums"
+              className="text-xs font-medium text-[var(--text-heading)] bg-transparent focus:outline-none cursor-pointer tabular-nums"
             />
           </div>
 
           <button
-            onClick={() => {
-              setSelectedDate(todayStr);
-            }}
-            className={`px-3 py-2 rounded-2xl text-xs font-bold transition ${
+            type="button"
+            onClick={() => setSelectedDate(todayStr)}
+            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${
               selectedDate === todayStr
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                ? 'bg-[var(--pitch-green)] text-[#0C0F0C] border-transparent font-semibold'
+                : 'phanta-btn-secondary'
             }`}
           >
             Hôm nay
@@ -399,315 +352,263 @@ export default function WalkInBookingPage() {
               setRecurringDryRun(null);
               setRecurringSuccess(null);
             }}
-            className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition"
+            className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
           >
-            <Repeat className="w-3.5 h-3.5" />
-            Đặt Lịch Định Kỳ (2-12 tuần)
+            <Repeat className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Đặt lịch định kỳ (2-12 tuần)</span>
           </button>
         </div>
       </div>
 
       {/* Conflict Error Notification */}
       {conflictError && (
-        <div className="p-5 rounded-2xl bg-rose-500/10 border-2 border-rose-500 text-rose-900 shadow-lg shadow-rose-500/10 flex items-start gap-3.5 animate-bounce">
-          <AlertTriangle className="w-6 h-6 shrink-0 text-rose-600 mt-0.5" />
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/40 text-rose-500 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" strokeWidth={1.75} />
           <div className="flex-1">
-            <h3 className="font-bold text-base text-rose-900">
-              XUNG ĐỘT THỜI GIAN THỰC (SLOT_ALREADY_TAKEN_ONLINE)
-            </h3>
-            <p className="text-sm font-medium mt-1 leading-relaxed text-rose-800">
-              {conflictError}
-            </p>
+            <h3 className="font-heading font-semibold text-sm">Xung đột khung giờ đặt sân</h3>
+            <p className="text-xs mt-1 leading-relaxed">{conflictError}</p>
           </div>
-          <button
-            onClick={() => setConflictError(null)}
-            className="p-1 rounded-lg hover:bg-rose-500/20 text-rose-700"
-          >
-            <X className="w-5 h-5" />
+          <button type="button" onClick={() => setConflictError(null)} className="p-1 text-[var(--text-sub)] hover:text-[var(--text-heading)]">
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* General Error Notification */}
       {generalError && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[var(--burnt-orange)] text-xs flex items-center justify-between font-medium">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
             <span>{generalError}</span>
           </div>
-          <button onClick={() => setGeneralError(null)}>
-            <X className="w-4 h-4 text-amber-700" />
+          <button type="button" onClick={() => setGeneralError(null)}>
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* SECTION 1: VISUAL GANTT TIMELINE SCHEDULE MATRIX */}
-      <div className="space-y-3">
-        <GanttTimelineChart
-          venues={venues}
-          selectedDate={selectedDate}
-          selectedVenueId={selectedVenue?._id || ''}
-          selectedSlot={selectedSlot}
-          onSelectSlot={handleSelectSlotFromGantt}
-        />
-      </div>
+      {/* SECTION 1: GANTT TIMELINE */}
+      <GanttTimelineChart
+        venues={venues}
+        selectedDate={selectedDate}
+        selectedVenueId={selectedVenue?._id || ''}
+        selectedSlot={selectedSlot}
+        onSelectSlot={handleSelectSlotFromGantt}
+      />
 
-      {/* SECTION 2: LUXURY CASHIER POS CONSOLE (BOTTOM GRID) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: Selected Booking Detail Card & Payment Summary */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      {/* SECTION 2: POS CONSOLE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-7 phanta-card p-6 space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-slate-100 text-slate-800">
-                <Receipt className="w-5 h-5 text-blue-600" />
+              <div className="p-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)]">
+                <Receipt className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Thông Tin Khung Giờ Đặt Chỗ
+                <h2 className="font-heading font-semibold text-base text-[var(--text-heading)]">
+                  Thông tin khung giờ đặt chỗ
                 </h2>
-                <p className="text-xs text-slate-400">
-                  Khung giờ được chọn trực tiếp từ bảng Timeline Gantt phía trên
+                <p className="text-xs text-[var(--text-sub)]">
+                  Khung giờ được chọn từ bảng lịch sân phía trên
                 </p>
               </div>
             </div>
 
             {selectedSlot ? (
-              <span className="px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                ✓ ĐÃ CHỌN SLOT
+              <span className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-emerald-500/10 text-[var(--pitch-green)] border border-emerald-500/30">
+                Đã chọn khung giờ
               </span>
             ) : (
-              <span className="px-3 py-1 text-xs font-bold rounded-full bg-slate-100 text-slate-500">
-                CHƯA CHỌN KHUNG GIỜ
+              <span className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-[var(--bg-card-inner)] text-[var(--text-sub)] border border-[var(--border-subtle)]">
+                Chưa chọn khung giờ
               </span>
             )}
           </div>
 
           {selectedSlot && selectedVenue ? (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-md relative overflow-hidden">
-              <div className="absolute right-0 top-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-              <div className="flex items-center justify-between">
+            <div className="phanta-subcard p-5 space-y-4">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <span className="text-[10px] font-heading tabular-nums tracking-widest text-cyan-400 uppercase font-bold">
-                    {selectedFacility?.name || 'Cơ sở Thể Thao'}
+                  <span className="text-[11px] font-medium text-[var(--pitch-green)]">
+                    {selectedFacility?.name || 'Cơ sở thể thao'}
                   </span>
-                  <h3 className="text-xl font-bold text-white mt-0.5">
+                  <h3 className="font-heading font-semibold text-xl text-[var(--text-heading)] mt-0.5">
                     {selectedVenue.name}
                   </h3>
-                  <p className="text-xs text-slate-300 mt-1">
-                    Loại sân: <strong className="text-white">{selectedVenue.venueType || 'Tiêu chuẩn'}</strong>
+                  <p className="text-xs text-[var(--text-sub)] mt-1">
+                    Loại sân: <strong className="text-[var(--text-heading)]">{selectedVenue.venueType || 'Tiêu chuẩn'}</strong>
                   </p>
                 </div>
-                <div className="text-right">
-                  <span className="text-xs text-slate-400 font-medium">Tổng tiền thanh toán</span>
-                  <div className="text-2xl font-bold text-emerald-400 font-heading tabular-nums">
+                <div className="text-right tabular-nums">
+                  <span className="text-xs text-[var(--text-sub)]">Tổng tiền thanh toán</span>
+                  <div className="text-2xl font-heading font-semibold text-[var(--pitch-green)]">
                     {selectedSlot.price.toLocaleString('vi-VN')} đ
                   </div>
-                  <span className="text-[10px] text-slate-400">Đã bao gồm VAT & ánh sáng</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">Đã bao gồm VAT và ánh sáng</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-700/60 flex items-center justify-between text-xs">
+              <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs tabular-nums">
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-cyan-400" />
-                  <span className="font-heading tabular-nums font-bold text-white text-sm">
+                  <Clock className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span className="font-semibold text-[var(--text-heading)] text-sm">
                     {selectedSlot.startTime} - {selectedSlot.endTime}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Calendar className="w-4 h-4 text-blue-400" />
-                  <span className="font-heading tabular-nums">{selectedDate}</span>
+                <div className="flex items-center gap-2 text-[var(--text-sub)]">
+                  <Calendar className="w-4 h-4" strokeWidth={1.75} />
+                  <span>{selectedDate}</span>
                 </div>
               </div>
 
-              {/* Cảnh báo Sân Ghép Liên Đới (Composite Pitches Engine) */}
               {linkedVenues.length > 0 && (
-                <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <span className="font-bold text-amber-300">
-                      ⚡ Cảnh báo Sân Ghép Liên Đới:
-                    </span>{' '}
-                    Sân <strong className="text-white">{selectedVenue.name}</strong> dùng chung mặt sân với:{' '}
-                    <strong className="text-amber-300">
-                      {linkedVenues.map((v) => v.name).join(', ')}
-                    </strong>. Khi đặt quầy, khung giờ {selectedSlot.startTime} - {selectedSlot.endTime} của các sân trên sẽ tự động bị chiếm chỗ (Leaf Units Engine).
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[var(--burnt-orange)] text-xs flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+                  <div>
+                    <span className="font-semibold">Lưu ý sân ghép liên kết: </span>
+                    Sân <strong>{selectedVenue.name}</strong> dùng chung mặt sân với{' '}
+                    <strong>{linkedVenues.map((v) => v.name).join(', ')}</strong>. Khi đặt khung giờ {selectedSlot.startTime} - {selectedSlot.endTime}, các sân trên sẽ tự động khóa trùng.
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <div className="p-8 rounded-2xl border-2 border-dashed border-slate-200 text-center space-y-2 bg-slate-50/50">
-              <Clock className="w-8 h-8 text-slate-300 mx-auto" />
-              <p className="text-sm font-bold text-slate-700">
-                Vui lòng nhấp vào một ô giờ màu xanh trống trên bảng Timeline
+            <div className="p-8 rounded-xl border border-dashed border-[var(--border-color)] text-center space-y-2 bg-[var(--bg-card-inner)]/50">
+              <Clock className="w-8 h-8 text-[var(--text-muted)] mx-auto" strokeWidth={1.5} />
+              <p className="text-sm font-medium text-[var(--text-heading)]">
+                Chọn một ô giờ trống trên bảng lịch sân
               </p>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                Hệ thống sẽ tự động gán sân con, tính giá cước và đưa vào hóa đơn quầy POS ngay lập tức.
+              <p className="text-xs text-[var(--text-sub)] max-w-sm mx-auto">
+                Hệ thống sẽ tự động tính giá theo khung giờ và đưa vào phiếu thanh toán tại quầy
               </p>
             </div>
           )}
 
           {/* Payment Method Selector */}
-          <div className="space-y-3 pt-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-600">
-              Phương Thức Thanh Toán Tại Quầy
+          <div className="space-y-3 pt-1">
+            <label className="block text-xs font-medium text-[var(--text-sub)]">
+              Phương thức thanh toán tại quầy
             </label>
             <div className="grid grid-cols-3 gap-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('CASH')}
-                className={`p-3.5 rounded-2xl border text-center transition flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'CASH'
-                    ? 'border-blue-600 bg-blue-50/60 text-blue-900 shadow-sm ring-2 ring-blue-500/20'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <Banknote className="w-5 h-5 text-emerald-600" />
-                <span className="text-xs font-bold">Tiền Mặt (Cash)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPaymentMethod('PAYOS_VIETQR');
-                  setShowKioskModal(true);
-                }}
-                className={`p-3.5 rounded-2xl border text-center transition flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'PAYOS_VIETQR'
-                    ? 'border-blue-600 bg-blue-50/60 text-blue-900 shadow-sm ring-2 ring-blue-500/20'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <QrCode className="w-5 h-5 text-blue-600" />
-                <span className="text-xs font-bold">VietQR PayOS</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('CARD')}
-                className={`p-3.5 rounded-2xl border text-center transition flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'CARD'
-                    ? 'border-blue-600 bg-blue-50/60 text-blue-900 shadow-sm ring-2 ring-blue-500/20'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <CreditCard className="w-5 h-5 text-purple-600" />
-                <span className="text-xs font-bold">Quẹt Thẻ POS</span>
-              </button>
+              {[
+                { id: 'CASH', label: 'Tiền mặt', icon: Banknote },
+                { id: 'PAYOS_VIETQR', label: 'VietQR', icon: QrCode },
+                { id: 'CARD', label: 'Quẹt thẻ POS', icon: CreditCard },
+              ].map((m) => {
+                const Icon = m.icon;
+                const active = paymentMethod === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => {
+                      setPaymentMethod(m.id as any);
+                      if (m.id === 'PAYOS_VIETQR') setShowKioskModal(true);
+                    }}
+                    className={`p-3.5 rounded-xl border text-center transition-colors flex flex-col items-center gap-1.5 ${
+                      active
+                        ? 'border-[var(--pitch-green)] bg-[var(--bg-card-inner)] text-[var(--pitch-green)] font-semibold'
+                        : 'border-[var(--border-subtle)] bg-[var(--bg-card)] text-[var(--text-sub)] hover:text-[var(--text-heading)]'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={1.75} />
+                    <span className="text-xs">{m.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Cash Tender Calculator (if CASH selected) */}
+          {/* Cash Tender Calculator */}
           {paymentMethod === 'CASH' && selectedSlot && (
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-700">Tiền khách đưa (Tendered):</span>
-                <span className="font-heading tabular-nums font-bold text-slate-900 text-sm">
+            <div className="phanta-subcard p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs tabular-nums">
+                <span className="font-medium text-[var(--text-sub)]">Tiền khách đưa</span>
+                <span className="font-heading font-semibold text-[var(--text-heading)] text-sm">
                   {cashTendered.toLocaleString('vi-VN')} đ
                 </span>
               </div>
 
-              {/* Quick Amount Buttons */}
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap tabular-nums">
                 <button
                   type="button"
                   onClick={() => setCashTendered(priceToPay)}
-                  className="px-3 py-1 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-400 transition"
+                  className="phanta-btn-secondary px-3 py-1.5 text-xs"
                 >
                   Đúng tiền ({priceToPay.toLocaleString('vi-VN')} đ)
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setCashTendered(200000)}
-                  className="px-3 py-1 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-400 transition"
-                >
-                  200.000 đ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCashTendered(500000)}
-                  className="px-3 py-1 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-400 transition"
-                >
-                  500.000 đ
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCashTendered(1000000)}
-                  className="px-3 py-1 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:border-blue-400 transition"
-                >
-                  1.000.000 đ
-                </button>
+                {[200000, 500000, 1000000].map((amt) => (
+                  <button
+                    key={amt}
+                    type="button"
+                    onClick={() => setCashTendered(amt)}
+                    className="phanta-btn-secondary px-3 py-1.5 text-xs"
+                  >
+                    {amt.toLocaleString('vi-VN')} đ
+                  </button>
+                ))}
               </div>
 
-              {/* Change calculation */}
-              <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-600">Tiền thối lại khách:</span>
-                <span className={`text-base font-bold font-heading tabular-nums ${cashChange >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+              <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between tabular-nums">
+                <span className="text-xs font-medium text-[var(--text-sub)]">Tiền thối lại khách</span>
+                <span className={`text-base font-heading font-semibold ${cashChange >= 0 ? 'text-[var(--pitch-green)]' : 'text-rose-500'}`}>
                   {cashChange.toLocaleString('vi-VN')} đ
                 </span>
               </div>
             </div>
           )}
 
-          {/* PayOS Kiosk Trigger Banner (if PayOS selected) */}
           {paymentMethod === 'PAYOS_VIETQR' && (
-            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+            <div className="phanta-subcard p-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <QrCode className="w-8 h-8 text-blue-600 shrink-0" />
+                <QrCode className="w-7 h-7 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
                 <div>
-                  <h4 className="text-xs font-bold text-blue-900">
-                    Sẵn sàng mã VietQR PayOS Kiosk
-                  </h4>
-                  <p className="text-[11px] text-blue-700">
-                    Bật màn hình phụ để khách hàng quét nhanh từ điện thoại
-                  </p>
+                  <h4 className="text-xs font-semibold text-[var(--text-heading)]">Mã VietQR thanh toán</h4>
+                  <p className="text-[11px] text-[var(--text-sub)]">Bật màn hình phụ để khách hàng quét mã từ điện thoại</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowKioskModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5"
+                className="phanta-btn-primary px-3.5 py-2 text-xs flex items-center gap-1.5 shrink-0"
               >
-                <Maximize2 className="w-3.5 h-3.5" />
-                Mở Màn Hình Kiosk
+                <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <span>Mở mã QR</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Right: Customer Info & Final Submit Action */}
-        <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-xl bg-slate-100 text-slate-800">
-                <User className="w-5 h-5 text-blue-600" />
+        {/* Right: Customer Info */}
+        <div className="lg:col-span-5 phanta-card p-6 space-y-5">
+          <div className="flex items-center justify-between pb-4 border-b border-[var(--border-subtle)]">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)]">
+                <User className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
-                  Thông Tin Khách Hàng
-                </h2>
-                <p className="text-xs text-slate-400">Ghi nhận thông tin người đặt</p>
+                <h2 className="font-heading font-semibold text-base text-[var(--text-heading)]">Thông tin khách hàng</h2>
+                <p className="text-xs text-[var(--text-sub)]">Ghi nhận thông tin người đặt</p>
               </div>
             </div>
 
-            {/* Quick 1-click Preset Button */}
             <button
               type="button"
               onClick={() => {
-                setCustomerName('Khách Lẻ Tại Quầy');
+                setCustomerName('Khách lẻ tại quầy');
                 setCustomerPhone('0900000000');
               }}
-              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition"
+              className="phanta-btn-secondary px-2.5 py-1.5 text-[11px]"
             >
-              ⚡ Khách Lẻ Nhanh
+              Điền khách lẻ
             </button>
           </div>
 
           <form onSubmit={handleWalkInSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                Họ Tên Khách Hàng
+              <label className="block text-xs font-medium text-[var(--text-sub)] mb-1 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Họ tên khách hàng</span>
               </label>
               <input
                 type="text"
@@ -715,14 +616,14 @@ export default function WalkInBookingPage() {
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Ví dụ: Nguyễn Văn A"
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3.5 py-2.5 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-blue-600" />
-                Số Điện Thoại Liên Hệ
+              <label className="block text-xs font-medium text-[var(--text-sub)] mb-1 flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Số điện thoại liên hệ</span>
               </label>
               <input
                 type="tel"
@@ -730,60 +631,52 @@ export default function WalkInBookingPage() {
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="Ví dụ: 0912345678"
-                className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none font-heading tabular-nums"
+                className="w-full px-3.5 py-2.5 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)] tabular-nums"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Ghi Chú Đơn Hàng (Tùy chọn)
+              <label className="block text-xs font-medium text-[var(--text-sub)] mb-1">
+                Ghi chú đơn hàng (tùy chọn)
               </label>
               <textarea
                 rows={2}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Ghi chú thêm (thuê thêm áo bib, bóng, nước suối...)"
-                className="w-full px-3.5 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                placeholder="Ghi chú thêm (thuê áo bib, bóng, nước suối...)"
+                className="w-full px-3.5 py-2 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)] resize-none"
               />
             </div>
 
-            {/* Total Due Summary Box */}
-            <div className="p-4 rounded-2xl bg-slate-900 text-white flex items-center justify-between">
+            <div className="phanta-subcard p-4 flex items-center justify-between tabular-nums">
               <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  CẦN THANH TOÁN
-                </span>
-                <div className="text-xl font-bold font-heading tabular-nums text-emerald-400">
+                <span className="text-[11px] text-[var(--text-sub)] font-medium">Cần thanh toán</span>
+                <div className="text-xl font-heading font-semibold text-[var(--pitch-green)]">
                   {priceToPay.toLocaleString('vi-VN')} đ
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-slate-400 font-bold">Hình thức</span>
-                <div className="text-xs font-bold text-white">
-                  {paymentMethod === 'CASH' ? '💵 Tiền Mặt' : paymentMethod === 'PAYOS_VIETQR' ? '📱 VietQR' : '💳 Thẻ POS'}
+                <span className="text-[11px] text-[var(--text-sub)]">Hình thức</span>
+                <div className="text-xs font-semibold text-[var(--text-heading)]">
+                  {paymentMethod === 'CASH' ? 'Tiền mặt' : paymentMethod === 'PAYOS_VIETQR' ? 'VietQR' : 'Thẻ POS'}
                 </div>
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting || !selectedSlot}
-              className={`w-full py-4 rounded-2xl font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg ${
-                submitting || !selectedSlot
-                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                  : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-blue-500/25 active:scale-[0.99]'
-              }`}
+              className="phanta-btn-primary w-full py-3.5 text-xs flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <RefreshCw className="w-4 h-4 animate-spin" />
                   <span>Đang xác nhận đặt chỗ</span>
                 </>
               ) : (
                 <>
-                  <Zap className="w-5 h-5" />
-                  <span>XÁC NHẬN & TẠO ĐƠN POS NGAY</span>
+                  <Zap className="w-4 h-4" strokeWidth={1.75} />
+                  <span>Xác nhận và tạo đơn</span>
                 </>
               )}
             </button>
@@ -791,104 +684,99 @@ export default function WalkInBookingPage() {
         </div>
       </div>
 
-      {/* MODAL 1: CUSTOMER FACING KIOSK DISPLAY (VIETQR PAYOS) */}
+      {/* MODAL 1: KIOSK VIETQR */}
       {showKioskModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-md w-full p-8 text-white relative shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="phanta-card max-w-md w-full p-6 relative space-y-4">
             <button
+              type="button"
               onClick={() => setShowKioskModal(false)}
-              className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             <div className="text-center space-y-4">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-xs font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                MÀN HÌNH KHÁCH HÀNG (KIOSK PAYOS)
-              </div>
-
               <div>
-                <h3 className="text-xl font-bold tracking-tight">Quét Mã VietQR Để Thanh Toán</h3>
-                <p className="text-xs text-slate-400 mt-1">
+                <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)]">Quét mã VietQR để thanh toán</h3>
+                <p className="text-xs text-[var(--text-sub)] mt-1">
                   Mở ứng dụng ngân hàng hoặc ví điện tử bất kỳ để quét
                 </p>
               </div>
 
-              {/* QR Image Frame with Glowing Hologram Border */}
-              <div className="relative mx-auto w-64 h-64 bg-white p-3 rounded-2xl shadow-[0_0_30px_rgba(6,182,212,0.3)] border-2 border-cyan-400/50 flex items-center justify-center">
+              <div className="mx-auto w-60 h-60 bg-white p-3 rounded-xl border border-[var(--border-color)] flex items-center justify-center">
                 {kioskQrUrl ? (
-                  <img src={kioskQrUrl} alt="VietQR PayOS" className="w-full h-full object-contain" />
+                  <img src={kioskQrUrl} alt="VietQR" className="w-full h-full object-contain" />
                 ) : (
-                  <RefreshCw className="w-8 h-8 text-slate-400 animate-spin" />
+                  <RefreshCw className="w-8 h-8 text-[var(--text-sub)] animate-spin" />
                 )}
               </div>
 
-              {/* Price & Bank Details */}
-              <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800 text-left space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Số tiền cần thanh toán:</span>
-                  <span className="font-heading tabular-nums font-bold text-emerald-400 text-lg">
+              <div className="phanta-subcard p-4 text-left space-y-2 text-xs tabular-nums">
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--text-sub)]">Số tiền cần thanh toán</span>
+                  <span className="font-heading font-semibold text-[var(--pitch-green)] text-base">
                     {priceToPay.toLocaleString('vi-VN')} đ
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Ngân hàng thụ hưởng:</span>
-                  <span className="font-bold text-white">MBBank (Quân Đội)</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--text-sub)]">Ngân hàng thụ hưởng</span>
+                  <span className="font-semibold text-[var(--text-heading)]">MBBank (Quân Đội)</span>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Số tài khoản:</span>
-                  <span className="font-heading tabular-nums font-bold text-cyan-400">0999999999</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--text-sub)]">Số tài khoản</span>
+                  <span className="font-semibold text-[var(--text-heading)]">0999999999</span>
                 </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400">Chủ tài khoản:</span>
-                  <span className="font-bold text-white">SPORTS BOOKING ARENA</span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--text-sub)]">Chủ tài khoản</span>
+                  <span className="font-semibold text-[var(--text-heading)]">PHANTA SPORTS ARENA</span>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => setShowKioskModal(false)}
-                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+                className="phanta-btn-primary w-full py-2.5 text-xs"
               >
-                Đã Khách Hàng Quét Xong (Đóng Màn Hình)
+                Đã khách hàng quét xong
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 3: ĐẶT SÂN ĐỊNH KỲ TẠI QUẦY (RECURRING BOOKING - FR-04, US-027) */}
+      {/* MODAL 3: ĐẶT SÂN ĐỊNH KỲ */}
       {showRecurringModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl relative space-y-5 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="phanta-card max-w-xl w-full p-6 relative space-y-5 max-h-[90vh] overflow-y-auto">
             <button
+              type="button"
               onClick={() => {
                 setShowRecurringModal(false);
                 setRecurringDryRun(null);
                 setRecurringSuccess(null);
               }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white shadow-md">
-                <Repeat className="w-5 h-5" />
+              <div className="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[var(--pitch-green)]">
+                <Repeat className="w-5 h-5" strokeWidth={1.75} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Đặt Sân Định Kỳ Tại Quầy (FR-04, US-027)
+                <h2 className="font-heading font-semibold text-lg text-[var(--text-heading)]">
+                  Đặt sân định kỳ tại quầy
                 </h2>
-                <p className="text-xs text-slate-500">
-                  Chuỗi đặt sân lặp lại hàng tuần từ 2 đến 12 tuần dành cho khách quen / cơ quan
+                <p className="text-xs text-[var(--text-sub)]">
+                  Chuỗi đặt sân lặp lại hàng tuần từ 2 đến 12 tuần dành cho khách quen hoặc cơ quan
                 </p>
               </div>
             </div>
 
-            {/* Sân thi đấu */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Chọn Sân thi đấu</label>
+              <label className="text-xs font-medium text-[var(--text-sub)]">Chọn sân thi đấu</label>
               <select
                 value={selectedVenue?._id || ''}
                 onChange={(e) => {
@@ -896,7 +784,7 @@ export default function WalkInBookingPage() {
                   if (v) setSelectedVenue(v);
                   setRecurringDryRun(null);
                 }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs font-medium text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
               >
                 {venues.map((v) => (
                   <option key={v._id} value={v._id}>
@@ -906,10 +794,9 @@ export default function WalkInBookingPage() {
               </select>
             </div>
 
-            {/* Form grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Ngày bắt đầu chuỗi</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Ngày bắt đầu chuỗi</label>
                 <input
                   type="date"
                   value={selectedDate}
@@ -917,12 +804,12 @@ export default function WalkInBookingPage() {
                     setSelectedDate(e.target.value);
                     setRecurringDryRun(null);
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-heading tabular-nums"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] tabular-nums"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Số tuần đặt (2 - 12 tuần)</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Số tuần đặt (2 - 12 tuần)</label>
                 <input
                   type="number"
                   min={2}
@@ -932,12 +819,12 @@ export default function WalkInBookingPage() {
                     setRecurringWeeks(Math.max(2, Math.min(12, parseInt(e.target.value, 10) || 2)));
                     setRecurringDryRun(null);
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-heading tabular-nums"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] tabular-nums"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Giờ bắt đầu</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Giờ bắt đầu</label>
                 <input
                   type="time"
                   value={recurringStartTime}
@@ -945,12 +832,12 @@ export default function WalkInBookingPage() {
                     setRecurringStartTime(e.target.value);
                     setRecurringDryRun(null);
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-heading tabular-nums"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] tabular-nums"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Giờ kết thúc</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Giờ kết thúc</label>
                 <input
                   type="time"
                   value={recurringEndTime}
@@ -958,16 +845,13 @@ export default function WalkInBookingPage() {
                     setRecurringEndTime(e.target.value);
                     setRecurringDryRun(null);
                   }}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-heading tabular-nums"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] tabular-nums"
                 />
               </div>
             </div>
 
-            {/* Thứ trong tuần */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">
-                Các thứ lặp lại trong tuần
-              </label>
+              <label className="text-xs font-medium text-[var(--text-sub)]">Các thứ lặp lại trong tuần</label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[
                   { label: 'CN', day: 0 },
@@ -984,10 +868,10 @@ export default function WalkInBookingPage() {
                       key={item.day}
                       type="button"
                       onClick={() => toggleDayOfWeek(item.day)}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-xl transition border ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
                         isChecked
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-[var(--pitch-green)] text-[#0C0F0C] border-transparent font-semibold'
+                          : 'bg-[var(--bg-card-inner)] text-[var(--text-sub)] border-[var(--border-subtle)] hover:text-[var(--text-heading)]'
                       }`}
                     >
                       {item.label}
@@ -997,102 +881,97 @@ export default function WalkInBookingPage() {
               </div>
             </div>
 
-            {/* Khách hàng */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Tên khách / Đội</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Tên khách / Đội</label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)]"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Số điện thoại</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Số điện thoại</label>
                 <input
                   type="tel"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 font-heading tabular-nums"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[var(--input-bg)] border border-[var(--border-color)] text-xs text-[var(--text-main)] tabular-nums"
                 />
               </div>
             </div>
 
-            {/* Dry-run Result Box */}
             {recurringDryRun && (
               <div
-                className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
+                className={`p-4 rounded-xl border text-xs space-y-2.5 ${
                   recurringDryRun.hasConflict
-                    ? 'bg-rose-50 border-rose-200 text-rose-900'
-                    : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                    ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-[var(--pitch-green)]'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-bold flex items-center gap-1.5">
+                  <span className="font-semibold flex items-center gap-1.5">
                     {recurringDryRun.hasConflict ? (
                       <>
-                        <AlertTriangle className="w-4 h-4 text-rose-600" />
-                        Xung đột: Phát hiện {recurringDryRun.conflictCount} buổi bị trùng lịch
+                        <AlertTriangle className="w-4 h-4" strokeWidth={1.75} />
+                        <span>Phát hiện {recurringDryRun.conflictCount} buổi bị trùng lịch</span>
                       </>
                     ) : (
                       <>
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        Toàn bộ {recurringDryRun.totalSessions} buổi đều khả dụng!
+                        <Check className="w-4 h-4" strokeWidth={1.75} />
+                        <span>Toàn bộ {recurringDryRun.totalSessions} buổi đều khả dụng</span>
                       </>
                     )}
                   </span>
-                  <span className="font-heading tabular-nums font-bold">
+                  <span className="tabular-nums font-semibold">
                     Tổng: {recurringDryRun.totalPrice.toLocaleString('vi-VN')} đ
                   </span>
                 </div>
 
-                <div className="max-h-36 overflow-y-auto space-y-1 pr-1 font-heading tabular-nums text-[11px]">
+                <div className="max-h-36 overflow-y-auto space-y-1 pr-1 tabular-nums text-[11px]">
                   {recurringDryRun.checkedDates.map((item, idx) => (
                     <div
                       key={idx}
-                      className={`flex justify-between items-center px-2 py-1 rounded-lg ${
-                        item.isAvailable ? 'bg-white/80' : 'bg-rose-100 text-rose-800 font-bold'
+                      className={`flex justify-between items-center px-2.5 py-1 rounded-lg ${
+                        item.isAvailable
+                          ? 'bg-[var(--bg-card)] text-[var(--text-main)]'
+                          : 'bg-rose-500/15 text-rose-500 font-semibold'
                       }`}
                     >
-                      <span>
-                        Buổi {idx + 1}: {item.date}
-                      </span>
-                      <span>{item.isAvailable ? '✓ Trống' : `✕ ${item.conflictReason || 'Đã có người đặt'}`}</span>
+                      <span>Buổi {idx + 1}: {item.date}</span>
+                      <span>{item.isAvailable ? 'Trống' : item.conflictReason || 'Đã có người đặt'}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Thành công */}
             {recurringSuccess && (
-              <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs space-y-2">
-                <div className="font-bold text-sm flex items-center gap-2 text-emerald-800">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  ĐÃ KHỞI TẠO THÀNH CÔNG CHUỖI ĐẶT ĐỊNH KỲ!
+              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--pitch-green)] text-xs space-y-1.5">
+                <div className="font-semibold text-sm flex items-center gap-2">
+                  <Check className="w-4 h-4" strokeWidth={1.75} />
+                  <span>Đã khởi tạo thành công chuỗi đặt định kỳ</span>
                 </div>
                 <p>
-                  Mã nhóm:{' '}
-                  <strong className="font-heading tabular-nums text-emerald-900">{recurringSuccess.recurringGroupId}</strong>
+                  Mã nhóm: <strong className="tabular-nums">{recurringSuccess.recurringGroupId}</strong>
                 </p>
-                <p>
+                <p className="tabular-nums">
                   Tổng số buổi: <strong>{recurringSuccess.totalSessions} buổi</strong> - Tổng tiền:{' '}
-                  <strong className="font-heading tabular-nums">{recurringSuccess.totalPrice.toLocaleString('vi-VN')} đ</strong>
+                  <strong>{recurringSuccess.totalPrice.toLocaleString('vi-VN')} đ</strong>
                 </p>
               </div>
             )}
 
-            {/* Action buttons */}
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={handleDryRunCheck}
                 disabled={checkingRecurring || submittingRecurring}
-                className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition"
+                className="phanta-btn-secondary flex-1 py-2.5 text-xs flex items-center justify-center gap-2"
               >
-                <CalendarRange className="w-4 h-4 text-indigo-600" />
-                {checkingRecurring ? 'Đang kiểm tra' : 'Kiểm tra xung đột lịch (Dry-run)'}
+                <CalendarRange className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>{checkingRecurring ? 'Đang kiểm tra' : 'Kiểm tra lịch trống'}</span>
               </button>
 
               <button
@@ -1103,99 +982,95 @@ export default function WalkInBookingPage() {
                   submittingRecurring ||
                   Boolean(recurringDryRun && recurringDryRun.hasConflict)
                 }
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition"
+                className="phanta-btn-primary flex-1 py-2.5 text-xs flex items-center justify-center gap-2"
               >
-                <Check className="w-4 h-4" />
-                {submittingRecurring ? 'Đang khởi tạo' : 'Xác nhận Đặt Chuỗi Định Kỳ'}
+                <Check className="w-4 h-4" strokeWidth={1.75} />
+                <span>{submittingRecurring ? 'Đang khởi tạo' : 'Xác nhận đặt định kỳ'}</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 2: THERMAL RECEIPT 80MM (IN PHIẾU ĐẶT SÂN) */}
+      {/* MODAL 2: THERMAL RECEIPT 80MM */}
       {showReceiptModal && successBooking && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl relative space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="phanta-card max-w-sm w-full p-6 relative space-y-4">
             <button
+              type="button"
               onClick={() => setShowReceiptModal(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            {/* Receipt Printable Area (80mm format) */}
-            <div id="printable-receipt" className="text-slate-900 font-heading tabular-nums text-xs space-y-3 p-2 border-b border-dashed border-slate-300">
+            <div id="printable-receipt" className="thermal-paper rounded-lg text-xs space-y-3 p-4">
               <div className="text-center space-y-1">
-                <h2 className="text-base font-bold uppercase tracking-wider">
-                  SPORTS & ESPORTS ARENA
-                </h2>
-                <p className="text-[10px] text-slate-500">{selectedFacility?.name}</p>
-                <p className="text-[9px] text-slate-400">{selectedFacility?.address}</p>
+                <h2 className="text-base font-heading font-semibold">Phanta Sports Arena</h2>
+                <p className="text-[11px] text-slate-600">{selectedFacility?.name}</p>
+                <p className="text-[10px] text-slate-500">{selectedFacility?.address}</p>
                 <div className="py-1 border-b border-dashed border-slate-400 text-[10px] font-bold">
-                  PHIẾU XÁC NHẬN VÀO SÂN (RECEIPT)
+                  PHIẾU XÁC NHẬN VÀO SÂN
                 </div>
               </div>
 
-              <div className="space-y-1 text-[11px]">
+              <div className="space-y-1 text-[11px] tabular-nums">
                 <div className="flex justify-between">
-                  <span>Mã đơn:</span>
+                  <span>Mã đơn</span>
                   <span className="font-bold">#{(successBooking._id || successBooking.bookingCode || '').slice(-6).toUpperCase()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Khách hàng:</span>
+                  <span>Khách hàng</span>
                   <span className="font-bold">{successBooking.customerName || customerName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Sân thi đấu:</span>
+                  <span>Sân thi đấu</span>
                   <span className="font-bold">{selectedVenue?.name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Khung giờ:</span>
+                  <span>Khung giờ</span>
                   <span className="font-bold">{successBooking.startTime} - {successBooking.endTime}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Ngày chơi:</span>
+                  <span>Ngày chơi</span>
                   <span className="font-bold">{successBooking.bookingDate?.split('T')[0] || selectedDate}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Hình thức:</span>
+                  <span>Hình thức</span>
                   <span className="font-bold">{successBooking.paymentMethod || paymentMethod}</span>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-dashed border-slate-400 flex justify-between items-center text-sm font-bold">
-                <span>TỔNG TIỀN:</span>
+              <div className="pt-2 border-t border-dashed border-slate-400 flex justify-between items-center text-sm font-bold tabular-nums">
+                <span>Tổng tiền</span>
                 <span>{(successBooking.totalPrice || priceToPay).toLocaleString('vi-VN')} đ</span>
               </div>
 
-              {/* Thermal QR Code */}
               <div className="pt-2 text-center">
-                {receiptQrUrl && (
-                  <img src={receiptQrUrl} alt="QR Code" className="w-32 h-32 mx-auto" />
-                )}
-                <p className="text-[9px] text-slate-500 mt-1">
+                {receiptQrUrl && <img src={receiptQrUrl} alt="QR Code" className="w-32 h-32 mx-auto" />}
+                <p className="text-[10px] text-slate-500 mt-1">
                   Đưa mã này qua cổng soát vé hoặc máy quét lễ tân
                 </p>
               </div>
 
-              <div className="text-center text-[8px] text-slate-400 pt-1">
-                Cảm ơn quý khách và chúc quý khách thi đấu vui vẻ!
+              <div className="text-center text-[10px] text-slate-500 pt-1">
+                Cảm ơn quý khách và chúc quý khách thi đấu vui vẻ
               </div>
             </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
+                className="phanta-btn-primary flex-1 py-2.5 text-xs flex items-center justify-center gap-2"
               >
-                <Printer className="w-4 h-4" />
-                In Phiếu 80mm
+                <Printer className="w-4 h-4" strokeWidth={1.75} />
+                <span>In phiếu 80mm</span>
               </button>
               <button
+                type="button"
                 onClick={() => setShowReceiptModal(false)}
-                className="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                className="phanta-btn-secondary px-4 py-2.5 text-xs"
               >
                 Đóng
               </button>

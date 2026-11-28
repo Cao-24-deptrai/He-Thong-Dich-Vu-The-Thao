@@ -13,6 +13,7 @@ import { fonts, radius, spacing, useTheme } from '../theme/colors';
 import { api } from '../api/client';
 import { Venue, SlotAvailability } from '../types';
 import { useBookingStore } from '../store/useBookingStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { subscribeSlotChanges } from '../socket/socket';
 import { PitchMap2D } from '../components/PitchMap2D';
 import { ScreenHeader } from '../components/ScreenHeader';
@@ -22,6 +23,7 @@ interface Props {
   onBack: () => void;
   onProceedPayment: () => void;
   onOpenVouchers?: () => void;
+  onRequireAuth?: () => void;
 }
 
 interface EquipmentItem {
@@ -123,8 +125,10 @@ export const VenueSlotGridScreen: React.FC<Props> = ({
   onBack,
   onProceedPayment,
   onOpenVouchers,
+  onRequireAuth,
 }) => {
   const theme = useTheme();
+  const { user } = useAuthStore();
   const {
     selectedFacility,
     setSelectedFacility,
@@ -290,6 +294,15 @@ export const VenueSlotGridScreen: React.FC<Props> = ({
   const totalPayable = Math.max(0, fieldSubtotal + equipSubtotal - voucherAmount);
 
   const handleConfirmHold = async (method: 'VIETQR' | 'WALLET') => {
+    if (!user) {
+      setDialog({
+        visible: true,
+        title: 'Yêu cầu đăng nhập',
+        message: 'Bạn cần đăng nhập tài khoản hội viên để giữ chỗ và thanh toán.',
+      });
+      return;
+    }
+
     if (!selectedVenue) {
       setDialog({ visible: true, title: 'Chưa chọn sân', message: 'Vui lòng chọn sân thi đấu.' });
       return;
@@ -807,7 +820,12 @@ export const VenueSlotGridScreen: React.FC<Props> = ({
         visible={dialog.visible}
         title={dialog.title}
         message={dialog.message}
-        onClose={() => setDialog((d) => ({ ...d, visible: false }))}
+        onClose={() => {
+          setDialog((d) => ({ ...d, visible: false }));
+          if (dialog.title === 'Yêu cầu đăng nhập' && onRequireAuth) {
+            onRequireAuth();
+          }
+        }}
       />
     </SafeAreaView>
   );

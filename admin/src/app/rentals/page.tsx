@@ -14,13 +14,20 @@ import {
   User,
   DollarSign,
   ShieldAlert,
-  ArrowRight,
-  Filter,
   Check,
   X,
   RefreshCw,
 } from 'lucide-react';
 import { api, Equipment, RentalTicket } from '@/lib/api';
+
+const SPORT_LABELS: Record<string, string> = {
+  ALL: 'Tất cả môn',
+  FOOTBALL: 'Bóng đá',
+  TENNIS: 'Tennis',
+  BADMINTON: 'Cầu lông',
+  BASKETBALL: 'Bóng rổ',
+  GENERAL: 'Chung',
+};
 
 export default function RentalsPage() {
   const [activeTab, setActiveTab] = useState<'DESK' | 'RETURNS' | 'CATALOG'>('DESK');
@@ -30,7 +37,6 @@ export default function RentalsPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Desk State
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [bookingId, setBookingId] = useState('');
@@ -38,14 +44,12 @@ export default function RentalsPage() {
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'VIETQR'>('CASH');
   const [cart, setCart] = useState<{ equipmentId: string; quantity: number }[]>([]);
 
-  // Return Modal State
   const [selectedTicketForReturn, setSelectedTicketForReturn] = useState<RentalTicket | null>(null);
   const [returnConditions, setReturnConditions] = useState<{
     [equipmentId: string]: { condition: 'GOOD' | 'DAMAGED' | 'LOST'; customPenaltyFee: number };
   }>({});
   const [returnNotes, setReturnNotes] = useState('');
 
-  // Catalog State
   const [selectedSport, setSelectedSport] = useState<string>('ALL');
   const [searchCatalog, setSearchCatalog] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -83,7 +87,6 @@ export default function RentalsPage() {
     fetchData();
   }, []);
 
-  // Quick Cart helpers
   const addToCart = (eq: Equipment) => {
     const existing = cart.find((item) => item.equipmentId === eq._id);
     if (existing) {
@@ -113,7 +116,6 @@ export default function RentalsPage() {
     setCart(cart.map((i) => (i.equipmentId === eqId ? { ...i, quantity: qty } : i)));
   };
 
-  // Cart summary calculations
   const cartSummary = cart.reduce(
     (acc, item) => {
       const eq = equipments.find((e) => e._id === item.equipmentId);
@@ -130,7 +132,6 @@ export default function RentalsPage() {
     { rental: 0, deposit: 0, total: 0 },
   );
 
-  // Submit Create Ticket
   const handleCreateTicket = async () => {
     if (!customerPhone.trim()) {
       setErrorMsg('Vui lòng nhập số điện thoại khách hàng.');
@@ -153,7 +154,7 @@ export default function RentalsPage() {
         items: cart,
       });
 
-      setSuccessMsg(`Đã lập phiếu thuê thành công: Mã phiếu ${newTicket.ticketCode}`);
+      setSuccessMsg(`Đã lập phiếu thuê thành công: Mã phiếu ${newTicket.ticketCode}.`);
       setCart([]);
       setCustomerPhone('');
       setCustomerName('');
@@ -167,7 +168,6 @@ export default function RentalsPage() {
     }
   };
 
-  // Open Return Modal
   const openReturnModal = (ticket: RentalTicket) => {
     setSelectedTicketForReturn(ticket);
     const initialConditions: any = {};
@@ -181,7 +181,6 @@ export default function RentalsPage() {
     setReturnNotes('');
   };
 
-  // Submit Return Ticket
   const handleConfirmReturn = async () => {
     if (!selectedTicketForReturn) return;
 
@@ -204,7 +203,7 @@ export default function RentalsPage() {
       });
 
       setSuccessMsg(
-        `Quyết toán phiếu ${updated.ticketCode} thành công! Tiền cọc hoàn trả: ${updated.refundDepositAmount.toLocaleString()} đ. Phạt: ${updated.totalPenaltyFee.toLocaleString()} đ`,
+        `Quyết toán phiếu ${updated.ticketCode} thành công. Hoàn trả cọc: ${updated.refundDepositAmount.toLocaleString('vi-VN')} đ. Phạt: ${updated.totalPenaltyFee.toLocaleString('vi-VN')} đ.`,
       );
       setSelectedTicketForReturn(null);
       await fetchData();
@@ -215,7 +214,6 @@ export default function RentalsPage() {
     }
   };
 
-  // Create or Update Equipment
   const handleSaveEquipment = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -223,10 +221,10 @@ export default function RentalsPage() {
       setErrorMsg(null);
       if (editingEquipment) {
         await api.updateEquipment(editingEquipment._id, equipmentForm as any);
-        setSuccessMsg(`Cập nhật thiết bị '${equipmentForm.name}' thành công!`);
+        setSuccessMsg(`Cập nhật thiết bị "${equipmentForm.name}" thành công.`);
       } else {
         await api.createEquipment(equipmentForm as any);
-        setSuccessMsg(`Tạo mới thiết bị '${equipmentForm.name}' thành công!`);
+        setSuccessMsg(`Tạo mới thiết bị "${equipmentForm.name}" thành công.`);
       }
       setIsAddModalOpen(false);
       setEditingEquipment(null);
@@ -238,14 +236,12 @@ export default function RentalsPage() {
     }
   };
 
-  // Calculate Metrics
   const totalEquipments = equipments.reduce((sum, e) => sum + e.totalQuantity, 0);
   const totalRented = equipments.reduce((sum, e) => sum + (e.rentedQuantity || 0), 0);
   const totalDamaged = equipments.reduce((sum, e) => sum + (e.damagedQuantity || 0), 0);
   const totalAvailable = equipments.reduce((sum, e) => sum + e.availableQuantity, 0);
 
   const rentingTickets = tickets.filter((t) => t.status === 'RENTING');
-  const returnedTickets = tickets.filter((t) => t.status === 'RETURNED');
 
   const filteredEquipments = equipments.filter((eq) => {
     const matchSport = selectedSport === 'ALL' || eq.sportType === selectedSport;
@@ -257,34 +253,30 @@ export default function RentalsPage() {
   });
 
   return (
-    <div className="flex-1 p-6 md:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-heading tabular-nums uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Module M13 • Epic E07
-            </span>
-            <span className="text-slate-400 text-xs">• Phụ trách: Nguyễn Lê Thành Trung</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight mt-1 flex items-center gap-3">
-            <PackageCheck className="w-8 h-8 text-cyan-400" />
-            Cho Thuê Dụng Cụ Thể Thao
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <PackageCheck className="w-6 h-6 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Cho thuê dụng cụ thể thao</span>
           </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Quản lý xuất nhập tồn dụng cụ thể thao, cọc bảo đảm, chống quá bán nguyên tử và quyết toán hư hỏng.
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Quản lý xuất nhập tồn dụng cụ, thu tiền cọc bảo đảm và quyết toán hoàn trả tại quầy
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
+            type="button"
             onClick={fetchData}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700 text-sm font-medium transition"
+            className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-cyan-400' : ''}`} />
-            Làm mới
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[var(--pitch-green)]' : ''}`} strokeWidth={1.75} />
+            <span>Làm mới</span>
           </button>
           <button
+            type="button"
             onClick={() => {
               setEditingEquipment(null);
               setEquipmentForm({
@@ -300,157 +292,159 @@ export default function RentalsPage() {
               });
               setIsAddModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-sm shadow-[0_0_20px_rgba(6,182,212,0.3)] transition"
+            className="phanta-btn-primary px-4 py-2 text-xs flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            Thêm Dụng Cụ Mới
+            <Plus className="w-4 h-4" strokeWidth={1.75} />
+            <span>Thêm dụng cụ mới</span>
           </button>
         </div>
       </div>
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#0f172a]/70 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Tổng Thiết Bị</span>
-            <Boxes className="w-5 h-5 text-cyan-400" />
+        <div className="phanta-card p-5">
+          <div className="flex justify-between items-center text-[var(--text-sub)]">
+            <span className="text-xs font-medium">Tổng thiết bị</span>
+            <Boxes className="w-4 h-4 text-[var(--text-sub)]" strokeWidth={1.75} />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-bold text-white">{totalEquipments}</div>
-          <span className="text-[11px] text-slate-400">tài sản quản lý trong kho</span>
+          <div className="mt-2 text-2xl font-heading font-semibold text-[var(--text-heading)] tabular-nums">{totalEquipments}</div>
+          <span className="text-xs text-[var(--text-muted)]">Tài sản quản lý trong kho</span>
         </div>
 
-        <div className="bg-[#0f172a]/70 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Đang Cho Thuê</span>
-            <Clock className="w-5 h-5 text-amber-400" />
+        <div className="phanta-card p-5">
+          <div className="flex justify-between items-center text-[var(--text-sub)]">
+            <span className="text-xs font-medium">Đang cho thuê</span>
+            <Clock className="w-4 h-4 text-[var(--burnt-orange)]" strokeWidth={1.75} />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-bold text-amber-400">{totalRented}</div>
-          <span className="text-[11px] text-slate-400">món đang ở ngoài sân</span>
+          <div className="mt-2 text-2xl font-heading font-semibold text-[var(--burnt-orange)] tabular-nums">{totalRented}</div>
+          <span className="text-xs text-[var(--text-muted)]">Món đang ở ngoài sân</span>
         </div>
 
-        <div className="bg-[#0f172a]/70 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Hỏng / Mất Cách Ly</span>
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
+        <div className="phanta-card p-5">
+          <div className="flex justify-between items-center text-[var(--text-sub)]">
+            <span className="text-xs font-medium">Hỏng / Mất cách ly</span>
+            <ShieldAlert className="w-4 h-4 text-rose-500" strokeWidth={1.75} />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-bold text-rose-400">{totalDamaged}</div>
-          <span className="text-[11px] text-slate-400">cách ly khỏi khả dụng</span>
+          <div className="mt-2 text-2xl font-heading font-semibold text-rose-500 tabular-nums">{totalDamaged}</div>
+          <span className="text-xs text-[var(--text-muted)]">Đã tách khỏi kho khả dụng</span>
         </div>
 
-        <div className="bg-[#0f172a]/70 border border-slate-800/80 rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Sẵn Sàng Cho Thuê</span>
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+        <div className="phanta-card p-5">
+          <div className="flex justify-between items-center text-[var(--text-sub)]">
+            <span className="text-xs font-medium">Sẵn sàng cho thuê</span>
+            <CheckCircle2 className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
           </div>
-          <div className="mt-2 text-2xl md:text-3xl font-bold text-emerald-400">{totalAvailable}</div>
-          <span className="text-[11px] text-slate-400">khả dụng tức thời</span>
+          <div className="mt-2 text-2xl font-heading font-semibold text-[var(--pitch-green)] tabular-nums">{totalAvailable}</div>
+          <span className="text-xs text-[var(--text-muted)]">Khả dụng tức thời</span>
         </div>
       </div>
 
       {/* Alert Notices */}
       {errorMsg && (
-        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center justify-between text-sm">
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 flex items-center justify-between text-xs font-medium">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+            <AlertTriangle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
             <span>{errorMsg}</span>
           </div>
-          <button onClick={() => setErrorMsg(null)} className="text-rose-400 hover:text-white">
+          <button type="button" onClick={() => setErrorMsg(null)} className="text-[var(--text-sub)] hover:text-[var(--text-heading)]">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center justify-between text-sm">
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--pitch-green)] flex items-center justify-between text-xs font-medium">
           <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+            <Check className="w-4 h-4 shrink-0" strokeWidth={1.75} />
             <span>{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg(null)} className="text-emerald-400 hover:text-white">
+          <button type="button" onClick={() => setSuccessMsg(null)} className="text-[var(--text-sub)] hover:text-[var(--text-heading)]">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Tab Navigation */}
-      <div className="flex border-b border-slate-800 gap-2">
+      <div className="inline-flex items-center gap-1 p-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
         <button
+          type="button"
           onClick={() => setActiveTab('DESK')}
-          className={`px-5 py-3 font-bold text-sm border-b-2 transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
             activeTab === 'DESK'
-              ? 'border-cyan-400 text-cyan-400 bg-cyan-500/5'
-              : 'border-transparent text-slate-400 hover:text-white'
+              ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
           }`}
         >
-          <PackageCheck className="w-4 h-4" />
-          Quầy Cho Thuê (POS Desk)
+          <PackageCheck className="w-4 h-4" strokeWidth={1.75} />
+          <span>Quầy cho thuê</span>
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('RETURNS')}
-          className={`px-5 py-3 font-bold text-sm border-b-2 transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
             activeTab === 'RETURNS'
-              ? 'border-cyan-400 text-cyan-400 bg-cyan-500/5'
-              : 'border-transparent text-slate-400 hover:text-white'
+              ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
           }`}
         >
-          <RotateCcw className="w-4 h-4" />
-          Đang Thuê & Trả Đồ
+          <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
+          <span>Đang thuê & Trả đồ</span>
           {rentingTickets.length > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">
+            <span className="px-1.5 py-0.5 rounded-md bg-black/20 text-[10px] tabular-nums">
               {rentingTickets.length}
             </span>
           )}
         </button>
 
         <button
+          type="button"
           onClick={() => setActiveTab('CATALOG')}
-          className={`px-5 py-3 font-bold text-sm border-b-2 transition flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
             activeTab === 'CATALOG'
-              ? 'border-cyan-400 text-cyan-400 bg-cyan-500/5'
-              : 'border-transparent text-slate-400 hover:text-white'
+              ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
           }`}
         >
-          <Boxes className="w-4 h-4" />
-          Kho Dụng Cụ ({equipments.length})
+          <Boxes className="w-4 h-4" strokeWidth={1.75} />
+          <span>Kho dụng cụ ({equipments.length})</span>
         </button>
       </div>
 
       {/* TAB 1: POS DESK */}
       {activeTab === 'DESK' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left 2 Cols: Choose Equipment */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between gap-4 bg-[#0d121f] p-4 rounded-2xl border border-slate-800">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+            <div className="phanta-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
                 {['ALL', 'FOOTBALL', 'TENNIS', 'BADMINTON', 'BASKETBALL', 'GENERAL'].map((sp) => (
                   <button
+                    type="button"
                     key={sp}
                     onClick={() => setSelectedSport(sp)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors whitespace-nowrap ${
                       selectedSport === sp
-                        ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                        : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+                        ? 'bg-[var(--pitch-green)] text-[#0C0F0C] border-transparent font-semibold'
+                        : 'bg-[var(--bg-card-inner)] border-[var(--border-subtle)] text-[var(--text-sub)] hover:text-[var(--text-heading)]'
                     }`}
                   >
-                    {sp === 'ALL' ? 'Tất cả môn' : sp}
+                    {SPORT_LABELS[sp] || sp}
                   </button>
                 ))}
               </div>
 
               <div className="relative min-w-[200px]">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)]" strokeWidth={1.75} />
                 <input
                   type="text"
                   placeholder="Tìm dụng cụ"
                   value={searchCatalog}
                   onChange={(e) => setSearchCatalog(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
             </div>
 
-            {/* Grid of Equipment Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {filteredEquipments.map((eq) => {
                 const inCart = cart.find((i) => i.equipmentId === eq._id);
@@ -458,79 +452,82 @@ export default function RentalsPage() {
                 return (
                   <div
                     key={eq._id}
-                    className={`p-4 rounded-2xl border transition relative flex flex-col justify-between ${
+                    className={`phanta-card p-4 flex flex-col justify-between transition-colors ${
                       isOutOfStock
-                        ? 'bg-slate-900/40 border-slate-800/40 opacity-60'
+                        ? 'opacity-60'
                         : inCart
-                        ? 'bg-cyan-950/20 border-cyan-500/50'
-                        : 'bg-[#0f172a]/70 border-slate-800/80 hover:border-slate-700'
+                        ? 'border-[var(--pitch-green)] bg-[var(--bg-card-inner)]'
+                        : 'phanta-card-hover'
                     }`}
                   >
                     <div>
                       <div className="flex justify-between items-start gap-2">
-                        <div>
-                          <span className="text-[10px] font-heading tabular-nums px-2 py-0.5 rounded bg-slate-800 text-cyan-300 border border-slate-700">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] tabular-nums px-2 py-0.5 rounded-md bg-[var(--bg-card-inner)] text-[var(--text-heading)] border border-[var(--border-subtle)] font-medium">
                             {eq.code}
                           </span>
-                          <span className="ml-2 text-[10px] uppercase font-bold text-slate-400">
-                            {eq.sportType}
+                          <span className="text-[11px] font-medium text-[var(--text-sub)]">
+                            {SPORT_LABELS[eq.sportType] || eq.sportType}
                           </span>
                         </div>
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border tabular-nums ${
                             eq.availableQuantity > 0
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              ? 'bg-emerald-500/10 text-[var(--pitch-green)] border-emerald-500/30'
+                              : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
                           }`}
                         >
                           Khả dụng: {eq.availableQuantity}
                         </span>
                       </div>
 
-                      <h3 className="font-bold text-white text-base mt-2">{eq.name}</h3>
-                      <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-cyan-400 font-bold text-lg">
-                          {eq.price.toLocaleString()} đ
+                      <h3 className="font-heading font-semibold text-[var(--text-heading)] text-base mt-2.5">{eq.name}</h3>
+                      <div className="mt-1 flex items-baseline gap-2 tabular-nums">
+                        <span className="text-[var(--pitch-green)] font-heading font-semibold text-lg">
+                          {eq.price.toLocaleString('vi-VN')} đ
                         </span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-[var(--text-sub)]">
                           / {eq.pricingType === 'HOURLY' ? 'giờ' : 'lượt'}
                         </span>
                         {eq.depositAmount > 0 && (
-                          <span className="text-[11px] text-amber-400 font-medium">
-                            • Cọc: {eq.depositAmount.toLocaleString()} đ
+                          <span className="text-[11px] text-[var(--burnt-orange)] font-medium">
+                            - Cọc: {eq.depositAmount.toLocaleString('vi-VN')} đ
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between">
+                    <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
                       {inCart ? (
                         <div className="flex items-center gap-2">
                           <button
+                            type="button"
                             onClick={() => updateCartQty(eq._id, inCart.quantity - 1, eq.availableQuantity)}
-                            className="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 flex items-center justify-center font-bold text-white transition"
+                            className="phanta-btn-secondary w-8 h-8 flex items-center justify-center font-bold"
                           >
                             -
                           </button>
-                          <span className="w-8 text-center font-bold text-cyan-400">{inCart.quantity}</span>
+                          <span className="w-8 text-center font-semibold text-[var(--text-heading)] tabular-nums">{inCart.quantity}</span>
                           <button
+                            type="button"
                             onClick={() => updateCartQty(eq._id, inCart.quantity + 1, eq.availableQuantity)}
-                            className="w-8 h-8 rounded-xl bg-cyan-500 text-slate-950 hover:bg-cyan-400 flex items-center justify-center font-bold transition"
+                            className="phanta-btn-primary w-8 h-8 flex items-center justify-center font-bold"
                           >
                             +
                           </button>
                         </div>
                       ) : (
                         <button
+                          type="button"
                           disabled={isOutOfStock}
                           onClick={() => addToCart(eq)}
-                          className={`w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                          className={`w-full py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
                             isOutOfStock
-                              ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                              : 'bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-slate-950 border border-cyan-500/30'
+                              ? 'bg-[var(--bg-card-inner)] text-[var(--text-muted)] cursor-not-allowed'
+                              : 'phanta-btn-secondary'
                           }`}
                         >
-                          {isOutOfStock ? 'Hết Hàng' : '+ Chọn Thuê'}
+                          {isOutOfStock ? 'Hết hàng' : 'Chọn thuê'}
                         </button>
                       )}
                     </div>
@@ -540,51 +537,49 @@ export default function RentalsPage() {
             </div>
           </div>
 
-          {/* Right Col: Desk Checkout Panel */}
-          <div className="bg-[#0d121f] border border-slate-800 rounded-3xl p-6 flex flex-col justify-between space-y-6">
+          <div className="phanta-card p-6 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-                <DollarSign className="w-5 h-5 text-emerald-400" />
-                Phiếu Thuê Quầy
+              <h2 className="font-heading font-semibold text-lg text-[var(--text-heading)] flex items-center gap-2 border-b border-[var(--border-subtle)] pb-3">
+                <DollarSign className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Phiếu thuê quầy</span>
               </h2>
 
-              {/* Customer Inputs */}
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 uppercase">SĐT Khách Hàng (*)</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">SĐT khách hàng</label>
                   <div className="relative mt-1">
-                    <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                    <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)]" strokeWidth={1.75} />
                     <input
                       type="text"
                       placeholder="0911223344"
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-400 uppercase">Tên Khách Hàng</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">Tên khách hàng</label>
                   <div className="relative mt-1">
-                    <User className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                    <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)]" strokeWidth={1.75} />
                     <input
                       type="text"
                       placeholder="Nguyễn Văn A"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs font-semibold text-slate-400 uppercase">Số Giờ Thuê</label>
+                    <label className="text-xs font-medium text-[var(--text-sub)]">Số giờ thuê</label>
                     <select
                       value={rentalHours}
                       onChange={(e) => setRentalHours(Number(e.target.value))}
-                      className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                     >
                       <option value={1}>1 Giờ</option>
                       <option value={2}>2 Giờ</option>
@@ -593,24 +588,23 @@ export default function RentalsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-slate-400 uppercase">Thanh Toán</label>
+                    <label className="text-xs font-medium text-[var(--text-sub)]">Thanh toán</label>
                     <select
                       value={paymentMethod}
                       onChange={(e) => setPaymentMethod(e.target.value as any)}
-                      className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500"
+                      className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                     >
-                      <option value="CASH">Tiền Mặt</option>
+                      <option value="CASH">Tiền mặt</option>
                       <option value="VIETQR">VietQR</option>
                     </select>
                   </div>
                 </div>
               </div>
 
-              {/* Cart List */}
-              <div className="border-t border-slate-800/80 pt-3">
-                <span className="text-xs font-bold text-slate-400 uppercase">Dụng Cụ Đã Chọn ({cart.length})</span>
+              <div className="border-t border-[var(--border-subtle)] pt-3">
+                <span className="text-xs font-medium text-[var(--text-sub)]">Dụng cụ đã chọn ({cart.length})</span>
                 {cart.length === 0 ? (
-                  <p className="text-xs text-slate-500 py-4 text-center">Chưa có món nào được chọn</p>
+                  <p className="text-xs text-[var(--text-muted)] py-4 text-center">Chưa có món nào được chọn</p>
                 ) : (
                   <div className="space-y-2 mt-2 max-h-48 overflow-y-auto pr-1">
                     {cart.map((item) => {
@@ -619,16 +613,16 @@ export default function RentalsPage() {
                       return (
                         <div
                           key={item.equipmentId}
-                          className="flex items-center justify-between text-xs bg-slate-900/60 p-2 rounded-xl border border-slate-800"
+                          className="phanta-subcard flex items-center justify-between text-xs p-2.5"
                         >
                           <div>
-                            <span className="font-bold text-white">{eq.name}</span>
-                            <span className="text-slate-400 block text-[10px]">
-                              {eq.code} • x{item.quantity}
+                            <span className="font-semibold text-[var(--text-heading)]">{eq.name}</span>
+                            <span className="text-[var(--text-sub)] block text-[11px] tabular-nums">
+                              {eq.code} - x{item.quantity}
                             </span>
                           </div>
-                          <span className="font-bold text-cyan-400">
-                            {((eq.pricingType === 'HOURLY' ? eq.price * rentalHours : eq.price) * item.quantity).toLocaleString()} đ
+                          <span className="font-semibold text-[var(--pitch-green)] tabular-nums">
+                            {((eq.pricingType === 'HOURLY' ? eq.price * rentalHours : eq.price) * item.quantity).toLocaleString('vi-VN')} đ
                           </span>
                         </div>
                       );
@@ -638,32 +632,28 @@ export default function RentalsPage() {
               </div>
             </div>
 
-            {/* Price Calculation Bottom */}
-            <div className="border-t border-slate-800 pt-4 space-y-2">
-              <div className="flex justify-between text-xs text-slate-400">
-                <span>Tiền thuê dụng cụ:</span>
-                <span className="font-bold text-white">{cartSummary.rental.toLocaleString()} đ</span>
+            <div className="border-t border-[var(--border-subtle)] pt-4 space-y-2 tabular-nums">
+              <div className="flex justify-between text-xs text-[var(--text-sub)]">
+                <span>Tiền thuê dụng cụ</span>
+                <span className="font-semibold text-[var(--text-heading)]">{cartSummary.rental.toLocaleString('vi-VN')} đ</span>
               </div>
-              <div className="flex justify-between text-xs text-amber-400">
-                <span>Tiền cọc giữ đồ:</span>
-                <span className="font-bold">{cartSummary.deposit.toLocaleString()} đ</span>
+              <div className="flex justify-between text-xs text-[var(--burnt-orange)]">
+                <span>Tiền cọc giữ đồ</span>
+                <span className="font-semibold">{cartSummary.deposit.toLocaleString('vi-VN')} đ</span>
               </div>
-              <div className="flex justify-between text-base font-bold text-white pt-2 border-t border-slate-800/60">
-                <span>Tổng thu tại quầy:</span>
-                <span className="text-emerald-400 text-lg">{cartSummary.total.toLocaleString()} đ</span>
+              <div className="flex justify-between text-base font-heading font-semibold text-[var(--text-heading)] pt-2 border-t border-[var(--border-subtle)]">
+                <span>Tổng thu tại quầy</span>
+                <span className="text-[var(--pitch-green)] text-lg">{cartSummary.total.toLocaleString('vi-VN')} đ</span>
               </div>
 
               <button
+                type="button"
                 disabled={loading || cart.length === 0}
                 onClick={handleCreateTicket}
-                className={`w-full py-3 rounded-2xl font-bold text-sm uppercase tracking-wider transition flex items-center justify-center gap-2 shadow-lg mt-4 ${
-                  loading || cart.length === 0
-                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 shadow-[0_0_25px_rgba(16,185,129,0.3)]'
-                }`}
+                className="phanta-btn-primary w-full py-3 text-xs flex items-center justify-center gap-2 mt-4"
               >
-                <PackageCheck className="w-5 h-5 stroke-[2.5]" />
-                Tạo Phiếu & Giao Đồ
+                <PackageCheck className="w-4 h-4" strokeWidth={1.75} />
+                <span>Tạo phiếu và giao đồ</span>
               </button>
             </div>
           </div>
@@ -673,12 +663,12 @@ export default function RentalsPage() {
       {/* TAB 2: ACTIVE TICKETS & RETURNS */}
       {activeTab === 'RETURNS' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center bg-[#0d121f] p-4 rounded-2xl border border-slate-800">
-            <span className="text-sm font-bold text-white">
+          <div className="phanta-card p-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <span className="text-sm font-heading font-semibold text-[var(--text-heading)]">
               Danh sách phiếu đang mượn ({rentingTickets.length})
             </span>
-            <span className="text-xs text-slate-400">
-              Nhấn &quot;Trả Đồ & Quyết Toán&quot; để kiểm tra tình trạng hỏng/mất và hoàn tiền cọc
+            <span className="text-xs text-[var(--text-sub)]">
+              Chọn &quot;Trả đồ và quyết toán&quot; để kiểm tra tình trạng và hoàn tiền cọc
             </span>
           </div>
 
@@ -688,62 +678,61 @@ export default function RentalsPage() {
               return (
                 <div
                   key={t._id}
-                  className={`p-5 rounded-2xl border flex flex-col justify-between space-y-4 ${
-                    isOverdue
-                      ? 'bg-rose-950/20 border-rose-500/50'
-                      : 'bg-[#0f172a]/70 border-slate-800/80 hover:border-slate-700'
+                  className={`phanta-card p-5 flex flex-col justify-between space-y-4 ${
+                    isOverdue ? 'border-rose-500/50' : 'phanta-card-hover'
                   }`}
                 >
                   <div>
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-heading tabular-nums font-bold text-cyan-400 px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                      <span className="text-xs tabular-nums font-semibold text-[var(--pitch-green)] px-2.5 py-0.5 rounded-lg bg-[var(--bg-card-inner)] border border-[var(--border-subtle)]">
                         {t.ticketCode}
                       </span>
                       <span
-                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                        className={`text-[11px] font-medium px-2 py-0.5 rounded-lg border ${
                           isOverdue
-                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                            : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            ? 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                            : 'bg-amber-500/10 text-[var(--burnt-orange)] border-amber-500/30'
                         }`}
                       >
-                        {isOverdue ? 'Quá Hạn' : 'Đang Thuê'}
+                        {isOverdue ? 'Quá hạn' : 'Đang thuê'}
                       </span>
                     </div>
 
                     <div className="mt-3 space-y-1">
-                      <div className="font-bold text-white text-sm">{t.customerName || 'Khách Vãng Lai'}</div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-slate-500" />
-                        {t.customerPhone}
+                      <div className="font-semibold text-[var(--text-heading)] text-sm">{t.customerName || 'Khách vãng lai'}</div>
+                      <div className="text-xs text-[var(--text-sub)] flex items-center gap-1.5 tabular-nums">
+                        <Phone className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        <span>{t.customerPhone}</span>
                       </div>
-                      <div className="text-xs text-slate-400 flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-slate-500" />
-                        Hạn trả: {new Date(t.dueAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      <div className="text-xs text-[var(--text-sub)] flex items-center gap-1.5 tabular-nums">
+                        <Clock className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        <span>Hạn trả: {new Date(t.dueAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </div>
 
-                    <div className="mt-3 pt-3 border-t border-slate-800/60 space-y-1.5">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase">Món đồ mượn:</span>
+                    <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] space-y-1.5">
+                      <span className="text-[11px] font-medium text-[var(--text-sub)]">Món đồ mượn</span>
                       {t.items.map((it, idx) => (
-                        <div key={idx} className="flex justify-between text-xs text-slate-300">
+                        <div key={idx} className="flex justify-between text-xs text-[var(--text-main)]">
                           <span>{it.name}</span>
-                          <span className="font-bold text-cyan-400">x{it.quantity}</span>
+                          <span className="font-semibold text-[var(--pitch-green)] tabular-nums">x{it.quantity}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-slate-800/60 flex justify-between text-xs">
-                      <span className="text-slate-400">Cọc đang giữ:</span>
-                      <span className="font-bold text-amber-400">{t.totalDepositAmount.toLocaleString()} đ</span>
+                    <div className="mt-3 pt-2 border-t border-[var(--border-subtle)] flex justify-between text-xs tabular-nums">
+                      <span className="text-[var(--text-sub)]">Cọc đang giữ</span>
+                      <span className="font-semibold text-[var(--burnt-orange)]">{t.totalDepositAmount.toLocaleString('vi-VN')} đ</span>
                     </div>
                   </div>
 
                   <button
+                    type="button"
                     onClick={() => openReturnModal(t)}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition"
+                    className="phanta-btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-1.5"
                   >
-                    <RotateCcw className="w-4 h-4 stroke-[2.5]" />
-                    Trả Đồ & Quyết Toán
+                    <RotateCcw className="w-4 h-4" strokeWidth={1.75} />
+                    <span>Trả đồ và quyết toán</span>
                   </button>
                 </div>
               );
@@ -751,10 +740,10 @@ export default function RentalsPage() {
           </div>
 
           {rentingTickets.length === 0 && (
-            <div className="p-12 text-center bg-[#0d121f] border border-slate-800 rounded-3xl">
-              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-3" />
-              <h3 className="text-base font-bold text-white">Không có phiếu thuê nào đang chờ trả</h3>
-              <p className="text-xs text-slate-400 mt-1">Toàn bộ dụng cụ đã được hoàn trả và quyết toán đầy đủ.</p>
+            <div className="phanta-card p-12 text-center">
+              <CheckCircle2 className="w-10 h-10 text-[var(--pitch-green)] mx-auto mb-3" strokeWidth={1.5} />
+              <h3 className="text-sm font-heading font-semibold text-[var(--text-heading)]">Không có phiếu thuê nào đang chờ trả</h3>
+              <p className="text-xs text-[var(--text-sub)] mt-1">Toàn bộ dụng cụ đã được hoàn trả và quyết toán đầy đủ</p>
             </div>
           )}
         </div>
@@ -762,117 +751,117 @@ export default function RentalsPage() {
 
       {/* TAB 3: CATALOG & ASSET MANAGEMENT */}
       {activeTab === 'CATALOG' && (
-        <div className="space-y-4">
-          <div className="bg-[#0d121f] border border-slate-800 rounded-3xl overflow-hidden">
-            <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Boxes className="w-5 h-5 text-cyan-400" />
-                <span className="font-bold text-white text-sm">Danh Mục Tài Sản Kho</span>
-              </div>
-              <div className="relative min-w-[240px]">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Lọc mã hoặc tên"
-                  value={searchCatalog}
-                  onChange={(e) => setSearchCatalog(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-500"
-                />
-              </div>
+        <div className="phanta-card overflow-hidden">
+          <div className="p-4 border-b border-[var(--border-subtle)] flex flex-col md:flex-row justify-between items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Boxes className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+              <span className="font-heading font-semibold text-[var(--text-heading)] text-sm">Danh mục tài sản kho</span>
             </div>
+            <div className="relative min-w-[240px]">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-sub)]" strokeWidth={1.75} />
+              <input
+                type="text"
+                placeholder="Lọc mã hoặc tên"
+                value={searchCatalog}
+                onChange={(e) => setSearchCatalog(e.target.value)}
+                className="w-full bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl pl-9 pr-3 py-2 text-xs text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
+              />
+            </div>
+          </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-900/60 text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="p-4">Mã</th>
-                    <th className="p-4">Tên Thiết Bị</th>
-                    <th className="p-4">Môn</th>
-                    <th className="p-4">Giá Thuê</th>
-                    <th className="p-4">Tiền Cọc</th>
-                    <th className="p-4">Phí Hỏng / Mất</th>
-                    <th className="p-4">Kho (Khả dụng / Tổng)</th>
-                    <th className="p-4 text-right">Thao Tác</th>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead className="bg-[var(--table-head-bg)] text-[var(--text-sub)] font-medium border-b border-[var(--border-subtle)]">
+                <tr>
+                  <th className="p-4">Mã</th>
+                  <th className="p-4">Tên thiết bị</th>
+                  <th className="p-4">Môn</th>
+                  <th className="p-4 text-right">Giá thuê</th>
+                  <th className="p-4 text-right">Tiền cọc</th>
+                  <th className="p-4">Phí hỏng / mất</th>
+                  <th className="p-4">Kho (Khả dụng / Tổng)</th>
+                  <th className="p-4 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-subtle)] tabular-nums">
+                {filteredEquipments.map((eq) => (
+                  <tr key={eq._id} className="hover:bg-[var(--table-row-hover)] transition-colors">
+                    <td className="p-4 font-semibold text-[var(--pitch-green)]">{eq.code}</td>
+                    <td className="p-4 font-semibold text-[var(--text-heading)]">{eq.name}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-0.5 rounded-md bg-[var(--bg-card-inner)] text-[var(--text-main)] border border-[var(--border-subtle)]">
+                        {SPORT_LABELS[eq.sportType] || eq.sportType}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right font-semibold text-[var(--pitch-green)]">
+                      {eq.price.toLocaleString('vi-VN')} đ
+                      <span className="text-[11px] text-[var(--text-sub)] block font-normal">
+                        / {eq.pricingType === 'HOURLY' ? 'giờ' : 'lượt'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right font-semibold text-[var(--burnt-orange)]">
+                      {(eq.depositAmount || 0).toLocaleString('vi-VN')} đ
+                    </td>
+                    <td className="p-4 text-[var(--text-sub)] text-[11px]">
+                      Hỏng: {(eq.damageFee || 0).toLocaleString('vi-VN')} đ<br />
+                      Mất: {(eq.lostFee || 0).toLocaleString('vi-VN')} đ
+                    </td>
+                    <td className="p-4">
+                      <span className="font-semibold text-[var(--pitch-green)]">{eq.availableQuantity}</span> /{' '}
+                      <span className="text-[var(--text-heading)]">{eq.totalQuantity}</span>
+                      <div className="text-[11px] text-[var(--text-muted)] mt-0.5">
+                        Đang thuê: {eq.rentedQuantity || 0} - Hỏng: {eq.damagedQuantity || 0}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingEquipment(eq);
+                          setEquipmentForm({
+                            code: eq.code,
+                            name: eq.name,
+                            sportType: eq.sportType,
+                            pricingType: eq.pricingType,
+                            price: eq.price,
+                            depositAmount: eq.depositAmount,
+                            damageFee: eq.damageFee,
+                            lostFee: eq.lostFee,
+                            totalQuantity: eq.totalQuantity,
+                          });
+                          setIsAddModalOpen(true);
+                        }}
+                        className="phanta-btn-secondary px-3 py-1.5 text-xs"
+                      >
+                        Sửa
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-slate-300">
-                  {filteredEquipments.map((eq) => (
-                    <tr key={eq._id} className="hover:bg-slate-900/40 transition">
-                      <td className="p-4 font-heading tabular-nums font-bold text-cyan-400">{eq.code}</td>
-                      <td className="p-4 font-bold text-white">{eq.name}</td>
-                      <td className="p-4">
-                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                          {eq.sportType}
-                        </span>
-                      </td>
-                      <td className="p-4 font-bold text-emerald-400">
-                        {eq.price.toLocaleString()} đ
-                        <span className="text-[10px] text-slate-400 block font-normal">
-                          / {eq.pricingType === 'HOURLY' ? 'giờ' : 'lượt'}
-                        </span>
-                      </td>
-                      <td className="p-4 font-bold text-amber-400">
-                        {(eq.depositAmount || 0).toLocaleString()} đ
-                      </td>
-                      <td className="p-4 text-slate-400 text-[11px]">
-                        Hỏng: {(eq.damageFee || 0).toLocaleString()} đ<br />
-                        Mất: {(eq.lostFee || 0).toLocaleString()} đ
-                      </td>
-                      <td className="p-4">
-                        <span className="font-bold text-emerald-400">{eq.availableQuantity}</span> /{' '}
-                        <span>{eq.totalQuantity}</span>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          Đang thuê: {eq.rentedQuantity || 0} • Hỏng: {eq.damagedQuantity || 0}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => {
-                            setEditingEquipment(eq);
-                            setEquipmentForm({
-                              code: eq.code,
-                              name: eq.name,
-                              sportType: eq.sportType,
-                              pricingType: eq.pricingType,
-                              price: eq.price,
-                              depositAmount: eq.depositAmount,
-                              damageFee: eq.damageFee,
-                              lostFee: eq.lostFee,
-                              totalQuantity: eq.totalQuantity,
-                            });
-                            setIsAddModalOpen(true);
-                          }}
-                          className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-semibold transition"
-                        >
-                          Sửa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
       {/* RETURN MODAL */}
       {selectedTicketForReturn && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#0d121f] border border-slate-800 rounded-3xl w-full max-w-xl p-6 space-y-5 shadow-2xl">
-            <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="phanta-card w-full max-w-xl p-6 space-y-5">
+            <div className="flex justify-between items-start border-b border-[var(--border-subtle)] pb-4">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <RotateCcw className="w-5 h-5 text-cyan-400" />
-                  Quyết Toán Trả Đồ • {selectedTicketForReturn.ticketCode}
+                <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)] flex items-center gap-2">
+                  <RotateCcw className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Quyết toán trả đồ - {selectedTicketForReturn.ticketCode}</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Kiểm tra tình trạng vật lý từng món đồ để tính phạt và hoàn trả cọc.
+                <p className="text-xs text-[var(--text-sub)] mt-1">
+                  Kiểm tra tình trạng từng món đồ để tính phí bồi thường và hoàn trả cọc
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedTicketForReturn(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--text-sub)] hover:text-[var(--text-heading)]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -886,10 +875,12 @@ export default function RentalsPage() {
                 };
                 const eq = equipments.find((e) => e._id === item.equipmentId);
                 return (
-                  <div key={item.equipmentId} className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 space-y-3">
+                  <div key={item.equipmentId} className="phanta-subcard p-4 space-y-3">
                     <div className="flex justify-between items-center">
-                      <span className="font-bold text-white text-sm">{item.name} (x{item.quantity})</span>
-                      <span className="text-xs text-slate-400 font-heading tabular-nums">{item.code}</span>
+                      <span className="font-semibold text-[var(--text-heading)] text-sm">
+                        {item.name} (x{item.quantity})
+                      </span>
+                      <span className="text-xs text-[var(--text-sub)] tabular-nums">{item.code}</span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
@@ -906,25 +897,25 @@ export default function RentalsPage() {
                               [item.equipmentId]: { condition: cond, customPenaltyFee: penalty },
                             });
                           }}
-                          className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
+                          className={`py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-center ${
                             currentCond.condition === cond
                               ? cond === 'GOOD'
-                                ? 'bg-emerald-500 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                                ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
                                 : cond === 'DAMAGED'
-                                ? 'bg-amber-500 text-slate-950 shadow-[0_0_15px_rgba(245,158,11,0.3)]'
-                                : 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-                              : 'bg-slate-800 text-slate-400 hover:text-white'
+                                ? 'bg-[var(--burnt-orange)] text-white font-semibold'
+                                : 'bg-rose-500 text-white font-semibold'
+                              : 'bg-[var(--bg-card)] border border-[var(--border-subtle)] text-[var(--text-sub)] hover:text-[var(--text-heading)]'
                           }`}
                         >
-                          {cond === 'GOOD' ? 'Bình Thường' : cond === 'DAMAGED' ? 'Bị Hỏng' : 'Bị Mất'}
+                          {cond === 'GOOD' ? 'Bình thường' : cond === 'DAMAGED' ? 'Bị hỏng' : 'Bị mất'}
                         </button>
                       ))}
                     </div>
 
                     {currentCond.condition !== 'GOOD' && (
-                      <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-xs text-rose-300">
-                        <span>Phí bồi thường:</span>
-                        <span className="font-bold">{currentCond.customPenaltyFee.toLocaleString()} đ</span>
+                      <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs text-rose-500 tabular-nums">
+                        <span>Phí bồi thường</span>
+                        <span className="font-semibold">{currentCond.customPenaltyFee.toLocaleString('vi-VN')} đ</span>
                       </div>
                     )}
                   </div>
@@ -932,40 +923,41 @@ export default function RentalsPage() {
               })}
             </div>
 
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-400">
-                <span>Tiền cọc ban đầu đã thu:</span>
-                <span className="font-bold text-white">
-                  {selectedTicketForReturn.totalDepositAmount.toLocaleString()} đ
+            <div className="phanta-subcard p-4 space-y-2 text-xs tabular-nums">
+              <div className="flex justify-between text-[var(--text-sub)]">
+                <span>Tiền cọc ban đầu đã thu</span>
+                <span className="font-semibold text-[var(--text-heading)]">
+                  {selectedTicketForReturn.totalDepositAmount.toLocaleString('vi-VN')} đ
                 </span>
               </div>
-              <div className="flex justify-between text-rose-400">
-                <span>Tổng tiền phạt bồi thường:</span>
-                <span className="font-bold">
+              <div className="flex justify-between text-rose-500">
+                <span>Tổng tiền phạt bồi thường</span>
+                <span className="font-semibold">
                   {Object.values(returnConditions)
                     .reduce((sum, c) => sum + (c.customPenaltyFee || 0), 0)
-                    .toLocaleString()}{' '}
+                    .toLocaleString('vi-VN')}{' '}
                   đ
                 </span>
               </div>
-              <div className="flex justify-between text-emerald-400 text-sm font-bold pt-2 border-t border-slate-800">
-                <span>Số tiền hoàn cọc lại cho khách:</span>
+              <div className="flex justify-between text-[var(--pitch-green)] text-sm font-heading font-semibold pt-2 border-t border-[var(--border-subtle)]">
+                <span>Số tiền hoàn cọc cho khách</span>
                 <span className="text-base">
                   {Math.max(
                     0,
                     selectedTicketForReturn.totalDepositAmount -
                       Object.values(returnConditions).reduce((sum, c) => sum + (c.customPenaltyFee || 0), 0),
-                  ).toLocaleString()}{' '}
+                  ).toLocaleString('vi-VN')}{' '}
                   đ
                 </span>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={handleConfirmReturn}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-sm uppercase tracking-wider transition shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+              className="phanta-btn-primary w-full py-3 text-xs"
             >
-              Xác Nhận Quyết Toán & Hoàn Cọc
+              Xác nhận quyết toán và hoàn cọc
             </button>
           </div>
         </div>
@@ -973,19 +965,16 @@ export default function RentalsPage() {
 
       {/* ADD / EDIT EQUIPMENT MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <form
-            onSubmit={handleSaveEquipment}
-            className="bg-[#0d121f] border border-slate-800 rounded-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl"
-          >
-            <div className="flex justify-between items-start border-b border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-white">
-                {editingEquipment ? 'Chỉnh Sửa Thiết Bị' : 'Thêm Thiết Bị Kho Mới'}
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <form onSubmit={handleSaveEquipment} className="phanta-card w-full max-w-lg p-6 space-y-4">
+            <div className="flex justify-between items-start border-b border-[var(--border-subtle)] pb-3">
+              <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)]">
+                {editingEquipment ? 'Chỉnh sửa thiết bị' : 'Thêm thiết bị kho mới'}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-slate-400 hover:text-white"
+                className="text-[var(--text-sub)] hover:text-[var(--text-heading)]"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -994,135 +983,124 @@ export default function RentalsPage() {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Mã Thiết Bị (*)</label>
+                  <label className="font-medium text-[var(--text-sub)]">Mã thiết bị</label>
                   <input
                     type="text"
                     required
                     value={equipmentForm.code}
                     onChange={(e) => setEquipmentForm({ ...equipmentForm, code: e.target.value })}
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Môn Thể Thao</label>
+                  <label className="font-medium text-[var(--text-sub)]">Môn thể thao</label>
                   <select
                     value={equipmentForm.sportType}
                     onChange={(e) => setEquipmentForm({ ...equipmentForm, sportType: e.target.value })}
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                   >
-                    <option value="FOOTBALL">Bóng Đá</option>
+                    <option value="FOOTBALL">Bóng đá</option>
                     <option value="TENNIS">Tennis</option>
-                    <option value="BADMINTON">Cầu Lông</option>
-                    <option value="BASKETBALL">Bóng Rổ</option>
+                    <option value="BADMINTON">Cầu lông</option>
+                    <option value="BASKETBALL">Bóng rổ</option>
                     <option value="GENERAL">Chung</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-slate-400 uppercase">Tên Thiết Bị (*)</label>
+                <label className="font-medium text-[var(--text-sub)]">Tên thiết bị</label>
                 <input
                   type="text"
                   required
                   placeholder="Vợt Tennis Pro Staff"
                   value={equipmentForm.name}
                   onChange={(e) => setEquipmentForm({ ...equipmentForm, name: e.target.value })}
-                  className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Cách Tính Giá</label>
+                  <label className="font-medium text-[var(--text-sub)]">Cách tính giá</label>
                   <select
                     value={equipmentForm.pricingType}
                     onChange={(e) => setEquipmentForm({ ...equipmentForm, pricingType: e.target.value })}
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] focus:outline-none focus:border-[var(--pitch-green)]"
                   >
-                    <option value="PER_TURN">Theo Lượt / Buổi</option>
-                    <option value="HOURLY">Theo Giờ</option>
+                    <option value="PER_TURN">Theo lượt / buổi</option>
+                    <option value="HOURLY">Theo giờ</option>
                   </select>
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Giá Thuê (VND) (*)</label>
+                  <label className="font-medium text-[var(--text-sub)]">Giá thuê (VND)</label>
                   <input
                     type="number"
                     min="0"
                     required
                     value={equipmentForm.price}
                     onChange={(e) => setEquipmentForm({ ...equipmentForm, price: Number(e.target.value) })}
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] tabular-nums focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Tiền Cọc</label>
+                  <label className="font-medium text-[var(--text-sub)]">Tiền cọc</label>
                   <input
                     type="number"
                     min="0"
                     value={equipmentForm.depositAmount}
-                    onChange={(e) =>
-                      setEquipmentForm({ ...equipmentForm, depositAmount: Number(e.target.value) })
-                    }
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setEquipmentForm({ ...equipmentForm, depositAmount: Number(e.target.value) })}
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] tabular-nums focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Phí Hỏng</label>
+                  <label className="font-medium text-[var(--text-sub)]">Phí hỏng</label>
                   <input
                     type="number"
                     min="0"
                     value={equipmentForm.damageFee}
-                    onChange={(e) =>
-                      setEquipmentForm({ ...equipmentForm, damageFee: Number(e.target.value) })
-                    }
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setEquipmentForm({ ...equipmentForm, damageFee: Number(e.target.value) })}
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] tabular-nums focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-400 uppercase">Phí Mất</label>
+                  <label className="font-medium text-[var(--text-sub)]">Phí mất</label>
                   <input
                     type="number"
                     min="0"
                     value={equipmentForm.lostFee}
-                    onChange={(e) =>
-                      setEquipmentForm({ ...equipmentForm, lostFee: Number(e.target.value) })
-                    }
-                    className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                    onChange={(e) => setEquipmentForm({ ...equipmentForm, lostFee: Number(e.target.value) })}
+                    className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] tabular-nums focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-slate-400 uppercase">Tổng Số Lượng Kho (*)</label>
+                <label className="font-medium text-[var(--text-sub)]">Tổng số lượng kho</label>
                 <input
                   type="number"
                   min="1"
                   required
                   value={equipmentForm.totalQuantity}
-                  onChange={(e) =>
-                    setEquipmentForm({ ...equipmentForm, totalQuantity: Number(e.target.value) })
-                  }
-                  className="w-full mt-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-500"
+                  onChange={(e) => setEquipmentForm({ ...equipmentForm, totalQuantity: Number(e.target.value) })}
+                  className="w-full mt-1 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl px-3 py-2 text-[var(--text-main)] tabular-nums focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition"
+                className="phanta-btn-secondary px-4 py-2 text-xs"
               >
                 Hủy
               </button>
-              <button
-                type="submit"
-                className="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-              >
-                Lưu Dụng Cụ
+              <button type="submit" className="phanta-btn-primary px-4 py-2 text-xs">
+                Lưu dụng cụ
               </button>
             </div>
           </form>

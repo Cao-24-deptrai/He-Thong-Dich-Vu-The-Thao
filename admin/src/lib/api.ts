@@ -540,12 +540,18 @@ class ApiService {
     const token = res.accessToken || res.access_token || '';
     if (typeof window !== 'undefined') {
       this.clearAuthTokens();
-      const targetStorage = options?.persistent === false ? sessionStorage : localStorage;
-      if (token) targetStorage.setItem('access_token', token);
-      if (res.refreshToken) targetStorage.setItem('refresh_token', res.refreshToken);
+      if (token) {
+        localStorage.setItem('access_token', token);
+        sessionStorage.setItem('access_token', token);
+      }
+      if (res.refreshToken) {
+        localStorage.setItem('refresh_token', res.refreshToken);
+        sessionStorage.setItem('refresh_token', res.refreshToken);
+      }
       if (res.user) {
         try {
-          targetStorage.setItem('admin_user', JSON.stringify(res.user));
+          localStorage.setItem('admin_user', JSON.stringify(res.user));
+          sessionStorage.setItem('admin_user', JSON.stringify(res.user));
         } catch (e) {
           console.warn('Failed to save user to storage:', e);
         }

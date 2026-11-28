@@ -3,14 +3,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  Building2, 
-  Plus, 
-  MapPin, 
-  Clock, 
-  DollarSign, 
-  Layers, 
-  Sparkles, 
+import {
+  Building2,
+  Plus,
+  MapPin,
+  Clock,
+  DollarSign,
+  Layers,
+  Sparkles,
   AlertCircle,
   X,
   Edit2,
@@ -21,30 +21,28 @@ import {
   RotateCcw,
   Search,
   RefreshCw,
-  SlidersHorizontal,
-  Info
 } from 'lucide-react';
 import { api, Facility, Venue, PricingRule, User } from '@/lib/api';
 
 const SPORT_TYPES = [
-  { value: 'ALL', label: 'Tất cả bộ môn', icon: '🏆' },
-  { value: 'FOOTBALL', label: 'Bóng đá (Sân 5 / 7 / 11)', icon: '⚽' },
-  { value: 'BASKETBALL', label: 'Bóng rổ tiêu chuẩn', icon: '🏀' },
-  { value: 'BADMINTON', label: 'Cầu lông Chuyên nghiệp', icon: '🏸' },
-  { value: 'PICKLEBALL', label: 'Pickleball Tiêu chuẩn QT', icon: '🏓' },
-  { value: 'TENNIS', label: 'Quần vợt Tennis', icon: '🎾' },
-  { value: 'VOLLEYBALL', label: 'Bóng chuyền thi đấu', icon: '🏐' },
+  { value: 'ALL', label: 'Tất cả bộ môn' },
+  { value: 'FOOTBALL', label: 'Bóng đá (Sân 5 / 7 / 11)' },
+  { value: 'BASKETBALL', label: 'Bóng rổ tiêu chuẩn' },
+  { value: 'BADMINTON', label: 'Cầu lông chuyên nghiệp' },
+  { value: 'PICKLEBALL', label: 'Pickleball tiêu chuẩn' },
+  { value: 'TENNIS', label: 'Quần vợt Tennis' },
+  { value: 'VOLLEYBALL', label: 'Bóng chuyền thi đấu' },
 ];
 
 const COURT_SPORTS = [
-  { value: 'FOOTBALL_5', label: '⚽ Bóng đá - Sân 5 người (Futsal)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 5', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { value: 'FOOTBALL_7', label: '⚽ Bóng đá - Sân 7 người (Mini)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 7', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { value: 'FOOTBALL_11', label: '⚽ Bóng đá - Sân 11 người (Tiêu chuẩn)', sport: 'FOOTBALL', badge: 'BÓNG ĐÁ - SÂN 11', color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-  { value: 'BASKETBALL', label: '🏀 Bóng rổ tiêu chuẩn (Indoor / Outdoor)', sport: 'BASKETBALL', badge: 'BÓNG RỔ', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  { value: 'BADMINTON', label: '🏸 Cầu lông thảm BWF chuyên nghiệp', sport: 'BADMINTON', badge: 'CẦU LÔNG', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-  { value: 'PICKLEBALL', label: '🏓 Pickleball tiêu chuẩn QT', sport: 'PICKLEBALL', badge: 'PICKLEBALL', color: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
-  { value: 'TENNIS', label: '🎾 Quần vợt Tennis (Mặt cứng / Đất nện)', sport: 'TENNIS', badge: 'QUẦN VỢT TENNIS', color: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
-  { value: 'VOLLEYBALL', label: '🏐 Bóng chuyền thi đấu', sport: 'VOLLEYBALL', badge: 'BÓNG CHUYỀN', color: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+  { value: 'FOOTBALL_5', label: 'Bóng đá - Sân 5 người (Futsal)', sport: 'FOOTBALL', badge: 'Bóng đá - Sân 5' },
+  { value: 'FOOTBALL_7', label: 'Bóng đá - Sân 7 người (Mini)', sport: 'FOOTBALL', badge: 'Bóng đá - Sân 7' },
+  { value: 'FOOTBALL_11', label: 'Bóng đá - Sân 11 người (Tiêu chuẩn)', sport: 'FOOTBALL', badge: 'Bóng đá - Sân 11' },
+  { value: 'BASKETBALL', label: 'Bóng rổ tiêu chuẩn (Trong nhà / Ngoài trời)', sport: 'BASKETBALL', badge: 'Bóng rổ' },
+  { value: 'BADMINTON', label: 'Cầu lông thảm BWF chuyên nghiệp', sport: 'BADMINTON', badge: 'Cầu lông' },
+  { value: 'PICKLEBALL', label: 'Pickleball tiêu chuẩn quốc tế', sport: 'PICKLEBALL', badge: 'Pickleball' },
+  { value: 'TENNIS', label: 'Quần vợt Tennis (Mặt cứng / Đất nện)', sport: 'TENNIS', badge: 'Quần vợt Tennis' },
+  { value: 'VOLLEYBALL', label: 'Bóng chuyền thi đấu', sport: 'VOLLEYBALL', badge: 'Bóng chuyền' },
 ];
 
 function getCourtSportBadge(venue: Venue) {
@@ -54,40 +52,21 @@ function getCourtSportBadge(venue: Venue) {
   const matched = COURT_SPORTS.find((cs) => cs.value === vType || cs.value === (venue as any).type);
   if (matched) return matched;
 
-  if (vName.includes('FUTSAL') || vName.includes('SÂN 5') || vType.includes('FUTSAL') || vType.includes('5')) {
-    return COURT_SPORTS[0];
-  }
-  if (vName.includes('SÂN 7') || vType.includes('7')) {
-    return COURT_SPORTS[1];
-  }
-  if (vName.includes('SÂN 11') || vType.includes('11')) {
-    return COURT_SPORTS[2];
-  }
-  if (vName.includes('BÓNG ĐÁ') || vType.includes('FOOTBALL')) {
-    return COURT_SPORTS[0];
-  }
-  if (vName.includes('BÓNG RỔ') || vType.includes('BASKETBALL')) {
-    return COURT_SPORTS[3];
-  }
-  if (vName.includes('CẦU LÔNG') || vType.includes('BADMINTON')) {
-    return COURT_SPORTS[4];
-  }
-  if (vName.includes('PICKLEBALL') || vType.includes('PICKLEBALL')) {
-    return COURT_SPORTS[5];
-  }
-  if (vName.includes('TENNIS') || vName.includes('QUẦN VỢT') || vType.includes('TENNIS')) {
-    return COURT_SPORTS[6];
-  }
-  if (vName.includes('BÓNG CHUYỀN') || vType.includes('VOLLEYBALL')) {
-    return COURT_SPORTS[7];
-  }
+  if (vName.includes('FUTSAL') || vName.includes('SÂN 5') || vType.includes('FUTSAL') || vType.includes('5')) return COURT_SPORTS[0];
+  if (vName.includes('SÂN 7') || vType.includes('7')) return COURT_SPORTS[1];
+  if (vName.includes('SÂN 11') || vType.includes('11')) return COURT_SPORTS[2];
+  if (vName.includes('BÓNG ĐÁ') || vType.includes('FOOTBALL')) return COURT_SPORTS[0];
+  if (vName.includes('BÓNG RỔ') || vType.includes('BASKETBALL')) return COURT_SPORTS[3];
+  if (vName.includes('CẦU LÔNG') || vType.includes('BADMINTON')) return COURT_SPORTS[4];
+  if (vName.includes('PICKLEBALL') || vType.includes('PICKLEBALL')) return COURT_SPORTS[5];
+  if (vName.includes('TENNIS') || vName.includes('QUẦN VỢT') || vType.includes('TENNIS')) return COURT_SPORTS[6];
+  if (vName.includes('BÓNG CHUYỀN') || vType.includes('VOLLEYBALL')) return COURT_SPORTS[7];
 
   return {
     value: venue.venueType || 'SPORTS',
     label: venue.venueType || 'Sân thể thao',
     sport: 'OTHER',
-    badge: venue.venueType || 'THỂ THAO',
-    color: 'bg-slate-800 text-cyan-300 border-slate-700',
+    badge: venue.venueType || 'Thể thao',
   };
 }
 
@@ -103,17 +82,14 @@ export default function FacilitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Filters
   const [selectedSport, setSelectedSport] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [includeInactiveVenues, setIncludeInactiveVenues] = useState(false);
 
-  // Modals
   const [showEditFacilityModal, setShowEditFacilityModal] = useState(false);
   const [showVenueModal, setShowVenueModal] = useState(false);
   const [showEditVenueModal, setShowEditVenueModal] = useState(false);
 
-  // Delete Confirm Modal State
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
     id: string;
@@ -127,11 +103,9 @@ export default function FacilitiesPage() {
     hardDelete: false,
   });
 
-  // Modal Purge All
   const [showPurgeModal, setShowPurgeModal] = useState(false);
   const [purging, setPurging] = useState(false);
 
-  // Edit Facility form
   const [editFacilityForm, setEditFacilityForm] = useState({
     _id: '',
     name: '',
@@ -143,7 +117,6 @@ export default function FacilitiesPage() {
     isActive: true,
   });
 
-  // Create Venue form
   const [venueForm, setVenueForm] = useState({
     name: '',
     venueType: 'FOOTBALL_5',
@@ -159,7 +132,6 @@ export default function FacilitiesPage() {
     hoursBeforeForNoRefund: 2,
   });
 
-  // Edit Venue form
   const [editVenueForm, setEditVenueForm] = useState({
     _id: '',
     name: '',
@@ -186,15 +158,10 @@ export default function FacilitiesPage() {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch facilities
       const facList = await api.getFacilities(true);
       if (facList.length > 0) {
-        // Pick primary facility or the first one
-        const primary = facList.find(f => f.name.includes('Phanta')) || facList[0];
+        const primary = facList.find((f) => f.name.includes('Phanta')) || facList[0];
         setFacility(primary);
-
-        // Fetch venues for this facility
         setVenuesLoading(true);
         const venueList = await api.getVenues(primary._id, includeInactiveVenues);
         setVenues(venueList);
@@ -221,25 +188,22 @@ export default function FacilitiesPage() {
     loadData();
   }, [includeInactiveVenues, router]);
 
-  // Consolidate database to single facility
   const handleConsolidate = async () => {
     try {
       setIsConsolidating(true);
       const res = await api.consolidateFacilities();
-      notifySuccess(`Đã hợp nhất thành công! Cập nhật ${res.venuesUpdatedCount || 0} sân bãi và dọn dẹp ${res.deletedFacilitiesCount || 0} cơ sở dư thừa.`);
+      notifySuccess(`Đã hợp nhất thành công. Cập nhật ${res.venuesUpdatedCount || 0} sân bãi và dọn dẹp ${res.deletedFacilitiesCount || 0} cơ sở dư thừa.`);
       await loadData();
     } catch (err: any) {
-      setError(err.message || 'Lỗi hợp nhất cơ sở dữ liệu');
+      setError(err.message || 'Lỗi hợp nhất dữ liệu cơ sở');
     } finally {
       setIsConsolidating(false);
     }
   };
 
-  // Open Edit Facility modal
   const openEditFacility = (fac: Facility) => {
-    const sportTypeStr = (fac.sportTypes && fac.sportTypes.length > 0)
-      ? fac.sportTypes[0]
-      : (fac.sportType || 'FOOTBALL');
+    const sportTypeStr =
+      fac.sportTypes && fac.sportTypes.length > 0 ? fac.sportTypes[0] : fac.sportType || 'FOOTBALL';
 
     setEditFacilityForm({
       _id: fac._id,
@@ -254,7 +218,6 @@ export default function FacilitiesPage() {
     setShowEditFacilityModal(true);
   };
 
-  // Update Facility
   const handleUpdateFacility = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -269,14 +232,13 @@ export default function FacilitiesPage() {
         isActive: editFacilityForm.isActive,
       });
       setShowEditFacilityModal(false);
-      notifySuccess(`Cập nhật thông tin cơ sở "${editFacilityForm.name}" thành công!`);
+      notifySuccess(`Cập nhật thông tin cơ sở "${editFacilityForm.name}" thành công.`);
       await loadData();
     } catch (err: any) {
       alert('Lỗi cập nhật cơ sở: ' + (err.message || 'Thất bại'));
     }
   };
 
-  // Create Venue
   const handleCreateVenue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!facility) return;
@@ -323,14 +285,13 @@ export default function FacilitiesPage() {
         hoursBeforeForFullRefund: 24,
         hoursBeforeForNoRefund: 2,
       });
-      notifySuccess(`Thêm sân "${venueForm.name}" thành công!`);
+      notifySuccess(`Thêm sân "${venueForm.name}" thành công.`);
       await loadData();
     } catch (err: any) {
       alert('Lỗi thêm sân: ' + (err.message || 'Thất bại'));
     }
   };
 
-  // Open Edit Venue
   const openEditVenue = (venue: Venue) => {
     const peakRule = (venue.pricingConfig || (venue as any).pricingRules?.peakHours || [])[0];
     const defaultPriceVal = (venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000;
@@ -356,7 +317,6 @@ export default function FacilitiesPage() {
     setShowEditVenueModal(true);
   };
 
-  // Update Venue
   const handleUpdateVenue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!facility) return;
@@ -389,14 +349,13 @@ export default function FacilitiesPage() {
       });
 
       setShowEditVenueModal(false);
-      notifySuccess(`Cập nhật thông tin sân "${editVenueForm.name}" thành công!`);
+      notifySuccess(`Cập nhật thông tin sân "${editVenueForm.name}" thành công.`);
       await loadData();
     } catch (err: any) {
       alert('Lỗi cập nhật sân: ' + (err.message || 'Thất bại'));
     }
   };
 
-  // Delete Venue Confirmation
   const confirmDeleteVenue = (venue: Venue) => {
     setDeleteDialog({
       isOpen: true,
@@ -407,11 +366,10 @@ export default function FacilitiesPage() {
     });
   };
 
-  // Execute Delete Venue
   const executeDelete = async () => {
     try {
       await api.deleteVenue(deleteDialog.id, deleteDialog.hardDelete);
-      notifySuccess(`Đã xóa/vô hiệu hóa sân "${deleteDialog.name}" thành công!`);
+      notifySuccess(`Đã xóa/vô hiệu hóa sân "${deleteDialog.name}" thành công.`);
       setDeleteDialog({ ...deleteDialog, isOpen: false });
       await loadData();
     } catch (err: any) {
@@ -419,7 +377,7 @@ export default function FacilitiesPage() {
       if (errData.errorCode === 'VENUE_HAS_ACTIVE_BOOKINGS') {
         setDeleteDialog((prev) => ({
           ...prev,
-          errorNote: `Không thể xóa sân này vì đang có ${errData.activeBookingCount || ''} đơn đặt chỗ trong tương lai (trạng thái HELD hoặc CONFIRMED). Vui lòng xử lý các đơn đặt chỗ trước khi đóng sân!`,
+          errorNote: `Không thể xóa sân này vì đang có ${errData.activeBookingCount || ''} đơn đặt chỗ trong tương lai. Vui lòng xử lý các đơn đặt chỗ trước khi đóng sân.`,
         }));
       } else {
         setDeleteDialog((prev) => ({
@@ -430,13 +388,12 @@ export default function FacilitiesPage() {
     }
   };
 
-  // Purge All Venues
   const handlePurgeAllVenues = async () => {
     if (!facility) return;
     try {
       setPurging(true);
       await api.purgeVenues(facility._id);
-      notifySuccess(`Đã dọn dẹp sạch toàn bộ sân bãi của cơ sở thành công!`);
+      notifySuccess('Đã dọn dẹp sạch toàn bộ sân bãi của cơ sở thành công.');
       setShowPurgeModal(false);
       await loadData();
     } catch (err: any) {
@@ -446,48 +403,29 @@ export default function FacilitiesPage() {
     }
   };
 
-  // Determine if venue belongs to courts/sports (Excluding Gym & Gaming)
   const isCourtSport = (venue: Venue) => {
     const vName = (venue.name || '').toLowerCase();
     const vType = (venue.venueType || (venue as any).type || '').toLowerCase();
-    // Exclude gym and gaming (they have dedicated modules)
     if (vName.includes('cyber') || vName.includes('ps5') || vName.includes('gaming') || vName.includes('std-') || vType.includes('gaming') || vType.includes('esport')) return false;
     if (vName.includes('gym') || vName.includes('fitness') || vType.includes('gym')) return false;
     return true;
   };
 
-  // Get sport category for filtering
   const getVenueSportCategory = (venue: Venue): string => {
     const vName = (venue.name || '').toLowerCase();
     const vType = (venue.venueType || (venue as any).type || '').toUpperCase();
 
-    if (vType.startsWith('FOOTBALL') || vType.includes('FUTSAL') || vName.includes('bóng đá') || vName.includes('futsal') || vName.includes('sân 5') || vName.includes('sân 7') || vName.includes('sân 11')) {
-      return 'FOOTBALL';
-    }
-    if (vType === 'BASKETBALL' || vName.includes('bóng rổ') || vName.includes('basketball')) {
-      return 'BASKETBALL';
-    }
-    if (vType === 'BADMINTON' || vName.includes('cầu lông') || vName.includes('badminton')) {
-      return 'BADMINTON';
-    }
-    if (vType === 'PICKLEBALL' || vName.includes('pickleball')) {
-      return 'PICKLEBALL';
-    }
-    if (vType === 'TENNIS' || vName.includes('tennis') || vName.includes('quần vợt')) {
-      return 'TENNIS';
-    }
-    if (vType === 'VOLLEYBALL' || vName.includes('bóng chuyền') || vName.includes('volleyball')) {
-      return 'VOLLEYBALL';
-    }
+    if (vType.startsWith('FOOTBALL') || vType.includes('FUTSAL') || vName.includes('bóng đá') || vName.includes('futsal') || vName.includes('sân 5') || vName.includes('sân 7') || vName.includes('sân 11')) return 'FOOTBALL';
+    if (vType === 'BASKETBALL' || vName.includes('bóng rổ') || vName.includes('basketball')) return 'BASKETBALL';
+    if (vType === 'BADMINTON' || vName.includes('cầu lông') || vName.includes('badminton')) return 'BADMINTON';
+    if (vType === 'PICKLEBALL' || vName.includes('pickleball')) return 'PICKLEBALL';
+    if (vType === 'TENNIS' || vName.includes('tennis') || vName.includes('quần vợt')) return 'TENNIS';
+    if (vType === 'VOLLEYBALL' || vName.includes('bóng chuyền') || vName.includes('volleyball')) return 'VOLLEYBALL';
     return 'OTHER';
   };
 
-  // Pure sports court venues
-  const courtVenues = useMemo(() => {
-    return venues.filter((v) => isCourtSport(v));
-  }, [venues]);
+  const courtVenues = useMemo(() => venues.filter((v) => isCourtSport(v)), [venues]);
 
-  // Count per sport category
   const sportCounts = useMemo(() => {
     const counts: Record<string, number> = { ALL: courtVenues.length };
     SPORT_TYPES.forEach((st) => {
@@ -498,42 +436,32 @@ export default function FacilitiesPage() {
     return counts;
   }, [courtVenues]);
 
-  // Filtered venues
   const filteredVenues = useMemo(() => {
     return courtVenues.filter((venue) => {
-      // Search term
-      if (searchTerm.trim() && !venue.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) {
-        return false;
-      }
-
-      // Sport filter
-      if (selectedSport !== 'ALL') {
-        if (getVenueSportCategory(venue) !== selectedSport) {
-          return false;
-        }
-      }
-
+      if (searchTerm.trim() && !venue.name.toLowerCase().includes(searchTerm.toLowerCase().trim())) return false;
+      if (selectedSport !== 'ALL' && getVenueSportCategory(venue) !== selectedSport) return false;
       return true;
     });
   }, [courtVenues, searchTerm, selectedSport]);
 
-  const activeVenuesCount = courtVenues.filter(v => v.isActive !== false).length;
+  const activeVenuesCount = courtVenues.filter((v) => v.isActive !== false).length;
 
   if (isStaffDenied || currentUser?.role === 'STAFF') {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-        <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-4 shadow-[0_0_20px_rgba(244,63,94,0.2)]">
-          <AlertCircle className="w-8 h-8" />
+        <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 mb-4">
+          <AlertCircle className="w-7 h-7" strokeWidth={1.75} />
         </div>
-        <h2 className="text-xl font-bold text-white tracking-tight mb-2">Truy Cập Bị Từ Chối</h2>
-        <p className="text-sm text-slate-400 max-w-md mb-6 leading-relaxed">
-          Tài khoản Nhân viên quầy không có quyền hạn truy cập hoặc chỉnh sửa khu vực <span className="text-rose-400 font-semibold">Quản Lý Sân Bãi & Biểu Giá</span>. Đang chuyển hướng về trang làm việc...
+        <h2 className="font-heading font-semibold text-xl text-[var(--text-heading)] mb-2">Truy cập bị từ chối</h2>
+        <p className="text-xs text-[var(--text-sub)] max-w-md mb-6 leading-relaxed">
+          Tài khoản nhân viên quầy không có quyền truy cập khu vực Quản lý sân bãi và biểu giá.
         </p>
         <button
+          type="button"
           onClick={() => router.replace('/walk-in')}
-          className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+          className="phanta-btn-primary px-5 py-2.5 text-xs"
         >
-          Quay lại Đặt tại Quầy
+          Quay lại Đặt tại quầy
         </button>
       </div>
     );
@@ -541,178 +469,162 @@ export default function FacilitiesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header Bar */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-slate-950 font-bold shadow-lg shadow-cyan-500/20">
-              <Building2 className="w-6 h-6 text-slate-950" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                Quản Lý Sân Bãi & Biểu Giá
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-heading tabular-nums">
-                  SINGLE FACILITY
-                </span>
-              </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Thiết lập hệ thống sân, giá giờ tiêu chuẩn, biểu giá giờ vàng & quy chế hoạt động
-              </p>
-            </div>
-          </div>
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <Building2 className="w-6 h-6 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Quản lý sân bãi & Biểu giá</span>
+          </h1>
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Thiết lập hệ thống sân, giá giờ tiêu chuẩn, biểu giá giờ vàng và quy chế hoạt động
+          </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <button
+            type="button"
             onClick={handleConsolidate}
             disabled={isConsolidating}
-            title="Đồng bộ toàn bộ sân và dọn dẹp các cơ sở trùng lặp trong cơ sở dữ liệu"
-            className="inline-flex items-center px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-2xl text-xs font-bold transition disabled:opacity-50"
+            className="phanta-btn-secondary px-3.5 py-2 text-xs flex items-center gap-1.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 text-cyan-400 ${isConsolidating ? 'animate-spin' : ''}`} />
-            <span>{isConsolidating ? 'Đang đồng bộ' : 'Đồng Bộ 1 Cơ Sở'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-[var(--pitch-green)] ${isConsolidating ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+            <span>{isConsolidating ? 'Đang đồng bộ' : 'Đồng bộ cơ sở'}</span>
           </button>
 
           {courtVenues.length > 0 && (
             <button
+              type="button"
               onClick={() => setShowPurgeModal(true)}
-              title="Xóa toàn bộ các sân hiện tại để tự thêm sân lại từ đầu"
-              className="inline-flex items-center px-3.5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-2xl text-xs font-bold transition active:scale-95"
+              className="px-3.5 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
             >
-              <Trash2 className="w-3.5 h-3.5 mr-1.5 text-rose-400" />
-              <span>Xóa Tất Cả Sân ({courtVenues.length})</span>
+              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+              <span>Xóa tất cả sân ({courtVenues.length})</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => setShowVenueModal(true)}
-            className="inline-flex items-center px-4 py-2.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-slate-950 font-bold rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
+            className="phanta-btn-primary px-4 py-2 text-xs flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4 mr-1.5" />
-            + THÊM SÂN MỚI
+            <Plus className="w-4 h-4" strokeWidth={1.75} />
+            <span>Thêm sân mới</span>
           </button>
         </div>
       </div>
 
-      {/* Success Notification */}
+      {/* Notifications */}
       {successMessage && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between shadow-lg backdrop-blur-md">
+        <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--pitch-green)] text-xs flex items-center justify-between font-medium">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
-            <span className="font-bold">{successMessage}</span>
+            <CheckCircle2 className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+            <span>{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage(null)} className="text-emerald-400 hover:text-white">
+          <button type="button" onClick={() => setSuccessMessage(null)} className="text-[var(--text-sub)] hover:text-[var(--text-heading)]">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Error Banner */}
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+        <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-center justify-between font-medium">
           <div className="flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+            <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.75} />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError(null)} className="text-rose-400 hover:text-white">
+          <button type="button" onClick={() => setError(null)} className="text-[var(--text-sub)] hover:text-[var(--text-heading)]">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Primary Facility Information Banner */}
+      {/* Primary Facility Banner */}
       {loading ? (
-        <div className="p-8 text-center text-slate-500 bg-slate-900/60 rounded-3xl border border-slate-800">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
+        <div className="phanta-card p-10 text-center text-xs text-[var(--text-sub)]">
           Đang tải thông tin cơ sở Phanta Sports...
         </div>
       ) : facility ? (
-        <div className="bg-gradient-to-br from-slate-900/90 via-[#0d1627]/90 to-slate-900/90 p-5 sm:p-6 rounded-3xl border border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.1)] backdrop-blur-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 relative z-10">
+        <div className="phanta-card p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
             <div className="space-y-2">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-2xl p-2 rounded-2xl bg-cyan-500/10 border border-cyan-500/30">
-                  ⚡
-                </span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="p-2.5 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[var(--pitch-green)]">
+                  <Building2 className="w-5 h-5" strokeWidth={1.75} />
+                </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-xl font-bold text-white tracking-tight">
+                    <h2 className="font-heading font-semibold text-xl text-[var(--text-heading)]">
                       {facility.name}
                     </h2>
-                    <span className="px-2 py-0.5 text-[10px] font-heading tabular-nums font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                      CƠ SỞ DUY NHẤT
-                    </span>
                     {facility.isActive === false && (
-                      <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                        TẠM ĐÓNG
+                      <span className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                        Tạm đóng
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 text-xs text-slate-300 mt-1">
-                    <MapPin className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs text-[var(--text-sub)] mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
                     <span>{facility.address || '30 Nguyễn Kim, Phường 6, Quận 10, TP.HCM'}</span>
                   </div>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-400 pl-11 max-w-2xl leading-relaxed">
-                {facility.description || 'Tổ hợp thể thao cao cấp tích hợp: Sân Bóng đá cỏ nhân tạo, Cầu lông thảm PVC tiêu chuẩn BWF, Pickleball, Tennis và Cyber Game VIP Lounge.'}
+              <p className="text-xs text-[var(--text-sub)] pl-12 max-w-2xl leading-relaxed">
+                {facility.description || 'Tổ hợp thể thao tích hợp sân bóng đá cỏ nhân tạo, cầu lông thảm BWF, Pickleball, Tennis và Cyber Game Lounge.'}
               </p>
             </div>
 
-            <div className="flex items-center gap-3 lg:self-center flex-wrap pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
-              {/* Quick stats */}
-              <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
-                <span className="block text-[10px] uppercase font-bold text-slate-400">Tổng số sân</span>
-                <span className="text-lg font-bold text-white font-heading tabular-nums">{courtVenues.length}</span>
+            <div className="flex items-center gap-3 flex-wrap pt-3 lg:pt-0 border-t lg:border-t-0 border-[var(--border-subtle)]">
+              <div className="phanta-subcard px-4 py-2 text-center min-w-[90px] tabular-nums">
+                <span className="block text-[11px] text-[var(--text-sub)]">Tổng số sân</span>
+                <span className="text-lg font-heading font-semibold text-[var(--text-heading)]">{courtVenues.length}</span>
               </div>
-              <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[90px]">
-                <span className="block text-[10px] uppercase font-bold text-slate-400">Đang mở</span>
-                <span className="text-lg font-bold text-emerald-400 font-heading tabular-nums">{activeVenuesCount}</span>
+              <div className="phanta-subcard px-4 py-2 text-center min-w-[90px] tabular-nums">
+                <span className="block text-[11px] text-[var(--text-sub)]">Đang mở</span>
+                <span className="text-lg font-heading font-semibold text-[var(--pitch-green)]">{activeVenuesCount}</span>
               </div>
-              <div className="px-4 py-2 rounded-2xl bg-slate-950/60 border border-slate-800 text-center min-w-[110px]">
-                <span className="block text-[10px] uppercase font-bold text-slate-400">Giờ hoạt động</span>
-                <span className="text-xs font-bold text-cyan-300 font-heading tabular-nums mt-1 block">
+              <div className="phanta-subcard px-4 py-2 text-center min-w-[115px] tabular-nums">
+                <span className="block text-[11px] text-[var(--text-sub)]">Giờ hoạt động</span>
+                <span className="text-xs font-heading font-semibold text-[var(--text-heading)] mt-1 block">
                   {facility.openHour || '06:00'} - {facility.closeHour || '23:00'}
                 </span>
               </div>
 
               <button
+                type="button"
                 onClick={() => openEditFacility(facility)}
-                className="px-3.5 py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                className="phanta-btn-secondary px-3.5 py-2.5 text-xs flex items-center gap-1.5"
               >
-                <Edit2 className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Sửa Cơ Sở</span>
+                <Edit2 className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Sửa cơ sở</span>
               </button>
             </div>
           </div>
         </div>
       ) : null}
 
-      {/* Filter and Search Bar for Venues */}
+      {/* Filter & Search Bar */}
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Sport Filter Tabs */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             {SPORT_TYPES.map((st) => (
               <button
                 key={st.value}
+                type="button"
                 onClick={() => setSelectedSport(st.value)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium whitespace-nowrap border transition-colors ${
                   selectedSport === st.value
-                    ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
-                    : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
+                    ? 'bg-[var(--pitch-green)] text-[#0C0F0C] border-transparent font-semibold'
+                    : 'bg-[var(--bg-card)] text-[var(--text-sub)] border-[var(--border-subtle)] hover:text-[var(--text-heading)]'
                 }`}
               >
-                <span>{st.icon}</span>
                 <span>{st.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-heading tabular-nums font-bold ${
+                  className={`text-[11px] px-1.5 py-0.5 rounded-md tabular-nums ${
                     selectedSport === st.value
-                      ? 'bg-slate-950/30 text-slate-950 font-bold'
-                      : 'bg-slate-800 text-slate-300'
+                      ? 'bg-black/15 text-[#0C0F0C]'
+                      : 'bg-[var(--bg-card-inner)] text-[var(--text-sub)]'
                   }`}
                 >
                   {sportCounts[st.value] || 0}
@@ -721,28 +633,28 @@ export default function FacilitiesPage() {
             ))}
           </div>
 
-          {/* Right Tools */}
           <div className="flex items-center gap-2.5">
             <div className="relative flex-1 md:w-60">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-[var(--text-sub)] absolute left-3 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Tìm kiếm sân"
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-900 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                className="w-full pl-9 pr-3 py-2 text-xs bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--pitch-green)]"
               />
             </div>
 
             <button
+              type="button"
               onClick={() => setIncludeInactiveVenues(!includeInactiveVenues)}
-              className={`flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold border transition shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-colors shrink-0 ${
                 includeInactiveVenues
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                  ? 'bg-amber-500/15 text-[var(--burnt-orange)] border-amber-500/30'
+                  : 'phanta-btn-secondary'
               }`}
             >
-              {includeInactiveVenues ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+              {includeInactiveVenues ? <Eye className="w-3.5 h-3.5" strokeWidth={1.75} /> : <EyeOff className="w-3.5 h-3.5" strokeWidth={1.75} />}
               <span className="hidden sm:inline">Hiện sân ngừng hoạt động</span>
             </button>
           </div>
@@ -750,33 +662,31 @@ export default function FacilitiesPage() {
 
         {/* Venues Grid */}
         {venuesLoading ? (
-          <div className="p-16 text-center text-slate-500 bg-slate-900/60 rounded-3xl border border-slate-800">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-2"></div>
+          <div className="phanta-card p-16 text-center text-xs text-[var(--text-sub)]">
             Đang tải danh sách sân bãi...
           </div>
         ) : courtVenues.length === 0 ? (
-          <div className="p-16 text-center text-slate-400 bg-gradient-to-b from-slate-900/60 to-slate-950/80 rounded-3xl border border-dashed border-cyan-500/30">
-            <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">
-              🏟️
-            </div>
-            <p className="font-bold text-white text-lg">Hệ Thống Sân Bãi Đang Trống</p>
-            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto leading-relaxed">
-              Toàn bộ các sân cũ đã được dọn sạch. Bạn có thể bắt đầu tự thêm các sân thể thao mới (Bóng đá, Bóng rổ, Cầu lông, Pickleball, Tennis, Bóng chuyền...) vào cơ sở duy nhất.
+          <div className="phanta-card p-14 text-center border-dashed">
+            <Layers className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" strokeWidth={1.5} />
+            <p className="font-heading font-semibold text-base text-[var(--text-heading)]">Hệ thống sân bãi đang trống</p>
+            <p className="text-xs text-[var(--text-sub)] mt-1 max-w-md mx-auto leading-relaxed">
+              Chưa có sân thể thao nào được thiết lập. Bạn có thể bắt đầu thêm các sân mới vào cơ sở.
             </p>
             <button
+              type="button"
               onClick={() => setShowVenueModal(true)}
-              className="mt-5 inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold rounded-2xl text-xs shadow-lg shadow-emerald-500/20 hover:brightness-110 active:scale-95 transition"
+              className="phanta-btn-primary mt-5 inline-flex items-center px-4 py-2 text-xs gap-1.5"
             >
-              <Plus className="w-4 h-4 mr-1.5" />
-              + THÊM SÂN ĐẦU TIÊN
+              <Plus className="w-4 h-4" strokeWidth={1.75} />
+              <span>Thêm sân đầu tiên</span>
             </button>
           </div>
         ) : filteredVenues.length === 0 ? (
-          <div className="p-16 text-center text-slate-500 bg-slate-900/60 rounded-3xl border border-dashed border-slate-800">
-            <Layers className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="font-bold text-slate-300 text-base">Chưa tìm thấy sân nào thuộc bộ môn này</p>
-            <p className="text-xs text-slate-500 mt-1">
-              Thử chọn tab &quot;Tất cả bộ môn&quot; hoặc bấm nút &quot;+ THÊM SÂN MỚI&quot; để tạo sân cho bộ môn này.
+          <div className="phanta-card p-14 text-center border-dashed">
+            <Layers className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" strokeWidth={1.5} />
+            <p className="font-heading font-semibold text-base text-[var(--text-heading)]">Chưa tìm thấy sân nào thuộc bộ môn này</p>
+            <p className="text-xs text-[var(--text-sub)] mt-1">
+              Thử chọn mục &quot;Tất cả bộ môn&quot; hoặc bấm &quot;Thêm sân mới&quot; để tạo sân cho bộ môn này
             </p>
           </div>
         ) : (
@@ -785,85 +695,74 @@ export default function FacilitiesPage() {
               const isVenueActive = venue.isActive !== false;
               const opHours = venue.operatingHours || { openTime: '06:00', closeTime: '23:00' };
               const cancelPol = venue.cancellationPolicy || { hoursBeforeForFullRefund: 24, hoursBeforeForNoRefund: 2 };
-              const peakRules = (venue.pricingConfig || (venue as any).pricingRules?.peakHours || []);
+              const peakRules = venue.pricingConfig || (venue as any).pricingRules?.peakHours || [];
+              const badgeInfo = getCourtSportBadge(venue);
 
               return (
                 <div
                   key={venue._id}
-                  className={`bg-slate-900/90 p-5 rounded-3xl border backdrop-blur-md shadow-lg transition-all duration-200 relative flex flex-col justify-between ${
-                    isVenueActive
-                      ? 'border-slate-800/90 hover:border-cyan-500/50 hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]'
-                      : 'border-dashed border-rose-900/50 opacity-70 bg-slate-950/80'
+                  className={`phanta-card p-5 flex flex-col justify-between transition-colors ${
+                    isVenueActive ? 'phanta-card-hover' : 'opacity-70 border-dashed'
                   }`}
                 >
-                  {/* Card Header */}
                   <div>
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-white text-base leading-snug">{venue.name}</h3>
+                          <h3 className="font-heading font-semibold text-[var(--text-heading)] text-base leading-snug">
+                            {venue.name}
+                          </h3>
                           {!isVenueActive && (
-                            <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                              TẠM ĐÓNG
+                            <span className="px-2 py-0.5 text-[10px] font-medium rounded-md bg-rose-500/15 text-rose-500 border border-rose-500/30">
+                              Tạm đóng
                             </span>
                           )}
                         </div>
-                        {(() => {
-                          const badgeInfo = getCourtSportBadge(venue);
-                          return (
-                            <span className={`inline-flex items-center gap-1 mt-1 text-[10px] font-heading tabular-nums font-bold px-2 py-0.5 rounded-md border ${badgeInfo.color}`}>
-                              {badgeInfo.badge}
-                            </span>
-                          );
-                        })()}
+                        <span className="inline-flex items-center gap-1.5 mt-1.5 text-[11px] font-medium px-2.5 py-0.5 rounded-lg bg-[var(--bg-card-inner)] text-[var(--text-sub)] border border-[var(--border-subtle)]">
+                          <span className={`w-1.5 h-1.5 rounded-full ${isVenueActive ? 'bg-[var(--pitch-green)]' : 'bg-rose-500'}`} />
+                          <span>{badgeInfo.badge}</span>
+                        </span>
                       </div>
 
                       <div className="flex items-center gap-1.5">
                         <button
+                          type="button"
                           title="Sửa thông tin sân"
                           onClick={() => openEditVenue(venue)}
-                          className="p-1.5 rounded-xl bg-slate-800 hover:bg-cyan-600 text-slate-400 hover:text-white transition"
+                          className="phanta-btn-secondary p-1.5 rounded-lg"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
                         </button>
                         <button
+                          type="button"
                           title="Vô hiệu hóa sân"
                           onClick={() => confirmDeleteVenue(venue)}
-                          className="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white transition"
+                          className="phanta-btn-secondary p-1.5 rounded-lg hover:border-rose-500"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" strokeWidth={1.75} />
                         </button>
-                        <span
-                          className={`w-2.5 h-2.5 rounded-full ml-1 ring-4 ${
-                            isVenueActive
-                              ? 'bg-emerald-400 ring-emerald-500/20 shadow-[0_0_8px_#10b981]'
-                              : 'bg-rose-500 ring-rose-500/20'
-                          }`}
-                        />
                       </div>
                     </div>
 
-                    {/* Operating Details */}
-                    <div className="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
-                      <div className="flex items-center gap-1 font-heading tabular-nums">
-                        <Clock className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                    <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] grid grid-cols-2 gap-2 text-xs text-[var(--text-sub)] tabular-nums">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
                         <span>{opHours.openTime} - {opHours.closeTime}</span>
                       </div>
-                      <div className="flex items-center gap-1 font-heading tabular-nums justify-end">
-                        <RotateCcw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <RotateCcw className="w-3.5 h-3.5 text-[var(--burnt-orange)] shrink-0" strokeWidth={1.75} />
                         <span>Hoàn 100%: &gt;{cancelPol.hoursBeforeForFullRefund}h</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Pricing Details */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/80 space-y-2">
+                  <div className="mt-4 pt-3 border-t border-[var(--border-subtle)] space-y-2 tabular-nums">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-400 flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5 text-slate-500" />
-                        Giá giờ chuẩn:
+                      <span className="text-[var(--text-sub)] flex items-center gap-1">
+                        <DollarSign className="w-3.5 h-3.5" strokeWidth={1.75} />
+                        <span>Giá giờ chuẩn</span>
                       </span>
-                      <span className="font-heading tabular-nums font-bold text-emerald-400">
+                      <span className="font-heading font-semibold text-[var(--pitch-green)]">
                         {((venue as any).defaultPrice ?? (venue as any).basePricePerHour ?? 200000).toLocaleString('vi-VN')} đ/h
                       </span>
                     </div>
@@ -872,19 +771,19 @@ export default function FacilitiesPage() {
                       peakRules.map((rule: any, idx: number) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between text-xs bg-amber-950/30 px-2.5 py-1.5 rounded-xl border border-amber-800/40"
+                          className="flex items-center justify-between text-xs bg-amber-500/10 px-2.5 py-1.5 rounded-lg border border-amber-500/25"
                         >
-                          <span className="text-amber-300 font-bold flex items-center gap-1 text-[11px]">
-                            <Sparkles className="w-3 h-3 text-amber-400" />
-                            Giờ vàng ({rule.startTime} - {rule.endTime}):
+                          <span className="text-[var(--burnt-orange)] font-medium flex items-center gap-1 text-[11px]">
+                            <Sparkles className="w-3 h-3" strokeWidth={1.75} />
+                            <span>Giờ vàng ({rule.startTime} - {rule.endTime})</span>
                           </span>
-                          <span className="font-heading tabular-nums font-bold text-amber-300 text-[11px]">
+                          <span className="font-semibold text-[var(--burnt-orange)] text-[11px]">
                             {(rule.price ?? 0).toLocaleString('vi-VN')} đ/h
                           </span>
                         </div>
                       ))
                     ) : (
-                      <div className="text-[11px] text-slate-500 italic py-1">
+                      <div className="text-[11px] text-[var(--text-muted)] py-1">
                         Áp dụng đồng giá mọi khung giờ
                       </div>
                     )}
@@ -896,114 +795,101 @@ export default function FacilitiesPage() {
         )}
       </div>
 
-      {/* MODAL 1: Sửa Cơ Sở Duy Nhất */}
+      {/* MODAL 1: Sửa Cơ Sở */}
       {showEditFacilityModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-lg w-full p-7 text-white shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="phanta-card max-w-lg w-full p-6 relative">
             <button
+              type="button"
               onClick={() => setShowEditFacilityModal(false)}
-              className="absolute top-5 right-5 p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition"
+              className="absolute top-5 right-5 p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-cyan-400" />
-              Chỉnh Sửa Thông Tin Tổ Hợp Thể Thao
+            <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)] mb-4 flex items-center gap-2">
+              <Edit2 className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+              <span>Chỉnh sửa thông tin tổ hợp thể thao</span>
             </h3>
 
-            <form onSubmit={handleUpdateFacility} className="space-y-4">
+            <form onSubmit={handleUpdateFacility} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Tên tổ hợp cơ sở
-                </label>
+                <label className="block font-medium text-[var(--text-sub)] mb-1">Tên tổ hợp cơ sở</label>
                 <input
                   type="text"
                   required
                   value={editFacilityForm.name}
                   onChange={(e) => setEditFacilityForm({ ...editFacilityForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Địa chỉ
-                </label>
+                <label className="block font-medium text-[var(--text-sub)] mb-1">Địa chỉ</label>
                 <input
                   type="text"
                   required
                   value={editFacilityForm.address}
                   onChange={(e) => setEditFacilityForm({ ...editFacilityForm, address: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Mô tả / Giới thiệu
-                </label>
+                <label className="block font-medium text-[var(--text-sub)] mb-1">Mô tả / Giới thiệu</label>
                 <textarea
                   rows={3}
                   value={editFacilityForm.description}
                   onChange={(e) => setEditFacilityForm({ ...editFacilityForm, description: e.target.value })}
                   placeholder="Mô tả các dịch vụ thể thao tích hợp"
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 tabular-nums">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ mở cửa
-                  </label>
+                  <label className="block font-medium text-[var(--text-sub)] mb-1">Giờ mở cửa</label>
                   <input
                     type="time"
                     value={editFacilityForm.openHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, openHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums"
+                    className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ đóng cửa
-                  </label>
+                  <label className="block font-medium text-[var(--text-sub)] mb-1">Giờ đóng cửa</label>
                   <input
                     type="time"
                     value={editFacilityForm.closeHour}
                     onChange={(e) => setEditFacilityForm({ ...editFacilityForm, closeHour: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums"
+                    className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
               </div>
 
-              {/* Status Toggle */}
-              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+              <div className="phanta-subcard p-3.5 flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-white block">Trạng thái hoạt động</span>
-                  <span className="text-[11px] text-slate-400">Tắt để chuyển cơ sở sang trạng thái tạm đóng</span>
+                  <span className="font-semibold text-[var(--text-heading)] block">Trạng thái hoạt động</span>
+                  <span className="text-[11px] text-[var(--text-sub)]">Tắt để chuyển cơ sở sang trạng thái tạm đóng</span>
                 </div>
                 <input
                   type="checkbox"
                   checked={editFacilityForm.isActive}
                   onChange={(e) => setEditFacilityForm({ ...editFacilityForm, isActive: e.target.checked })}
-                  className="w-4 h-4 accent-cyan-500 rounded cursor-pointer"
+                  className="w-4 h-4 accent-[var(--pitch-green)] rounded cursor-pointer"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setShowEditFacilityModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800"
+                  className="phanta-btn-secondary px-4 py-2 text-xs"
                 >
                   Hủy
                 </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition"
-                >
-                  Lưu Thay Đổi
+                <button type="submit" className="phanta-btn-primary px-4 py-2 text-xs">
+                  Lưu thay đổi
                 </button>
               </div>
             </form>
@@ -1011,408 +897,227 @@ export default function FacilitiesPage() {
         </div>
       )}
 
-      {/* MODAL 2: Thêm Sân Mới */}
-      {showVenueModal && facility && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-lg w-full p-7 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      {/* MODAL 2 & 3: Thêm / Sửa Sân */}
+      {(showVenueModal || showEditVenueModal) && facility && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="phanta-card max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto">
             <button
-              onClick={() => setShowVenueModal(false)}
-              className="absolute top-5 right-5 p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition"
+              type="button"
+              onClick={() => {
+                setShowVenueModal(false);
+                setShowEditVenueModal(false);
+              }}
+              className="absolute top-5 right-5 p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Plus className="w-5 h-5 text-emerald-400" />
-              Thêm Sân Mới Vào Tổ Hợp
+            <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)] mb-4 flex items-center gap-2">
+              {showEditVenueModal ? (
+                <Edit2 className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+              ) : (
+                <Plus className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+              )}
+              <span>{showEditVenueModal ? 'Chỉnh sửa thông tin sân' : 'Thêm sân mới vào tổ hợp'}</span>
             </h3>
 
-            <form onSubmit={handleCreateVenue} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Tên Sân Bãi
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={venueForm.name}
-                  onChange={(e) => setVenueForm({ ...venueForm, name: e.target.value })}
-                  placeholder="Ví dụ: Sân Bóng 1 (Mini 5 người)"
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Bộ Môn / Loại Sân
-                </label>
-                <select
-                  value={venueForm.venueType}
-                  onChange={(e) => setVenueForm({ ...venueForm, venueType: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                >
-                  {COURT_SPORTS.map((cs) => (
-                    <option key={cs.value} value={cs.value} className="bg-slate-900 text-white">
-                      {cs.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ mở cửa
-                  </label>
-                  <input
-                    type="time"
-                    value={venueForm.openTime}
-                    onChange={(e) => setVenueForm({ ...venueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ đóng cửa
-                  </label>
-                  <input
-                    type="time"
-                    value={venueForm.closeTime}
-                    onChange={(e) => setVenueForm({ ...venueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Giá Giờ Tiêu Chuẩn (VNĐ / giờ)
-                </label>
-                <input
-                  type="number"
-                  step="10000"
-                  required
-                  value={venueForm.defaultPrice}
-                  onChange={(e) => setVenueForm({ ...venueForm, defaultPrice: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-heading tabular-nums font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Peak Hours Configuration */}
-              <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-800/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
+            {(() => {
+              const isEdit = showEditVenueModal;
+              const current = isEdit ? editVenueForm : venueForm;
+              const setForm = (next: any) => (isEdit ? setEditVenueForm(next) : setVenueForm(next));
+              return (
+                <form onSubmit={isEdit ? handleUpdateVenue : handleCreateVenue} className="space-y-4 text-xs">
+                  <div>
+                    <label className="block font-medium text-[var(--text-sub)] mb-1">Tên sân bãi</label>
+                    <input
+                      type="text"
+                      required
+                      value={current.name}
+                      onChange={(e) => setForm({ ...current, name: e.target.value })}
+                      placeholder="Ví dụ: Sân bóng 1 (Mini 5 người)"
+                      className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
+                    />
                   </div>
-                  <input
-                    type="checkbox"
-                    checked={venueForm.hasPeakHour}
-                    onChange={(e) => setVenueForm({ ...venueForm, hasPeakHour: e.target.checked })}
-                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
-                  />
-                </div>
 
-                {venueForm.hasPeakHour && (
-                  <div className="space-y-3 pt-2 border-t border-amber-900/40">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Bắt đầu</label>
-                        <input
-                          type="time"
-                          value={venueForm.peakStart}
-                          onChange={(e) => setVenueForm({ ...venueForm, peakStart: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Kết thúc</label>
-                        <input
-                          type="time"
-                          value={venueForm.peakEnd}
-                          onChange={(e) => setVenueForm({ ...venueForm, peakEnd: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
-                        />
-                      </div>
+                  <div>
+                    <label className="block font-medium text-[var(--text-sub)] mb-1">Bộ môn / Loại sân</label>
+                    <select
+                      value={current.venueType}
+                      onChange={(e) => setForm({ ...current, venueType: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
+                    >
+                      {COURT_SPORTS.map((cs) => (
+                        <option key={cs.value} value={cs.value}>
+                          {cs.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 tabular-nums">
+                    <div>
+                      <label className="block font-medium text-[var(--text-sub)] mb-1">Giờ mở cửa</label>
+                      <input
+                        type="time"
+                        value={current.openTime}
+                        onChange={(e) => setForm({ ...current, openTime: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
+                      />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Giá Giờ Vàng (VNĐ / giờ)</label>
+                      <label className="block font-medium text-[var(--text-sub)] mb-1">Giờ đóng cửa</label>
                       <input
-                        type="number"
-                        step="10000"
-                        value={venueForm.peakPrice}
-                        onChange={(e) => setVenueForm({ ...venueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-heading tabular-nums font-bold rounded-lg focus:outline-none"
+                        type="time"
+                        value={current.closeTime}
+                        onChange={(e) => setForm({ ...current, closeTime: e.target.value })}
+                        className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                       />
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Cancellation Policy */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <RotateCcw className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-bold uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
                   <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Hoàn 100% nếu hủy trước (giờ):</label>
+                    <label className="block font-medium text-[var(--text-sub)] mb-1">Giá giờ tiêu chuẩn (VND / giờ)</label>
                     <input
                       type="number"
-                      value={venueForm.hoursBeforeForFullRefund}
-                      onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
+                      step="10000"
+                      required
+                      value={current.defaultPrice}
+                      onChange={(e) => setForm({ ...current, defaultPrice: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2.5 bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--pitch-green)] font-semibold tabular-nums rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Không hoàn nếu sát giờ &lt; (giờ):</label>
-                    <input
-                      type="number"
-                      value={venueForm.hoursBeforeForNoRefund}
-                      onChange={(e) => setVenueForm({ ...venueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowVenueModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/20 active:scale-95 transition"
-                >
-                  Lưu Sân Mới
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: Sửa Sân */}
-      {showEditVenueModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-lg w-full p-7 text-white shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button
-              onClick={() => setShowEditVenueModal(false)}
-              className="absolute top-5 right-5 p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Edit2 className="w-5 h-5 text-cyan-400" />
-              Chỉnh Sửa Thông Tin Sân
-            </h3>
-
-            <form onSubmit={handleUpdateVenue} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Tên Sân Bãi
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={editVenueForm.name}
-                  onChange={(e) => setEditVenueForm({ ...editVenueForm, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Bộ Môn / Loại Sân
-                </label>
-                <select
-                  value={editVenueForm.venueType}
-                  onChange={(e) => setEditVenueForm({ ...editVenueForm, venueType: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                >
-                  {COURT_SPORTS.map((cs) => (
-                    <option key={cs.value} value={cs.value} className="bg-slate-900 text-white">
-                      {cs.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ mở cửa
-                  </label>
-                  <input
-                    type="time"
-                    value={editVenueForm.openTime}
-                    onChange={(e) => setEditVenueForm({ ...editVenueForm, openTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                    Giờ đóng cửa
-                  </label>
-                  <input
-                    type="time"
-                    value={editVenueForm.closeTime}
-                    onChange={(e) => setEditVenueForm({ ...editVenueForm, closeTime: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-white rounded-xl font-heading tabular-nums focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Giá Giờ Tiêu Chuẩn (VNĐ / giờ)
-                </label>
-                <input
-                  type="number"
-                  step="10000"
-                  required
-                  value={editVenueForm.defaultPrice}
-                  onChange={(e) => setEditVenueForm({ ...editVenueForm, defaultPrice: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 text-sm bg-slate-900 border border-slate-700 text-emerald-400 font-heading tabular-nums font-bold rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
-                />
-              </div>
-
-              {/* Peak Hours Configuration */}
-              <div className="p-4 rounded-2xl bg-amber-950/20 border border-amber-800/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold uppercase text-amber-300">Biểu Giá Giờ Vàng (Peak Hours)</span>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={editVenueForm.hasPeakHour}
-                    onChange={(e) => setEditVenueForm({ ...editVenueForm, hasPeakHour: e.target.checked })}
-                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
-                  />
-                </div>
-
-                {editVenueForm.hasPeakHour && (
-                  <div className="space-y-3 pt-2 border-t border-amber-900/40">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Bắt đầu</label>
-                        <input
-                          type="time"
-                          value={editVenueForm.peakStart}
-                          onChange={(e) => setEditVenueForm({ ...editVenueForm, peakStart: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
-                        />
+                  <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-[var(--burnt-orange)] font-medium">
+                        <Sparkles className="w-4 h-4" strokeWidth={1.75} />
+                        <span>Biểu giá giờ vàng</span>
                       </div>
-                      <div>
-                        <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Kết thúc</label>
-                        <input
-                          type="time"
-                          value={editVenueForm.peakEnd}
-                          onChange={(e) => setEditVenueForm({ ...editVenueForm, peakEnd: e.target.value })}
-                          className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-white rounded-lg font-heading tabular-nums focus:outline-none"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-bold text-amber-200/80 mb-1">Giá Giờ Vàng (VNĐ / giờ)</label>
                       <input
-                        type="number"
-                        step="10000"
-                        value={editVenueForm.peakPrice}
-                        onChange={(e) => setEditVenueForm({ ...editVenueForm, peakPrice: Number(e.target.value) })}
-                        className="w-full px-3 py-1.5 text-xs bg-slate-900 border border-amber-700/50 text-amber-300 font-heading tabular-nums font-bold rounded-lg focus:outline-none"
+                        type="checkbox"
+                        checked={current.hasPeakHour}
+                        onChange={(e) => setForm({ ...current, hasPeakHour: e.target.checked })}
+                        className="w-4 h-4 accent-[var(--burnt-orange)] rounded cursor-pointer"
                       />
                     </div>
-                  </div>
-                )}
-              </div>
 
-              {/* Cancellation Policy */}
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                <div className="flex items-center gap-1.5">
-                  <RotateCcw className="w-4 h-4 text-cyan-400" />
-                  <span className="text-xs font-bold uppercase text-slate-300">Chính Sách Hoàn Hủy</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Hoàn 100% nếu hủy trước (giờ):</label>
-                    <input
-                      type="number"
-                      value={editVenueForm.hoursBeforeForFullRefund}
-                      onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForFullRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
-                    />
+                    {current.hasPeakHour && (
+                      <div className="space-y-3 pt-2 border-t border-amber-500/20 tabular-nums">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-medium text-[var(--text-sub)] mb-1">Bắt đầu</label>
+                            <input
+                              type="time"
+                              value={current.peakStart}
+                              onChange={(e) => setForm({ ...current, peakStart: e.target.value })}
+                              className="w-full px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-main)] rounded-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-medium text-[var(--text-sub)] mb-1">Kết thúc</label>
+                            <input
+                              type="time"
+                              value={current.peakEnd}
+                              onChange={(e) => setForm({ ...current, peakEnd: e.target.value })}
+                              className="w-full px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-main)] rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-medium text-[var(--text-sub)] mb-1">Giá giờ vàng (VND / giờ)</label>
+                          <input
+                            type="number"
+                            step="10000"
+                            value={current.peakPrice}
+                            onChange={(e) => setForm({ ...current, peakPrice: Number(e.target.value) })}
+                            className="w-full px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--burnt-orange)] font-semibold rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Không hoàn nếu sát giờ &lt; (giờ):</label>
-                    <input
-                      type="number"
-                      value={editVenueForm.hoursBeforeForNoRefund}
-                      onChange={(e) => setEditVenueForm({ ...editVenueForm, hoursBeforeForNoRefund: Number(e.target.value) })}
-                      className="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 text-white rounded-lg font-heading tabular-nums"
-                    />
+
+                  <div className="phanta-subcard p-4 space-y-3">
+                    <div className="flex items-center gap-1.5 text-[var(--text-heading)] font-medium">
+                      <RotateCcw className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                      <span>Chính sách hoàn hủy</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 tabular-nums">
+                      <div>
+                        <label className="block text-[11px] text-[var(--text-sub)] mb-1">Hoàn 100% trước (giờ)</label>
+                        <input
+                          type="number"
+                          value={current.hoursBeforeForFullRefund}
+                          onChange={(e) => setForm({ ...current, hoursBeforeForFullRefund: Number(e.target.value) })}
+                          className="w-full px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-main)] rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-[var(--text-sub)] mb-1">Không hoàn nếu dưới (giờ)</label>
+                        <input
+                          type="number"
+                          value={current.hoursBeforeForNoRefund}
+                          onChange={(e) => setForm({ ...current, hoursBeforeForNoRefund: Number(e.target.value) })}
+                          className="w-full px-3 py-1.5 bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-main)] rounded-lg"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Status Toggle */}
-              <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-white block">Trạng thái sân</span>
-                  <span className="text-[11px] text-slate-400">Tắt để chuyển sân sang trạng thái tạm đóng</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={editVenueForm.isActive}
-                  onChange={(e) => setEditVenueForm({ ...editVenueForm, isActive: e.target.checked })}
-                  className="w-4 h-4 accent-cyan-500 rounded cursor-pointer"
-                />
-              </div>
+                  {isEdit && (
+                    <div className="phanta-subcard p-3.5 flex items-center justify-between">
+                      <div>
+                        <span className="font-semibold text-[var(--text-heading)] block">Trạng thái sân</span>
+                        <span className="text-[11px] text-[var(--text-sub)]">Tắt để chuyển sân sang trạng thái tạm đóng</span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={editVenueForm.isActive}
+                        onChange={(e) => setEditVenueForm({ ...editVenueForm, isActive: e.target.checked })}
+                        className="w-4 h-4 accent-[var(--pitch-green)] rounded cursor-pointer"
+                      />
+                    </div>
+                  )}
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowEditVenueModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-95 transition"
-                >
-                  Lưu Thay Đổi
-                </button>
-              </div>
-            </form>
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-subtle)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowVenueModal(false);
+                        setShowEditVenueModal(false);
+                      }}
+                      className="phanta-btn-secondary px-4 py-2 text-xs"
+                    >
+                      Hủy
+                    </button>
+                    <button type="submit" className="phanta-btn-primary px-4 py-2 text-xs">
+                      {isEdit ? 'Lưu thay đổi' : 'Lưu sân mới'}
+                    </button>
+                  </div>
+                </form>
+              );
+            })()}
           </div>
         </div>
       )}
 
       {/* DELETE CONFIRM DIALOG */}
       {deleteDialog.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-950 border border-slate-800 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
-            <h3 className="text-base font-bold text-rose-400 mb-2 flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-rose-400" />
-              Xác Nhận Xóa Sân Bãi
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="phanta-card max-w-md w-full p-6 space-y-4">
+            <h3 className="font-heading font-semibold text-base text-rose-500 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" strokeWidth={1.75} />
+              <span>Xác nhận xóa sân bãi</span>
             </h3>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Bạn có chắc chắn muốn xóa/vô hiệu hóa sân <strong className="text-white">&quot;{deleteDialog.name}&quot;</strong> không? Khách hàng sẽ không thể đặt sân này trên ứng dụng.
+            <p className="text-xs text-[var(--text-main)] leading-relaxed">
+              Bạn có chắc chắn muốn xóa hoặc vô hiệu hóa sân <strong>&quot;{deleteDialog.name}&quot;</strong> không? Khách hàng sẽ không thể đặt sân này trên ứng dụng.
             </p>
 
-            <div className="mt-4 p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+            <div className="phanta-subcard p-3 flex items-center justify-between text-xs">
               <div>
-                <span className="text-xs font-bold text-white block">Xóa vĩnh viễn (Hard Delete)</span>
-                <span className="text-[10px] text-slate-400">Xóa hẳn khỏi cơ sở dữ liệu thay vì ẩn</span>
+                <span className="font-semibold text-[var(--text-heading)] block">Xóa vĩnh viễn</span>
+                <span className="text-[11px] text-[var(--text-sub)]">Xóa hẳn khỏi cơ sở dữ liệu thay vì ẩn tạm thời</span>
               </div>
               <input
                 type="checkbox"
@@ -1423,17 +1128,17 @@ export default function FacilitiesPage() {
             </div>
 
             {deleteDialog.errorNote && (
-              <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
                 <span>{deleteDialog.errorNote}</span>
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 mt-6">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setDeleteDialog({ ...deleteDialog, isOpen: false })}
-                className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800"
+                className="phanta-btn-secondary px-4 py-2 text-xs"
               >
                 Đóng
               </button>
@@ -1441,9 +1146,9 @@ export default function FacilitiesPage() {
                 <button
                   type="button"
                   onClick={executeDelete}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30 transition"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
                 >
-                  {deleteDialog.hardDelete ? 'Xóa Vĩnh Viễn' : 'Xác Nhận Vô Hiệu Hóa'}
+                  {deleteDialog.hardDelete ? 'Xóa vĩnh viễn' : 'Xác nhận vô hiệu hóa'}
                 </button>
               )}
             </div>
@@ -1451,41 +1156,41 @@ export default function FacilitiesPage() {
         </div>
       )}
 
-      {/* MODAL 4: PURGE ALL VENUES CONFIRMATION */}
+      {/* PURGE ALL MODAL */}
       {showPurgeModal && facility && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-slate-950 border border-rose-500/40 rounded-3xl max-w-md w-full p-6 text-white shadow-2xl relative">
-            <h3 className="text-base font-bold text-rose-400 mb-2 flex items-center gap-2">
-              <Trash2 className="w-5 h-5 text-rose-400" />
-              Xác Nhận Xóa Sạch Toàn Bộ Sân Bãi
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="phanta-card max-w-md w-full p-6 space-y-4 border-rose-500/40">
+            <h3 className="font-heading font-semibold text-base text-rose-500 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" strokeWidth={1.75} />
+              <span>Xác nhận xóa toàn bộ sân bãi</span>
             </h3>
 
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Hành động này sẽ <strong className="text-rose-400">xóa vĩnh viễn toàn bộ {courtVenues.length} sân thể thao</strong> thuộc cơ sở <strong className="text-white">&quot;{facility.name}&quot;</strong> để bạn có thể tự thêm lại hệ thống sân mới từ đầu.
+            <p className="text-xs text-[var(--text-main)] leading-relaxed">
+              Hành động này sẽ <strong className="text-rose-500">xóa vĩnh viễn toàn bộ {courtVenues.length} sân thể thao</strong> thuộc cơ sở <strong>&quot;{facility.name}&quot;</strong> để thiết lập lại từ đầu.
             </p>
 
-            <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-              <span>Lưu ý: Thao tác này sẽ dọn dẹp sạch sẽ danh sách sân. Bạn có thể tự thêm lại từng sân theo ý muốn ngay sau đó.</span>
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[var(--burnt-orange)] text-[11px] flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.75} />
+              <span>Lưu ý: Thao tác này sẽ dọn sạch danh sách sân hiện tại. Bạn có thể tự thêm lại từng sân ngay sau đó.</span>
             </div>
 
-            <div className="flex items-center justify-end gap-3 mt-6">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 disabled={purging}
                 onClick={() => setShowPurgeModal(false)}
-                className="px-4 py-2 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                className="phanta-btn-secondary px-4 py-2 text-xs"
               >
-                Hủy Bỏ
+                Hủy bỏ
               </button>
               <button
                 type="button"
                 disabled={purging}
                 onClick={handlePurgeAllVenues}
-                className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-rose-600/30 transition disabled:opacity-50 flex items-center gap-1.5"
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>{purging ? 'Đang Xóa' : 'Xác Nhận Xóa Sạch'}</span>
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                <span>{purging ? 'Đang xóa' : 'Xác nhận xóa sạch'}</span>
               </button>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 import { 
   Coffee, 
   ShoppingBag, 
@@ -40,7 +41,10 @@ export default function CanteenPage() {
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const token = () => (typeof window === 'undefined' ? '' : localStorage.getItem('access_token') || '');
+  const token = () => {
+    if (typeof window === 'undefined') return '';
+    return api.getToken() || localStorage.getItem('access_token') || sessionStorage.getItem('access_token') || '';
+  };
 
   async function req(path: string, method = 'GET', body?: any) {
     const res = await fetch(base + path, {
@@ -51,9 +55,11 @@ export default function CanteenPage() {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-    const json = await res.json().catch(() => ({}));
+    const text = await res.text().catch(() => '');
+    const json = text ? JSON.parse(text) : null;
     if (!res.ok) {
-      throw Error(Array.isArray(json.message) ? json.message.join(', ') : json.message || 'HTTP ' + res.status);
+      const err = json?.message || 'HTTP ' + res.status;
+      throw Error(Array.isArray(err) ? err.join(', ') : err);
     }
     return json;
   }
@@ -65,8 +71,8 @@ export default function CanteenPage() {
         req('/canteen/products'),
         req('/canteen/shifts/current'),
       ]);
-      setProducts(p || []);
-      setShift(s || null);
+      setProducts(Array.isArray(p) ? p : []);
+      setShift(s && s._id ? s : null);
     } catch (e: any) {
       setMsg(e.message);
     } finally {
@@ -98,7 +104,7 @@ export default function CanteenPage() {
         <div>
           <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
             <Coffee className="w-6 h-6 text-[var(--burnt-orange)]" />
-            <span>Quản Lý Căn Tin & POS Bán Lẻ F&B</span>
+            <span>Quản lý căn tin & POS bán lẻ F&B</span>
           </h1>
           <p className="text-xs text-[var(--text-sub)] mt-1">
             Quản lý thực đơn đồ uống, thức ăn nhẹ, quản lý ca thu ngân và xử lý thanh toán đơn hàng trực tiếp tại quầy
@@ -139,10 +145,10 @@ export default function CanteenPage() {
             <div className="flex justify-between text-[var(--text-sub)]">
               <span>Trạng thái ca:</span>
               <span className="font-semibold text-[var(--text-main)]">
-                {shift ? `Mã ca #${shift._id.substring(0, 8)}` : 'Đang đóng'}
+                {shift?._id ? `Mã ca #${String(shift._id).substring(0, 8)}` : 'Đang đóng'}
               </span>
             </div>
-            {shift && (
+            {shift?._id && (
               <div className="flex justify-between text-[var(--text-sub)]">
                 <span>Tiền đầu ca:</span>
                 <span className="font-heading font-bold text-[var(--text-heading)] tabular-nums">
@@ -154,7 +160,7 @@ export default function CanteenPage() {
 
           <div className="space-y-2">
             <label className="text-xs font-semibold text-[var(--text-sub)]">
-              {shift ? 'Tiền mặt kết ca (kiểm đếm):' : 'Tiền mặt đầu ca:'}
+              {shift?._id ? 'Tiền mặt kết ca (kiểm đếm):' : 'Tiền mặt đầu ca:'}
             </label>
             <div className="flex gap-2">
               <input
@@ -165,7 +171,7 @@ export default function CanteenPage() {
                 onChange={(e) => setCash(e.target.value)}
                 placeholder="Nhập số tiền..."
               />
-              {shift ? (
+              {shift?._id ? (
                 <button
                   className="px-4 py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold text-xs"
                   onClick={() =>

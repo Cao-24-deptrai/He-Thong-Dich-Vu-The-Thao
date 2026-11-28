@@ -153,6 +153,7 @@ export default function App() {
             onBack={() => navigateTo('HOME')}
             onProceedPayment={() => navigateTo('PAYMENT')}
             onOpenVouchers={() => navigateTo('VOUCHERS')}
+            onRequireAuth={() => navigateTo('AUTH')}
           />
         );
       case 'PAYMENT':

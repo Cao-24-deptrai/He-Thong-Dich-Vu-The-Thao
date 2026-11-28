@@ -10,8 +10,8 @@ import { CanteenService } from './canteen.service';
 export class CanteenController {
  constructor(private readonly svc:CanteenService){}
  @Get('products') products(){return this.svc.listProducts();}
- @Post('products') @Roles(UserRole.OWNER,UserRole.ADMIN) addProduct(@Body() b:{name:string;price:number;stock:number;category?:string}){return this.svc.createProduct(b);}
- @Post('products/:id/stock') @Roles(UserRole.OWNER,UserRole.ADMIN) stock(@Param('id') id:string,@Body('delta') delta:number){return this.svc.stock(id,delta);}
+ @Post('products') @Roles(UserRole.STAFF,UserRole.OWNER,UserRole.ADMIN,UserRole.MANAGER) addProduct(@Body() b:{name:string;price:number;stock:number;category?:string}){return this.svc.createProduct(b);}
+ @Post('products/:id/stock') @Roles(UserRole.STAFF,UserRole.OWNER,UserRole.ADMIN,UserRole.MANAGER) stock(@Param('id') id:string,@Body('delta') delta:number){return this.svc.stock(id,delta);}
  @Get('shifts/current') current(@Req() req:any){return this.svc.currentShift(req.user.userId);}
  @Post('shifts/open') open(@Req() req:any,@Body('openingCash') cash:number){return this.svc.openShift(req.user.userId,cash);}
  @Post('shifts/:id/close') close(@Req() req:any,@Param('id') id:string,@Body('closingCash') cash:number){return this.svc.closeShift(req.user.userId,id,cash);}

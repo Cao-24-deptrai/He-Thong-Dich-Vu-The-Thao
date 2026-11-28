@@ -7,15 +7,14 @@ import {
   Search,
   RefreshCw,
   PlusCircle,
-  Download,
   Building,
   CheckCircle2,
-  Clock,
   Printer,
   ShieldCheck,
   TrendingUp,
   Receipt,
-  FileCode
+  FileCode,
+  X,
 } from 'lucide-react';
 
 export default function InvoicesPage() {
@@ -31,7 +30,7 @@ export default function InvoicesPage() {
   const [customerEmail, setCustomerEmail] = useState('finance@abc.vn');
   const [serviceName, setServiceName] = useState('Thuê cụm 4 sân cầu lông thi đấu giải nội bộ (4 giờ)');
   const [unitPrice, setUnitPrice] = useState<number>(1200000);
-  const [taxRate, setTaxRate] = useState<number>(8); // 8% thuế suất thể dục thể thao
+  const [taxRate, setTaxRate] = useState<number>(8);
 
   useEffect(() => {
     loadInvoices();
@@ -44,7 +43,6 @@ export default function InvoicesPage() {
       if (res?.items && Array.isArray(res.items)) {
         setInvoices(res.items);
       } else {
-        // Mock fallback data cho trải nghiệm tức thì
         setInvoices([
           {
             _id: 'inv-1',
@@ -124,7 +122,7 @@ export default function InvoicesPage() {
           },
         ],
       });
-      alert('Đã phát hành hóa đơn điện tử thành công và gửi cấp mã CQT!');
+      alert('Đã phát hành hóa đơn điện tử thành công và gửi cấp mã Cơ quan thuế.');
       setShowIssueModal(false);
       loadInvoices();
     } catch (e: any) {
@@ -142,95 +140,91 @@ export default function InvoicesPage() {
   });
 
   return (
-    <div className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-wide uppercase">
-                Thuế & Hóa Đơn Điện Tử VAT (Epic E09)
-              </h1>
-              <p className="text-sm text-slate-400">
-                Tích hợp hóa đơn điện tử (M08) • Thuế suất ưu đãi 8% thể thao • Cấp mã Cơ quan thuế
-              </p>
-            </div>
-          </div>
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <FileText className="w-6 h-6 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Doanh thu & Hóa đơn điện tử</span>
+          </h1>
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Quản lý sổ cái doanh thu, thuế suất ưu đãi 8% thể thao và cấp mã Cơ quan thuế
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setShowIssueModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all"
+            className="phanta-btn-primary px-4 py-2.5 text-xs flex items-center gap-2"
           >
-            <PlusCircle className="w-4 h-4" />
-            Xuất Hóa Đơn VAT
+            <PlusCircle className="w-4 h-4" strokeWidth={1.75} />
+            <span>Xuất hóa đơn VAT</span>
           </button>
           <button
+            type="button"
             onClick={loadInvoices}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-sm font-semibold transition-all"
+            className="phanta-btn-secondary px-3.5 py-2.5 text-xs flex items-center gap-2"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-            Làm mới
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[var(--pitch-green)]' : ''}`} strokeWidth={1.75} />
+            <span>Làm mới</span>
           </button>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900/60 border border-emerald-500/20 shadow-lg">
-          <div className="flex items-center justify-between text-emerald-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">Doanh Thu Trước Thuế</span>
-            <TrendingUp className="w-5 h-5" />
+        <div className="phanta-card p-5">
+          <div className="flex items-center justify-between text-[var(--text-sub)] mb-2">
+            <span className="text-xs font-medium">Doanh thu trước thuế</span>
+            <TrendingUp className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
           </div>
-          <div className="text-2xl font-bold text-white">
-            {totalRevenue.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-emerald-300">đ</span>
+          <div className="text-2xl font-heading font-semibold text-[var(--text-heading)] tabular-nums">
+            {totalRevenue.toLocaleString('vi-VN')} <span className="text-sm font-medium text-[var(--text-sub)]">đ</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Doanh thu dịch vụ thể thao & phòng máy
-          </div>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-cyan-500/20 shadow-lg">
-          <div className="flex items-center justify-between text-cyan-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">Thuế GTGT (VAT 8%)</span>
-            <Receipt className="w-5 h-5" />
-          </div>
-          <div className="text-2xl font-bold text-cyan-400">
-            {totalTax.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-cyan-300">đ</span>
-          </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Theo NQ Quốc hội giảm thuế kích cầu
+          <div className="mt-2 text-xs text-[var(--text-muted)]">
+            Doanh thu dịch vụ thể thao và phòng máy
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-purple-500/20 shadow-lg">
-          <div className="flex items-center justify-between text-purple-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">Tổng Doanh Số Kê Khai</span>
-            <Building className="w-5 h-5" />
+        <div className="phanta-card p-5">
+          <div className="flex items-center justify-between text-[var(--text-sub)] mb-2">
+            <span className="text-xs font-medium">Thuế GTGT (VAT 8%)</span>
+            <Receipt className="w-4 h-4 text-[var(--burnt-orange)]" strokeWidth={1.75} />
           </div>
-          <div className="text-2xl font-bold text-white">
-            {totalFinal.toLocaleString('vi-VN')} <span className="text-sm font-semibold text-purple-300">đ</span>
+          <div className="text-2xl font-heading font-semibold text-[var(--text-heading)] tabular-nums">
+            {totalTax.toLocaleString('vi-VN')} <span className="text-sm font-medium text-[var(--text-sub)]">đ</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
+          <div className="mt-2 text-xs text-[var(--text-muted)]">
+            Áp dụng mức thuế suất ưu đãi 8%
+          </div>
+        </div>
+
+        <div className="phanta-card p-5">
+          <div className="flex items-center justify-between text-[var(--text-sub)] mb-2">
+            <span className="text-xs font-medium">Tổng doanh số kê khai</span>
+            <Building className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+          </div>
+          <div className="text-2xl font-heading font-semibold text-[var(--pitch-green)] tabular-nums">
+            {totalFinal.toLocaleString('vi-VN')} <span className="text-sm font-medium">đ</span>
+          </div>
+          <div className="mt-2 text-xs text-[var(--text-muted)]">
             Đã bao gồm thuế GTGT hợp lệ
           </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-700 shadow-lg">
-          <div className="flex items-center justify-between text-emerald-400 mb-2">
-            <span className="text-xs font-bold uppercase tracking-wider">Cơ Quan Thuế Cấp Mã</span>
-            <ShieldCheck className="w-5 h-5" />
+        <div className="phanta-card p-5">
+          <div className="flex items-center justify-between text-[var(--text-sub)] mb-2">
+            <span className="text-xs font-medium">Cơ quan thuế cấp mã</span>
+            <ShieldCheck className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
           </div>
-          <div className="text-2xl font-bold text-emerald-400">
-            {invoices.length} / {invoices.length} <span className="text-sm font-normal text-slate-400">HĐ</span>
+          <div className="text-2xl font-heading font-semibold text-[var(--text-heading)] tabular-nums">
+            {invoices.length} / {invoices.length} <span className="text-sm font-normal text-[var(--text-sub)]">HĐ</span>
           </div>
-          <div className="mt-2 text-xs text-slate-400">
-            Tỷ lệ cấp mã hợp lệ: 100%
+          <div className="mt-2 text-xs text-[var(--text-muted)]">
+            Tỷ lệ cấp mã hợp lệ 100%
           </div>
         </div>
       </div>
@@ -238,75 +232,79 @@ export default function InvoicesPage() {
       {/* Filter & Search */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[var(--text-sub)] absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={1.75} />
           <input
             type="text"
-            placeholder="Tra cứu số hóa đơn, tên công ty, mã số thuế, mã CQT"
+            placeholder="Tìm số hóa đơn, công ty, mã số thuế, mã CQT"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full pl-10 pr-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl text-xs text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--pitch-green)] transition-colors"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-slate-800 bg-[#0d121f]/90 overflow-hidden shadow-xl">
+      <div className="phanta-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-900/90 text-xs uppercase font-bold text-slate-400 border-b border-slate-800">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead className="bg-[var(--table-head-bg)] text-[var(--text-sub)] font-medium border-b border-[var(--border-subtle)]">
               <tr>
                 <th className="py-3.5 px-4">Số hóa đơn / Ngày</th>
                 <th className="py-3.5 px-4">Đơn vị mua hàng / MST</th>
-                <th className="py-3.5 px-4">Trước thuế</th>
-                <th className="py-3.5 px-4">Thuế VAT (8%)</th>
-                <th className="py-3.5 px-4">Tổng thanh toán</th>
+                <th className="py-3.5 px-4 text-right">Trước thuế</th>
+                <th className="py-3.5 px-4 text-right">Thuế VAT (8%)</th>
+                <th className="py-3.5 px-4 text-right">Tổng thanh toán</th>
                 <th className="py-3.5 px-4">Mã CQT</th>
-                <th className="py-3.5 px-4 text-right">Tải HĐĐT</th>
+                <th className="py-3.5 px-4 text-right">Tải hóa đơn</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-heading tabular-nums text-xs">
+            <tbody className="divide-y divide-[var(--border-subtle)] tabular-nums">
               {filteredInvoices.map((inv) => (
-                <tr key={inv._id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="py-4 px-4">
-                    <div className="font-bold text-emerald-400 text-sm">{inv.invoiceNumber}</div>
-                    <div className="text-[11px] text-slate-400 font-sans">
+                <tr key={inv._id} className="hover:bg-[var(--table-row-hover)] transition-colors">
+                  <td className="py-3.5 px-4">
+                    <div className="font-heading font-semibold text-[var(--pitch-green)] text-sm">{inv.invoiceNumber}</div>
+                    <div className="text-[11px] text-[var(--text-sub)]">
                       {new Date(inv.issuedAt || inv.createdAt).toLocaleDateString('vi-VN')}
                     </div>
                   </td>
-                  <td className="py-4 px-4 font-sans">
-                    <div className="font-bold text-white text-xs">{inv.customerName}</div>
-                    <div className="text-xs text-slate-400 font-heading tabular-nums">MST: {inv.customerTaxCode || 'Cá nhân không MST'}</div>
+                  <td className="py-3.5 px-4">
+                    <div className="font-medium text-[var(--text-heading)] text-xs">{inv.customerName}</div>
+                    <div className="text-[11px] text-[var(--text-sub)] tabular-nums">
+                      MST: {inv.customerTaxCode || 'Cá nhân không MST'}
+                    </div>
                   </td>
-                  <td className="py-4 px-4 text-slate-200">
+                  <td className="py-3.5 px-4 text-right text-[var(--text-main)]">
                     {inv.subtotal?.toLocaleString('vi-VN')} đ
                   </td>
-                  <td className="py-4 px-4 text-cyan-400 font-semibold">
+                  <td className="py-3.5 px-4 text-right text-[var(--burnt-orange)] font-medium">
                     +{inv.taxAmount?.toLocaleString('vi-VN')} đ
                   </td>
-                  <td className="py-4 px-4 font-bold text-white text-sm">
+                  <td className="py-3.5 px-4 text-right font-heading font-semibold text-[var(--text-heading)] text-sm">
                     {inv.totalAmount?.toLocaleString('vi-VN')} đ
                   </td>
-                  <td className="py-4 px-4">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {inv.cqtCode}
+                  <td className="py-3.5 px-4">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--bg-card-inner)] text-[var(--pitch-green)] border border-[var(--border-subtle)] text-[11px] font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                      <span>{inv.cqtCode}</span>
                     </span>
                   </td>
-                  <td className="py-4 px-4 text-right">
+                  <td className="py-3.5 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
+                        type="button"
                         onClick={() => alert(`Đang tải file XML hóa đơn điện tử chuẩn CQT: ${inv.invoiceNumber}.xml`)}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                        className="phanta-btn-secondary p-2 rounded-lg"
                         title="Tải XML hóa đơn"
                       >
-                        <FileCode className="w-4 h-4 text-emerald-400" />
+                        <FileCode className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
                       </button>
                       <button
+                        type="button"
                         onClick={() => alert(`Mở bản xem và in PDF hóa đơn VAT: ${inv.invoiceNumber}.pdf`)}
-                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
-                        title="Xem & In PDF"
+                        className="phanta-btn-secondary p-2 rounded-lg"
+                        title="Xem và in PDF"
                       >
-                        <Printer className="w-4 h-4 text-cyan-400" />
+                        <Printer className="w-4 h-4 text-[var(--text-main)]" strokeWidth={1.75} />
                       </button>
                     </div>
                   </td>
@@ -319,106 +317,127 @@ export default function InvoicesPage() {
 
       {/* Modal Xuất Hóa Đơn VAT */}
       {showIssueModal && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0f172a] border border-slate-700 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText className="w-5 h-5 text-emerald-400" />
-              Xuất Hóa Đơn Giá Trị Gia Tăng Điện Tử
-            </h3>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="phanta-card p-6 max-w-lg w-full space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-semibold text-lg text-[var(--text-heading)] flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Xuất hóa đơn giá trị gia tăng điện tử</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowIssueModal(false)}
+                className="p-1.5 rounded-lg text-[var(--text-sub)] hover:text-[var(--text-heading)]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase">Tên khách hàng / Tên Công ty</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Tên khách hàng / Tên công ty</label>
                 <input
                   type="text"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Mã số thuế (MST)</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">Mã số thuế (MST)</label>
                   <input
                     type="text"
                     value={customerTaxCode}
                     onChange={(e) => setCustomerTaxCode(e.target.value)}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-heading tabular-nums text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] tabular-nums text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Email nhận HĐĐT</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">Email nhận hóa đơn</label>
                   <input
                     type="email"
                     value={customerEmail}
                     onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase">Địa chỉ công ty</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Địa chỉ công ty</label>
                 <input
                   type="text"
                   value={companyAddress}
                   onChange={(e) => setCompanyAddress(e.target.value)}
-                  className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase">Tên dịch vụ / Hàng hóa</label>
+                <label className="text-xs font-medium text-[var(--text-sub)]">Tên dịch vụ / Hàng hóa</label>
                 <input
                   type="text"
                   value={serviceName}
                   onChange={(e) => setServiceName(e.target.value)}
-                  className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500"
+                  className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Đơn giá trước thuế (VND)</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">Đơn giá trước thuế (VND)</label>
                   <input
                     type="number"
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(Number(e.target.value))}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-heading tabular-nums text-sm focus:outline-none focus:border-emerald-500"
+                    className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] tabular-nums text-xs focus:outline-none focus:border-[var(--pitch-green)]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase">Thuế suất VAT (%)</label>
+                  <label className="text-xs font-medium text-[var(--text-sub)]">Thuế suất VAT (%)</label>
                   <select
                     value={taxRate}
                     onChange={(e) => setTaxRate(Number(e.target.value))}
-                    className="w-full mt-1 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-emerald-500 cursor-pointer"
+                    className="w-full mt-1 px-3.5 py-2 bg-[var(--input-bg)] border border-[var(--border-color)] rounded-xl text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--pitch-green)] cursor-pointer"
                   >
-                    <option value={8}>8% (Dịch vụ thể thao theo NQ Quốc hội)</option>
-                    <option value={10}>10% (Ăn uống, Căn tin, Phụ kiện)</option>
+                    <option value={8}>8% (Dịch vụ thể thao)</option>
+                    <option value={10}>10% (Ăn uống, Canteen, Phụ kiện)</option>
                     <option value={0}>0% (Không chịu thuế)</option>
                   </select>
                 </div>
               </div>
 
               {/* Tạm tính */}
-              <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex justify-between items-center text-xs">
-                <span className="text-slate-400">Tiền thuế: <strong className="text-cyan-400 font-heading tabular-nums">{Math.round((unitPrice * taxRate) / 100).toLocaleString('vi-VN')} đ</strong></span>
-                <span className="text-slate-400">Tổng thanh toán: <strong className="text-emerald-400 font-heading tabular-nums text-sm">{(unitPrice + Math.round((unitPrice * taxRate) / 100)).toLocaleString('vi-VN')} đ</strong></span>
+              <div className="p-3 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-subtle)] flex justify-between items-center text-xs">
+                <span className="text-[var(--text-sub)]">
+                  Tiền thuế:{' '}
+                  <strong className="text-[var(--burnt-orange)] font-heading tabular-nums">
+                    {Math.round((unitPrice * taxRate) / 100).toLocaleString('vi-VN')} đ
+                  </strong>
+                </span>
+                <span className="text-[var(--text-sub)]">
+                  Tổng thanh toán:{' '}
+                  <strong className="text-[var(--pitch-green)] font-heading tabular-nums text-sm">
+                    {(unitPrice + Math.round((unitPrice * taxRate) / 100)).toLocaleString('vi-VN')} đ
+                  </strong>
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
+                type="button"
                 onClick={() => setShowIssueModal(false)}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-400 hover:text-slate-200"
+                className="phanta-btn-secondary px-4 py-2 text-xs"
               >
                 Hủy
               </button>
               <button
+                type="button"
                 onClick={handleIssueSubmit}
-                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-600/30"
+                className="phanta-btn-primary px-4 py-2 text-xs"
               >
                 Ký số & Gửi Cơ quan thuế
               </button>

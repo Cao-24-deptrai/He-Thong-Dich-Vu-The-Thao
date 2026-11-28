@@ -2,30 +2,28 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  QrCode, 
-  Camera, 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  RefreshCw, 
-  User, 
-  Calendar, 
-  Clock, 
+import {
+  QrCode,
+  Camera,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  User,
+  Calendar,
+  Clock,
   Layers,
-  Sparkles,
   Search,
   Zap,
   ShieldCheck,
   Radio,
   Phone,
   Check,
-  FileText
+  FileText,
+  X,
 } from 'lucide-react';
 import { api, Booking } from '@/lib/api';
 import { io, Socket } from 'socket.io-client';
 
-// Web audio checkin chime
 const playCheckinSound = (status: 'SUCCESS' | 'INVALID') => {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -36,9 +34,9 @@ const playCheckinSound = (status: 'SUCCESS' | 'INVALID') => {
 
     if (status === 'SUCCESS') {
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-      osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
       osc.start();
@@ -58,7 +56,6 @@ const playCheckinSound = (status: 'SUCCESS' | 'INVALID') => {
 export default function CheckinPage() {
   const [activeTab, setActiveTab] = useState<'SCANNER' | 'MANUAL'>('SCANNER');
 
-  // Scanner states
   const [scannerActive, setScannerActive] = useState(false);
   const [manualToken, setManualToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,19 +69,16 @@ export default function CheckinPage() {
     checkinMethod?: string;
   } | null>(null);
 
-  // Manual Check-in lookup states (US-041)
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDate, setSearchDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [lookupResults, setLookupResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [lookupSearched, setLookupSearched] = useState(false);
 
-  // Manual Check-in confirmation modal
   const [selectedBookingForCheckin, setSelectedBookingForCheckin] = useState<any | null>(null);
   const [manualNote, setManualNote] = useState('Khách hết pin điện thoại, đã xác minh SĐT');
   const [submittingManual, setSubmittingManual] = useState(false);
 
-  // Real-time live status
   const [socketConnected, setSocketConnected] = useState(false);
   const [recentLiveCheckin, setRecentLiveCheckin] = useState<string | null>(null);
 
@@ -92,7 +86,6 @@ export default function CheckinPage() {
   const scannerContainerId = 'reader';
   const socketRef = useRef<Socket | null>(null);
 
-  // WebSocket Live Sync
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
     const socket = io(socketUrl, {
@@ -110,10 +103,9 @@ export default function CheckinPage() {
     });
 
     socket.on('booking_checked_in', (data: any) => {
-      const bannerText = `⚡ ${data.customerName || 'Khách'} vừa check-in: ${data.venueName || 'Sân'} (${data.startTime} - ${data.endTime})`;
+      const bannerText = `${data.customerName || 'Khách'} vừa check-in: ${data.venueName || 'Sân'} (${data.startTime} - ${data.endTime})`;
       setRecentLiveCheckin(bannerText);
 
-      // Tự động cập nhật dòng tương ứng trong bảng nếu đang mở tra cứu
       setLookupResults((prev) =>
         prev.map((item) =>
           item.id === data.bookingId
@@ -132,7 +124,6 @@ export default function CheckinPage() {
     };
   }, []);
 
-  // Process a QR token (from camera or manual input)
   const handleProcessQr = async (token: string) => {
     if (!token || loading) return;
     setLoading(true);
@@ -151,7 +142,7 @@ export default function CheckinPage() {
       playCheckinSound('SUCCESS');
       setScanResult({
         status: 'SUCCESS',
-        message: res.message || 'Check-in thành công! Khách được phép vào sân.',
+        message: res.message || 'Check-in thành công. Khách được phép vào sân.',
         booking: res.booking,
         bookingCode: (res as any).bookingCode || res.booking?.bookingCode,
         ticketCode: (res as any).ticketCode,
@@ -164,7 +155,7 @@ export default function CheckinPage() {
       const errorMsg = err.message || 'Mã QR không hợp lệ hoặc đã hết hạn';
       setScanResult({
         status: 'INVALID',
-        message: 'CHECK-IN THẤT BẠI',
+        message: 'Check-in thất bại',
         errorDetail: errorMsg,
       });
     } finally {
@@ -172,7 +163,6 @@ export default function CheckinPage() {
     }
   };
 
-  // Start html5-qrcode scanner
   const startScanner = async () => {
     try {
       const { Html5Qrcode } = await import('html5-qrcode');
@@ -192,9 +182,7 @@ export default function CheckinPage() {
         (decodedText) => {
           handleProcessQr(decodedText);
         },
-        () => {
-          // ignore misses
-        }
+        () => {}
       );
       setScannerActive(true);
     } catch (err) {
@@ -221,7 +209,6 @@ export default function CheckinPage() {
     };
   }, []);
 
-  // Handle Lookup Bookings (US-041)
   const handleLookup = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSearching(true);
@@ -237,7 +224,6 @@ export default function CheckinPage() {
     }
   };
 
-  // Execute Manual Check-in (US-041)
   const handleConfirmManualCheckin = async () => {
     if (!selectedBookingForCheckin) return;
     setSubmittingManual(true);
@@ -245,7 +231,6 @@ export default function CheckinPage() {
       const res = await api.manualCheckin(selectedBookingForCheckin.id, manualNote);
       playCheckinSound('SUCCESS');
 
-      // Update in results table
       setLookupResults((prev) =>
         prev.map((item) =>
           item.id === selectedBookingForCheckin.id
@@ -254,10 +239,9 @@ export default function CheckinPage() {
         )
       );
 
-      // Show result card
       setScanResult({
         status: 'SUCCESS',
-        message: `Check-in thủ công thành công cho khách ${res.customerName || selectedBookingForCheckin.customerName}!`,
+        message: `Check-in thủ công thành công cho khách ${res.customerName || selectedBookingForCheckin.customerName}.`,
         booking: res.booking,
         bookingCode: res.bookingCode || selectedBookingForCheckin.bookingCode,
         ticketCode: res.ticketCode || selectedBookingForCheckin.ticketCode,
@@ -282,66 +266,56 @@ export default function CheckinPage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
-              <QrCode className="w-6 h-6 text-slate-950" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                Trạm Soát Vé & Quét Check-in QR
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-heading tabular-nums">
-                  EPIC E05
-                </span>
-              </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Xác thực Dynamic QR 60s chống gian lận, chống race condition quét trùng và hỗ trợ Check-in thủ công ngoại lệ (US-041)
-              </p>
-            </div>
-          </div>
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <QrCode className="w-6 h-6 text-[var(--pitch-green)]" strokeWidth={1.75} />
+            <span>Trạm soát vé & Quét check-in QR</span>
+          </h1>
+          <p className="text-xs text-[var(--text-sub)] mt-1">
+            Xác thực mã QR vé đặt sân và hỗ trợ check-in thủ công tại quầy cho khách hàng
+          </p>
         </div>
 
-        {/* Realtime Live Socket Indicator */}
-        <div className="flex items-center gap-2">
-          <div
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-              socketConnected
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
-            }`}
-          >
-            <Radio className={`w-3.5 h-3.5 ${socketConnected ? ' text-emerald-400' : ''}`} />
-            <span>{socketConnected ? 'Live Socket.io' : 'Live Sync'}</span>
-          </div>
+        <div
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border w-fit ${
+            socketConnected
+              ? 'bg-emerald-500/10 text-[var(--pitch-green)] border-emerald-500/30'
+              : 'bg-[var(--bg-card-inner)] text-[var(--text-sub)] border-[var(--border-subtle)]'
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5" strokeWidth={1.75} />
+          <span>{socketConnected ? 'Đồng bộ trực tiếp' : 'Chế độ tiêu chuẩn'}</span>
         </div>
       </div>
 
-      {/* Realtime Live Checkin Notification Toast */}
+      {/* Live Checkin Notification */}
       {recentLiveCheckin && (
-        <div className="p-3.5 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-200 text-xs font-bold flex items-center gap-2 shadow-lg animate-bounce">
-          <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[var(--pitch-green)] text-xs font-medium flex items-center gap-2">
+          <Zap className="w-4 h-4 shrink-0" strokeWidth={1.75} />
           <span>{recentLiveCheckin}</span>
         </div>
       )}
 
       {/* Tabs Selector */}
-      <div className="flex items-center gap-2 p-1.5 bg-slate-900/90 rounded-2xl border border-slate-800 w-fit">
+      <div className="inline-flex items-center gap-1 p-1 bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)]">
         <button
+          type="button"
           onClick={() => setActiveTab('SCANNER')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
             activeTab === 'SCANNER'
-              ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-md shadow-emerald-500/20'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
           }`}
         >
-          <Camera className="w-4 h-4" />
-          Quét Camera QR (HUD Scanner)
+          <Camera className="w-4 h-4" strokeWidth={1.75} />
+          <span>Quét camera QR</span>
         </button>
 
         <button
+          type="button"
           onClick={() => {
             setActiveTab('MANUAL');
             stopScanner();
@@ -349,212 +323,200 @@ export default function CheckinPage() {
               handleLookup();
             }
           }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-medium transition-colors ${
             activeTab === 'MANUAL'
-              ? 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-md shadow-emerald-500/20'
-              : 'text-slate-400 hover:text-white'
+              ? 'bg-[var(--pitch-green)] text-[#0C0F0C] font-semibold'
+              : 'text-[var(--text-sub)] hover:text-[var(--text-heading)]'
           }`}
         >
-          <FileText className="w-4 h-4" />
-          Check-in Thủ Công Ngoại Lệ (US-041)
+          <FileText className="w-4 h-4" strokeWidth={1.75} />
+          <span>Check-in thủ công</span>
         </button>
       </div>
 
-      {/* Result Card: Displayed right at top for instant visibility */}
+      {/* Result Card */}
       {scanResult && (
         <div
-          className={`p-6 rounded-3xl border-2 shadow-2xl transition-all duration-300 backdrop-blur-md ${
+          className={`phanta-card p-6 border ${
             scanResult.status === 'SUCCESS'
-              ? 'bg-emerald-950/40 border-emerald-400 text-white shadow-emerald-500/15'
-              : 'bg-rose-950/40 border-rose-500 text-white shadow-rose-500/15'
+              ? 'border-emerald-500/50 bg-emerald-500/5'
+              : 'border-rose-500/50 bg-rose-500/5'
           }`}
         >
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">
               {scanResult.status === 'SUCCESS' ? (
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-lg shadow-emerald-500/40 font-bold">
-                  <CheckCircle2 className="w-7 h-7" />
+                <div className="w-11 h-11 rounded-xl bg-[var(--pitch-green)] text-[#0C0F0C] flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="w-6 h-6" strokeWidth={1.75} />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/40 font-bold">
-                  <XCircle className="w-7 h-7" />
+                <div className="w-11 h-11 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0">
+                  <XCircle className="w-6 h-6" strokeWidth={1.75} />
                 </div>
               )}
               <div>
-                <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                  {scanResult.status === 'SUCCESS' ? 'XÁC THỰC THÀNH CÔNG • VÉ HỢP LỆ' : 'VÉ KHÔNG HỢP LỆ'}
+                <h2 className="font-heading font-semibold text-lg text-[var(--text-heading)] flex items-center gap-2">
+                  <span>{scanResult.status === 'SUCCESS' ? 'Xác thực thành công' : 'Vé không hợp lệ'}</span>
                   {scanResult.status === 'SUCCESS' && scanResult.checkinMethod && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-heading tabular-nums font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    <span className="text-[11px] px-2 py-0.5 rounded-md font-medium bg-emerald-500/15 text-[var(--pitch-green)] border border-emerald-500/30">
                       {scanResult.checkinMethod}
                     </span>
                   )}
                 </h2>
-                <p className="text-xs font-medium mt-0.5 text-slate-300">
+                <p className="text-xs text-[var(--text-sub)] mt-0.5">
                   {scanResult.status === 'SUCCESS' ? scanResult.message : scanResult.errorDetail}
                 </p>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => setScanResult(null)}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+              className="phanta-btn-secondary px-3 py-1.5 text-xs"
             >
-              Đóng kết quả
+              Đóng
             </button>
           </div>
 
-          {/* Success Booking Details */}
           {scanResult.status === 'SUCCESS' && scanResult.booking && (
-            <div className="mt-6 pt-5 border-t border-emerald-500/20 grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-                  <User className="w-3.5 h-3.5 text-emerald-400" />
-                  Khách hàng
+            <div className="mt-5 pt-4 border-t border-[var(--border-subtle)] grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
+              <div className="phanta-subcard p-3.5">
+                <span className="text-[11px] text-[var(--text-sub)] flex items-center gap-1 mb-1">
+                  <User className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Khách hàng</span>
                 </span>
-                <span className="font-bold text-white block truncate text-base">
+                <span className="font-semibold text-[var(--text-heading)] block truncate text-sm">
                   {scanResult.booking.customerName || scanResult.booking.userId?.fullName || 'Khách hàng'}
                 </span>
-                <span className="text-xs font-heading tabular-nums text-slate-400">
+                <span className="text-xs tabular-nums text-[var(--text-sub)]">
                   {scanResult.booking.customerPhone || scanResult.booking.userId?.phone || 'N/A'}
                 </span>
               </div>
 
-              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-                  <Layers className="w-3.5 h-3.5 text-emerald-400" />
-                  Sân & Mã Vé
+              <div className="phanta-subcard p-3.5">
+                <span className="text-[11px] text-[var(--text-sub)] flex items-center gap-1 mb-1">
+                  <Layers className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Sân & Mã vé</span>
                 </span>
-                <span className="font-bold text-white block truncate text-base">
+                <span className="font-semibold text-[var(--text-heading)] block truncate text-sm">
                   {scanResult.booking.venueId?.name || 'Sân thể thao'}
                 </span>
-                <span className="text-xs text-emerald-400 font-heading tabular-nums font-bold">
+                <span className="text-xs text-[var(--pitch-green)] tabular-nums font-medium">
                   {scanResult.ticketCode || scanResult.bookingCode || `#${scanResult.booking._id.slice(-6).toUpperCase()}`}
                 </span>
               </div>
 
-              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-                  <Clock className="w-3.5 h-3.5 text-emerald-400" />
-                  Khung giờ thi đấu
+              <div className="phanta-subcard p-3.5">
+                <span className="text-[11px] text-[var(--text-sub)] flex items-center gap-1 mb-1">
+                  <Clock className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Khung giờ thi đấu</span>
                 </span>
-                <span className="font-bold text-cyan-400 font-heading tabular-nums block text-base">
+                <span className="font-heading font-semibold text-[var(--text-heading)] tabular-nums block text-sm">
                   {scanResult.booking.startTime} - {scanResult.booking.endTime}
                 </span>
-                <span className="text-xs text-slate-400 font-heading tabular-nums">
+                <span className="text-xs text-[var(--text-sub)] tabular-nums">
                   {scanResult.booking.bookingDate ? new Date(scanResult.booking.bookingDate).toLocaleDateString('vi-VN') : ''}
                 </span>
               </div>
 
-              <div className="bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
-                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  Giờ vào cổng
+              <div className="phanta-subcard p-3.5">
+                <span className="text-[11px] text-[var(--text-sub)] flex items-center gap-1 mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Giờ vào cổng</span>
                 </span>
-                <span className="font-heading tabular-nums font-bold text-emerald-400 block text-base">
+                <span className="font-heading font-semibold text-[var(--pitch-green)] tabular-nums block text-sm">
                   {scanResult.booking.checkedInAt
                     ? new Date(scanResult.booking.checkedInAt).toLocaleTimeString('vi-VN')
                     : 'Vừa xong'}
                 </span>
-                <span className="text-[10px] text-slate-500">
-                  Đã khóa vé điện tử
-                </span>
+                <span className="text-[11px] text-[var(--text-muted)]">Đã ghi nhận vào sân</span>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* TAB 1: HUD CAMERA SCANNER */}
+      {/* TAB 1: CAMERA SCANNER */}
       {activeTab === 'SCANNER' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Camera Scanner View */}
-          <div className="md:col-span-7 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-4 backdrop-blur-md">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h2 className="font-bold text-white text-base flex items-center gap-2">
-                <Camera className="w-4 h-4 text-cyan-400" />
-                Camera Quét Trực Tiếp (HUD Scanner)
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          <div className="md:col-span-7 phanta-card p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+              <h2 className="font-heading font-semibold text-[var(--text-heading)] text-base flex items-center gap-2">
+                <Camera className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Camera quét trực tiếp</span>
               </h2>
-              <div className="flex items-center gap-2">
-                {!scannerActive ? (
-                  <button
-                    onClick={startScanner}
-                    className="inline-flex items-center px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white rounded-xl text-xs font-bold hover:from-emerald-700 hover:to-cyan-700 shadow-sm active:scale-95 transition"
-                  >
-                    <Camera className="w-3.5 h-3.5 mr-1" />
-                    Bật Camera Quét
-                  </button>
-                ) : (
-                  <button
-                    onClick={stopScanner}
-                    className="inline-flex items-center px-3.5 py-1.5 bg-rose-600/20 border border-rose-500/30 text-rose-300 rounded-xl text-xs font-bold hover:bg-rose-600/30 transition"
-                  >
-                    Tắt Camera
-                  </button>
-                )}
-              </div>
+              {!scannerActive ? (
+                <button
+                  type="button"
+                  onClick={startScanner}
+                  className="phanta-btn-primary px-3.5 py-1.5 text-xs flex items-center gap-1.5"
+                >
+                  <Camera className="w-3.5 h-3.5" strokeWidth={1.75} />
+                  <span>Bật camera quét</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={stopScanner}
+                  className="px-3.5 py-1.5 bg-rose-500/15 border border-rose-500/30 text-rose-500 rounded-xl text-xs font-medium hover:bg-rose-500/20 transition-colors"
+                >
+                  Tắt camera
+                </button>
+              )}
             </div>
 
-            {/* HTML5 QR Container */}
-            <div className="relative min-h-[300px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center">
+            <div className="relative min-h-[300px] bg-[var(--bg-card-inner)] rounded-xl overflow-hidden border border-[var(--border-subtle)] flex items-center justify-center">
               <div id={scannerContainerId} className="w-full h-full" />
-              
+
               {!scannerActive && (
                 <div className="text-center p-8 space-y-3 z-10">
-                  <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-cyan-400 shadow-inner">
-                    <QrCode className="w-7 h-7" />
+                  <div className="w-14 h-14 rounded-xl bg-[var(--bg-card)] border border-[var(--border-color)] flex items-center justify-center mx-auto text-[var(--pitch-green)]">
+                    <QrCode className="w-7 h-7" strokeWidth={1.5} />
                   </div>
-                  <p className="text-sm font-bold text-slate-300">
-                    Camera chưa được kích hoạt
-                  </p>
-                  <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                    Nhấn &quot;Bật Camera Quét&quot; ở trên hoặc dùng ô nhập mã Token bên phải để xác thực vé.
+                  <p className="text-sm font-medium text-[var(--text-heading)]">Camera chưa được kích hoạt</p>
+                  <p className="text-xs text-[var(--text-sub)] max-w-xs mx-auto">
+                    Chọn &quot;Bật camera quét&quot; ở trên hoặc nhập mã vé ở khung bên phải để xác thực
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400 flex items-center gap-2.5">
-              <Zap className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>
-                Cơ chế bảo mật: Mã QR Dynamic JWT có hiệu lực 60s. Khách không thể sử dụng ảnh chụp màn hình cũ để gian lận vé.
-              </span>
+            <div className="phanta-subcard p-3.5 text-xs text-[var(--text-sub)] flex items-center gap-2.5">
+              <ShieldCheck className="w-4 h-4 text-[var(--pitch-green)] shrink-0" strokeWidth={1.75} />
+              <span>Mã QR vé điện tử có hiệu lực làm mới theo chu kỳ 60 giây để ngăn chặn việc sử dụng ảnh chụp màn hình cũ.</span>
             </div>
           </div>
 
-          {/* Manual Input Form on Right */}
-          <div className="md:col-span-5 bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl space-y-5 backdrop-blur-md">
-            <div className="pb-3 border-b border-slate-800">
-              <h2 className="font-bold text-white text-base flex items-center gap-2">
-                <Search className="w-4 h-4 text-emerald-400" />
-                Nhập Mã Token Thủ Công
+          <div className="md:col-span-5 phanta-card p-6 space-y-4">
+            <div className="pb-3 border-b border-[var(--border-subtle)]">
+              <h2 className="font-heading font-semibold text-[var(--text-heading)] text-base flex items-center gap-2">
+                <Search className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                <span>Nhập mã vé thủ công</span>
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Dành cho trường hợp camera bị mờ hoặc kiểm thử nhanh
+              <p className="text-xs text-[var(--text-sub)] mt-0.5">
+                Dành cho trường hợp camera bị mờ hoặc cần kiểm tra nhanh
               </p>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
-                  Chuỗi Dynamic Token / JWT
+                <label className="block text-xs font-medium text-[var(--text-sub)] mb-1.5">
+                  Chuỗi mã vé điện tử
                 </label>
                 <textarea
                   rows={5}
                   value={manualToken}
                   onChange={(e) => setManualToken(e.target.value)}
-                  placeholder="Dán chuỗi token mã hóa từ vé QR của khách hàng tại đây"
-                  className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none font-heading tabular-nums resize-none"
+                  placeholder="Dán chuỗi mã vé QR của khách hàng tại đây"
+                  className="w-full p-3 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)] tabular-nums resize-none"
                 />
               </div>
 
               <button
+                type="button"
                 onClick={() => handleProcessQr(manualToken)}
                 disabled={loading || !manualToken.trim()}
-                className={`w-full py-3.5 rounded-2xl font-bold text-xs transition flex items-center justify-center gap-2 ${
-                  loading || !manualToken.trim()
-                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-emerald-600 to-cyan-600 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
-                }`}
+                className="phanta-btn-primary w-full py-3 text-xs flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -563,8 +525,8 @@ export default function CheckinPage() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>XÁC THỰC VÉ & CHECK-IN NGAY</span>
+                    <CheckCircle2 className="w-4 h-4" strokeWidth={1.75} />
+                    <span>Xác thực vé và check-in</span>
                   </>
                 )}
               </button>
@@ -573,36 +535,35 @@ export default function CheckinPage() {
         </div>
       )}
 
-      {/* TAB 2: MANUAL CHECK-IN & LOOKUP (US-041) */}
+      {/* TAB 2: MANUAL CHECK-IN & LOOKUP */}
       {activeTab === 'MANUAL' && (
         <div className="space-y-6">
-          {/* Search Box */}
-          <div className="bg-slate-900/90 p-6 rounded-3xl border border-slate-800 shadow-xl backdrop-blur-md">
+          <div className="phanta-card p-6">
             <form onSubmit={handleLookup} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
               <div className="md:col-span-6">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
-                  <Search className="w-3.5 h-3.5 text-cyan-400" />
-                  Tìm theo SĐT, Tên khách hoặc Mã Đơn / Vé
+                <label className="block text-xs font-medium text-[var(--text-sub)] mb-1.5 flex items-center gap-1.5">
+                  <Search className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Tìm theo SĐT, tên khách hoặc mã đơn</span>
                 </label>
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Nhập SĐT khách (VD: 0988), tên khách, mã BK - TCK"
-                  className="w-full px-4 py-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  placeholder="Nhập SĐT khách, tên khách hoặc mã đơn"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
               <div className="md:col-span-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-cyan-400" />
-                  Ngày đặt sân
+                <label className="block text-xs font-medium text-[var(--text-sub)] mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Ngày đặt sân</span>
                 </label>
                 <input
                   type="date"
                   value={searchDate}
                   onChange={(e) => setSearchDate(e.target.value)}
-                  className="w-full px-4 py-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)]"
                 />
               </div>
 
@@ -610,7 +571,7 @@ export default function CheckinPage() {
                 <button
                   type="submit"
                   disabled={searching}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                  className="phanta-btn-primary w-full py-2.5 text-xs flex items-center justify-center gap-2"
                 >
                   {searching ? (
                     <>
@@ -619,7 +580,7 @@ export default function CheckinPage() {
                     </>
                   ) : (
                     <>
-                      <Search className="w-4 h-4" />
+                      <Search className="w-4 h-4" strokeWidth={1.75} />
                       <span>Tra cứu danh sách</span>
                     </>
                   )}
@@ -628,114 +589,112 @@ export default function CheckinPage() {
             </form>
           </div>
 
-          {/* Results Table */}
-          <div className="bg-slate-900/90 rounded-3xl border border-slate-800 shadow-xl overflow-hidden backdrop-blur-md">
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between">
+          <div className="phanta-card overflow-hidden">
+            <div className="p-5 border-b border-[var(--border-subtle)] flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-bold text-white text-base flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-emerald-400" />
-                  Danh Sách Đơn Đặt Hợp Lệ Cần Check-in ({lookupResults.length})
+                <h3 className="font-heading font-semibold text-[var(--text-heading)] text-base flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[var(--pitch-green)]" strokeWidth={1.75} />
+                  <span>Danh sách đơn đặt hợp lệ ({lookupResults.length})</span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Dành cho khách hàng hết pin hoặc gặp sự cố kết nối, lễ tân đối chiếu thông tin và bấm xác nhận
+                <p className="text-xs text-[var(--text-sub)] mt-0.5">
+                  Dành cho khách hàng hết pin hoặc gặp sự cố kết nối, lễ tân đối chiếu thông tin và xác nhận
                 </p>
               </div>
 
               <button
+                type="button"
                 onClick={() => handleLookup()}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 transition"
+                className="phanta-btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 shrink-0"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${searching ? 'animate-spin' : ''}`} />
-                Làm mới
+                <RefreshCw className={`w-3.5 h-3.5 ${searching ? 'animate-spin' : ''}`} strokeWidth={1.75} />
+                <span>Làm mới</span>
               </button>
             </div>
 
             {lookupResults.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
-                <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-                <p className="text-sm font-semibold text-slate-400">
-                  {lookupSearched ? 'Không tìm thấy đơn đặt nào phù hợp với bộ lọc' : 'Nhấn "Tra cứu danh sách" để hiển thị các đơn đặt hôm nay'}
+              <div className="p-12 text-center text-[var(--text-sub)]">
+                <FileText className="w-10 h-10 mx-auto mb-3 text-[var(--text-muted)]" strokeWidth={1.5} />
+                <p className="text-sm font-medium text-[var(--text-heading)]">
+                  {lookupSearched ? 'Không tìm thấy đơn đặt nào phù hợp' : 'Nhấn "Tra cứu danh sách" để hiển thị các đơn đặt hôm nay'}
                 </p>
-                <p className="text-xs text-slate-600 mt-1">
-                  Đơn cần check-in phải ở trạng thái ĐÃ THANH TOÁN (CONFIRMED)
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  Đơn cần check-in phải ở trạng thái đã thanh toán
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/70 text-slate-400 uppercase font-heading tabular-nums border-b border-slate-800">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-[var(--table-head-bg)] text-[var(--text-sub)] font-medium border-b border-[var(--border-subtle)]">
                     <tr>
-                      <th className="py-3 px-4">Mã Đơn / Vé</th>
+                      <th className="py-3 px-4">Mã đơn / Vé</th>
                       <th className="py-3 px-4">Khách hàng</th>
                       <th className="py-3 px-4">Sân thi đấu</th>
                       <th className="py-3 px-4">Khung giờ</th>
-                      <th className="py-3 px-4">Tổng tiền</th>
+                      <th className="py-3 px-4 text-right">Tổng tiền</th>
                       <th className="py-3 px-4">Trạng thái</th>
                       <th className="py-3 px-4 text-right">Thao tác</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300">
+                  <tbody className="divide-y divide-[var(--border-subtle)]">
                     {lookupResults.map((item) => (
-                      <tr key={item.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3 px-4 font-heading tabular-nums font-bold text-white">
+                      <tr key={item.id} className="hover:bg-[var(--table-row-hover)] transition-colors">
+                        <td className="py-3 px-4 tabular-nums font-medium text-[var(--text-heading)]">
                           <div>{item.bookingCode || `#${item.id.slice(-6).toUpperCase()}`}</div>
                           {item.ticketCode && (
-                            <div className="text-[10px] text-cyan-400">{item.ticketCode}</div>
+                            <div className="text-[11px] text-[var(--pitch-green)]">{item.ticketCode}</div>
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <div className="font-bold text-white flex items-center gap-1.5">
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            {item.customerName}
+                          <div className="font-medium text-[var(--text-heading)] flex items-center gap-1.5">
+                            <User className="w-3.5 h-3.5 text-[var(--text-sub)]" strokeWidth={1.75} />
+                            <span>{item.customerName}</span>
                           </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                            <Phone className="w-3 h-3 text-slate-500" />
-                            {item.customerPhone}
+                          <div className="text-[11px] text-[var(--text-sub)] flex items-center gap-1 mt-0.5 tabular-nums">
+                            <Phone className="w-3 h-3" strokeWidth={1.75} />
+                            <span>{item.customerPhone}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-semibold text-slate-200">
-                          {item.venueName}
-                        </td>
-                        <td className="py-3 px-4 font-heading tabular-nums">
-                          <div className="font-bold text-cyan-400">
+                        <td className="py-3 px-4 font-medium text-[var(--text-main)]">{item.venueName}</td>
+                        <td className="py-3 px-4 tabular-nums">
+                          <div className="font-semibold text-[var(--text-heading)]">
                             {item.startTime} - {item.endTime}
                           </div>
-                          <div className="text-[10px] text-slate-500">
+                          <div className="text-[11px] text-[var(--text-sub)]">
                             {item.bookingDate ? new Date(item.bookingDate).toLocaleDateString('vi-VN') : ''}
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-heading tabular-nums font-bold text-white">
+                        <td className="py-3 px-4 text-right tabular-nums font-semibold text-[var(--text-heading)]">
                           {Number(item.totalPrice).toLocaleString('vi-VN')} đ
                         </td>
                         <td className="py-3 px-4">
                           {item.isCheckedIn ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              Đã vào sân
-                              {item.checkinMethod && ` (${item.checkinMethod})`}
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-emerald-500/10 text-[var(--pitch-green)] border border-emerald-500/30">
+                              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                              <span>Đã vào sân{item.checkinMethod ? ` (${item.checkinMethod})` : ''}</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                              <Clock className="w-3.5 h-3.5" />
-                              Chưa check-in
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-500/10 text-[var(--burnt-orange)] border border-amber-500/30">
+                              <Clock className="w-3.5 h-3.5" strokeWidth={1.75} />
+                              <span>Chưa check-in</span>
                             </span>
                           )}
                         </td>
                         <td className="py-3 px-4 text-right">
                           {item.isCheckedIn ? (
-                            <span className="text-[11px] font-heading tabular-nums text-slate-500">
+                            <span className="text-[11px] tabular-nums text-[var(--text-sub)]">
                               {item.checkedInAt ? new Date(item.checkedInAt).toLocaleTimeString('vi-VN') : 'Đã check-in'}
                             </span>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => {
                                 setSelectedBookingForCheckin(item);
                                 setManualNote('Khách hết pin điện thoại, đã xác minh SĐT');
                               }}
-                              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20 active:scale-95 transition flex items-center gap-1.5 ml-auto"
+                              className="phanta-btn-primary px-3 py-1.5 text-xs inline-flex items-center gap-1.5"
                             >
-                              <Check className="w-3.5 h-3.5" />
-                              Xác nhận nhận sân
+                              <Check className="w-3.5 h-3.5" strokeWidth={1.75} />
+                              <span>Xác nhận nhận sân</span>
                             </button>
                           )}
                         </td>
@@ -749,60 +708,58 @@ export default function CheckinPage() {
         </div>
       )}
 
-      {/* MODAL XÁC NHẬN CHECK-IN THỦ CÔNG (US-041) */}
+      {/* MODAL XÁC NHẬN CHECK-IN THỦ CÔNG */}
       {selectedBookingForCheckin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-5">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="phanta-card p-6 max-w-lg w-full space-y-5">
+            <div className="flex items-start justify-between pb-3 border-b border-[var(--border-subtle)]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 flex items-center justify-center font-bold">
-                  <FileText className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-xl bg-[var(--bg-card-inner)] border border-[var(--border-color)] text-[var(--pitch-green)] flex items-center justify-center">
+                  <FileText className="w-5 h-5" strokeWidth={1.75} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-white">Xác Nhận Check-in Thủ Công</h3>
-                  <p className="text-xs text-slate-400">Quy trình dự phòng ngoại lệ (US-041)</p>
+                  <h3 className="font-heading font-semibold text-base text-[var(--text-heading)]">Xác nhận check-in thủ công</h3>
+                  <p className="text-xs text-[var(--text-sub)]">Xác minh thông tin khách hàng tại quầy</p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedBookingForCheckin(null)}
-                className="text-slate-400 hover:text-white text-sm"
+                className="text-[var(--text-sub)] hover:text-[var(--text-heading)] p-1"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Booking Summary Box */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5 text-xs">
+            <div className="phanta-subcard p-4 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-400">Khách hàng:</span>
-                <span className="font-bold text-white">
+                <span className="text-[var(--text-sub)]">Khách hàng</span>
+                <span className="font-semibold text-[var(--text-heading)]">
                   {selectedBookingForCheckin.customerName} ({selectedBookingForCheckin.customerPhone})
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Sân thi đấu:</span>
-                <span className="font-bold text-cyan-400">{selectedBookingForCheckin.venueName}</span>
+                <span className="text-[var(--text-sub)]">Sân thi đấu</span>
+                <span className="font-semibold text-[var(--pitch-green)]">{selectedBookingForCheckin.venueName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Khung giờ:</span>
-                <span className="font-heading tabular-nums font-bold text-white">
+                <span className="text-[var(--text-sub)]">Khung giờ</span>
+                <span className="tabular-nums font-semibold text-[var(--text-heading)]">
                   {selectedBookingForCheckin.startTime} - {selectedBookingForCheckin.endTime} (
-                  {selectedBookingForCheckin.bookingDate ? new Date(selectedBookingForCheckin.bookingDate).toLocaleDateString('vi-VN') : ''}
-                  )
+                  {selectedBookingForCheckin.bookingDate ? new Date(selectedBookingForCheckin.bookingDate).toLocaleDateString('vi-VN') : ''})
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Mã đặt chỗ:</span>
-                <span className="font-heading tabular-nums font-bold text-emerald-400">
+                <span className="text-[var(--text-sub)]">Mã đặt chỗ</span>
+                <span className="tabular-nums font-semibold text-[var(--pitch-green)]">
                   {selectedBookingForCheckin.bookingCode || selectedBookingForCheckin.id}
                 </span>
               </div>
             </div>
 
-            {/* Note & Quick Reasons */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-300">
-                Lý do check-in thủ công:
+              <label className="block text-xs font-medium text-[var(--text-sub)]">
+                Lý do check-in thủ công
               </label>
               <div className="flex flex-wrap gap-1.5">
                 {quickNotes.map((qNote) => (
@@ -810,10 +767,10 @@ export default function CheckinPage() {
                     key={qNote}
                     type="button"
                     onClick={() => setManualNote(qNote)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition border ${
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors ${
                       manualNote === qNote
-                        ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-                        : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                        ? 'bg-[var(--bg-card-inner)] text-[var(--pitch-green)] border-[var(--pitch-green)]'
+                        : 'bg-[var(--bg-card-inner)] text-[var(--text-sub)] border-[var(--border-subtle)] hover:text-[var(--text-heading)]'
                     }`}
                   >
                     {qNote}
@@ -824,17 +781,16 @@ export default function CheckinPage() {
                 rows={3}
                 value={manualNote}
                 onChange={(e) => setManualNote(e.target.value)}
-                placeholder="Nhập ghi chú chi tiết lý do lễ tân check-in thủ công"
-                className="w-full p-3 text-xs bg-slate-950 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-cyan-500 focus:outline-none resize-none mt-2"
+                placeholder="Nhập ghi chú lý do lễ tân check-in thủ công"
+                className="w-full p-3 text-xs bg-[var(--input-bg)] border border-[var(--border-color)] text-[var(--text-main)] rounded-xl focus:outline-none focus:border-[var(--pitch-green)] resize-none mt-2"
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setSelectedBookingForCheckin(null)}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                className="phanta-btn-secondary px-4 py-2 text-xs"
               >
                 Hủy bỏ
               </button>
@@ -842,7 +798,7 @@ export default function CheckinPage() {
                 type="button"
                 disabled={submittingManual}
                 onClick={handleConfirmManualCheckin}
-                className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-500/25 active:scale-95 transition flex items-center gap-2 disabled:opacity-50"
+                className="phanta-btn-primary px-4 py-2 text-xs flex items-center gap-1.5"
               >
                 {submittingManual ? (
                   <>
@@ -851,8 +807,8 @@ export default function CheckinPage() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Xác nhận vào sân ngay</span>
+                    <CheckCircle2 className="w-4 h-4" strokeWidth={1.75} />
+                    <span>Xác nhận vào sân</span>
                   </>
                 )}
               </button>

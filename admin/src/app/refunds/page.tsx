@@ -98,12 +98,12 @@ export default function RefundsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="font-heading font-extrabold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
-            <RotateCcw className="w-6 h-6 text-[var(--burnt-orange)]" />
-            <span>Xử lý & Đối soát Hoàn tiền (REFUND_PENDING)</span>
+          <h1 className="font-heading font-semibold text-2xl text-[var(--text-heading)] flex items-center gap-2.5">
+            <RotateCcw className="w-6 h-6 text-[var(--burnt-orange)]" strokeWidth={1.75} />
+            <span>Xử lý & Đối soát hoàn tiền</span>
           </h1>
           <p className="text-xs text-[var(--text-sub)] mt-1">
-            Quản lý và giải ngân cho các đơn khách hủy hợp lệ hoặc thanh toán muộn (Late Webhook) sau thời hạn giữ chỗ 10 phút
+            Quản lý và giải ngân cho các đơn khách hủy hợp lệ hoặc thanh toán muộn sau thời hạn giữ chỗ 10 phút
           </p>
         </div>
 
@@ -123,7 +123,7 @@ export default function RefundsPage() {
             <CheckCircle2 className="w-4 h-4" />
             <span>{successMessage}</span>
           </div>
-          <button onClick={() => setSuccessMessage(null)} className="text-[var(--text-sub)] hover:text-white">
+          <button onClick={() => setSuccessMessage(null)} className="text-[var(--text-sub)] hover:text-[var(--text-heading)]">
             Đóng
           </button>
         </div>
@@ -140,9 +140,9 @@ export default function RefundsPage() {
       {/* Content */}
       <div className="phanta-card p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-heading font-bold text-base text-[var(--text-heading)] flex items-center gap-2">
+          <h2 className="font-heading font-semibold text-base text-[var(--text-heading)] flex items-center gap-2">
             <span>Danh sách yêu cầu chờ duyệt hoàn tất</span>
-            <span className="px-2 py-0.5 rounded-full text-xs font-heading font-extrabold bg-[var(--burnt-orange)]/20 text-[var(--burnt-orange-light)] border border-[var(--burnt-orange)]/30 tabular-nums">
+            <span className="px-2 py-0.5 rounded-lg text-xs font-heading font-semibold bg-[var(--burnt-orange)]/15 text-[var(--burnt-orange)] border border-[var(--burnt-orange)]/30 tabular-nums">
               {bookings.length}
             </span>
           </h2>
@@ -167,7 +167,7 @@ export default function RefundsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-sub)] uppercase tracking-wider font-semibold">
+                <tr className="border-b border-[var(--border-subtle)] text-[var(--text-sub)] font-medium">
                   <th className="pb-3 pl-2">Mã đơn / Khách hàng</th>
                   <th className="pb-3">Sân / Khung giờ</th>
                   <th className="pb-3">Số tiền hoàn</th>
@@ -206,7 +206,7 @@ export default function RefundsPage() {
                       </td>
 
                       <td className="py-3.5">
-                        <div className="font-heading font-extrabold text-[var(--pitch-green)] text-sm tabular-nums">
+                        <div className="font-heading font-semibold text-[var(--pitch-green)] text-sm tabular-nums">
                           {amt.toLocaleString('vi-VN')} đ
                         </div>
                         <span className="text-[10px] text-[var(--text-sub)] font-medium">Qua cổng / STK</span>

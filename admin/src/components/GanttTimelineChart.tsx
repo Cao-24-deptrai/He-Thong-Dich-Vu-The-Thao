@@ -227,13 +227,13 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
       <div className="p-5 border-b border-slate-800 bg-slate-950/60 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <span className="p-2 rounded-xl bg-emerald-500/15 text-[var(--pitch-green)] border border-emerald-500/30">
               <Calendar className="w-5 h-5" />
             </span>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white tracking-tight">
-                  Bảng Lịch Timeline Gantt Chart Trực Quan
+                  Bảng lịch timeline Gantt chart trực quan
                 </h2>
                 <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border flex items-center gap-1 ${
                   wsConnected 
@@ -265,7 +265,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
             <span>Đã đặt:</span>
             <strong className="font-mono font-bold">{confirmedCount}</strong>
           </div>
-          <div className="px-3 py-1.5 rounded-xl bg-blue-950/50 border border-blue-700/40 text-xs flex items-center gap-2 text-blue-300">
+          <div className="px-3 py-1.5 rounded-xl bg-amber-950/40 border border-amber-700/40 text-xs flex items-center gap-2 text-amber-300">
             <span>Công suất:</span>
             <strong className="font-mono font-bold">{occupancyRate}%</strong>
           </div>
@@ -274,21 +274,21 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
           <div className="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700">
             <button
               onClick={() => setZoomLevel('sm')}
-              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'sm' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'sm' ? 'bg-[var(--pitch-green)] text-black font-bold' : 'text-slate-400 hover:text-white'}`}
               title="Thu nhỏ"
             >
               Thu nhỏ
             </button>
             <button
               onClick={() => setZoomLevel('md')}
-              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'md' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'md' ? 'bg-[var(--pitch-green)] text-black font-bold' : 'text-slate-400 hover:text-white'}`}
               title="Vừa"
             >
               Chuẩn
             </button>
             <button
               onClick={() => setZoomLevel('lg')}
-              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'lg' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`px-2 py-1 text-xs rounded-lg transition font-medium ${zoomLevel === 'lg' ? 'bg-[var(--pitch-green)] text-black font-bold' : 'text-slate-400 hover:text-white'}`}
               title="Phóng to"
             >
               Phóng to
@@ -304,7 +304,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition"
             title="Làm mới lịch sân"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-400' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[var(--pitch-green)]' : ''}`} />
           </button>
         </div>
       </div>
@@ -317,8 +317,8 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
             {/* Sticky Left Corner Header */}
             <div className="sticky left-0 z-40 w-52 shrink-0 p-3 bg-slate-950 border-r border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-blue-400" />
-                Danh Sách Sân
+                <Layers className="w-3.5 h-3.5 text-[var(--pitch-green)]" />
+                Danh sách sân
               </span>
               <span className="text-[10px] text-slate-500 font-mono">06:00 - 23:00</span>
             </div>
@@ -380,14 +380,14 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                   <div
                     key={venue._id}
                     className={`flex items-center hover:bg-slate-800/30 transition-colors ${
-                      isVenueSelected ? 'bg-blue-950/20' : isLinked ? 'bg-amber-950/10' : ''
+                      isVenueSelected ? 'bg-emerald-950/20' : isLinked ? 'bg-amber-950/10' : ''
                     }`}
                   >
                     {/* Sticky Left Venue Info Cell */}
                     <div
                       className={`sticky left-0 z-10 w-52 shrink-0 p-3 bg-slate-900 border-r border-slate-800 ${
                         isVenueSelected 
-                          ? 'bg-blue-950/40 border-l-4 border-l-cyan-400' 
+                          ? 'bg-emerald-950/40 border-l-4 border-l-[var(--pitch-green)]' 
                           : isLinked
                           ? 'border-l-4 border-l-amber-500 bg-amber-950/30'
                           : ''
@@ -468,7 +468,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                         }
 
                         if (isSelected) {
-                          cellBg = 'bg-cyan-500/30 border-cyan-400 text-cyan-200 ring-2 ring-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.5)] z-10';
+                          cellBg = 'bg-emerald-500/25 border-[var(--pitch-green)] text-emerald-200 ring-2 ring-[var(--pitch-green)] shadow-[0_0_12px_rgba(0,181,98,0.4)] z-10';
                           statusText = '✓ Chọn';
                         }
 
@@ -494,7 +494,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
                                 <span
                                   className={`w-2 h-2 rounded-full ${
                                     isSelected
-                                      ? 'bg-cyan-400 shadow-[0_0_6px_#06b6d4]'
+                                      ? 'bg-[var(--pitch-green)] shadow-[0_0_6px_#00b562]'
                                       : isAvailable
                                       ? 'bg-emerald-400 shadow-[0_0_6px_#10b981]'
                                       : isHeld
@@ -549,8 +549,8 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
             <span className="text-amber-300 font-medium">Sân ghép liên đới</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-md bg-cyan-500/30 border border-cyan-400 ring-1 ring-cyan-400" />
-            <span className="text-cyan-300 font-medium">Đang chọn</span>
+            <span className="w-3 h-3 rounded-md bg-emerald-500/30 border border-[var(--pitch-green)] ring-1 ring-[var(--pitch-green)]" />
+            <span className="text-emerald-300 font-medium">Đang chọn</span>
           </div>
         </div>
 
@@ -558,7 +558,7 @@ export const GanttTimelineChart: React.FC<GanttTimelineChartProps> = ({
           <div className="text-xs text-slate-300 flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-lg border border-slate-800">
             <span className="font-bold text-white">{hoveredSlot.venue.name}</span>
             <span>•</span>
-            <span className="font-mono text-cyan-400 font-bold">
+            <span className="font-mono text-[var(--pitch-green)] font-bold">
               {hoveredSlot.slot.startTime} - {hoveredSlot.slot.endTime}
             </span>
             <span>•</span>

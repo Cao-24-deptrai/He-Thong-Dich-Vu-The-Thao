@@ -50,8 +50,8 @@ const SPORT_SHARE = [
   { name: 'Bóng đá mini', pct: 46, color: '#10b981', tw: 'bg-emerald-500' },
   { name: 'Cầu lông', pct: 22, color: '#2dd4bf', tw: 'bg-teal-400' },
   { name: 'Tennis', pct: 14, color: '#38bdf8', tw: 'bg-sky-400' },
-  { name: 'Bóng rổ & Bể bơi', pct: 11, color: '#fbbf24', tw: 'bg-amber-400' },
-  { name: 'Gym & Gaming', pct: 7, color: '#f97316', tw: 'bg-orange-500' },
+  { name: 'Bóng rổ & bể bơi', pct: 11, color: '#fbbf24', tw: 'bg-amber-400' },
+  { name: 'Gym & gaming', pct: 7, color: '#f97316', tw: 'bg-orange-500' },
 ];
 
 const HOURLY_HEATMAP = [
@@ -87,7 +87,7 @@ const WATERFALL_STEPS = [
 
 const SHIFT_GROUPS = [
   {
-    metric: 'Doanh thu Sân bãi',
+    metric: 'Doanh thu sân bãi',
     morning: 14200000,
     evening: 31800000,
   },
@@ -97,16 +97,16 @@ const SHIFT_GROUPS = [
     evening: 9850000,
   },
   {
-    metric: 'Phụ kiện & Thuê đồ',
+    metric: 'Phụ kiện & thuê đồ',
     morning: 1850000,
     evening: 4600000,
   },
 ];
 
 const CANTEEN_CATEGORY_SHARE = [
-  { name: 'Nước tăng lực & Điện giải', value: 5820000, pct: 44, tw: 'bg-emerald-500' },
-  { name: 'Nước khoáng & Nước ép', value: 3120000, pct: 24, tw: 'bg-teal-400' },
-  { name: 'Thức ăn nhẹ & Năng lượng', value: 2460000, pct: 19, tw: 'bg-amber-400' },
+  { name: 'Nước tăng lực & điện giải', value: 5820000, pct: 44, tw: 'bg-emerald-500' },
+  { name: 'Nước khoáng & nước ép', value: 3120000, pct: 24, tw: 'bg-teal-400' },
+  { name: 'Thức ăn nhẹ & năng lượng', value: 2460000, pct: 19, tw: 'bg-amber-400' },
   { name: 'Phụ kiện thể thao', value: 1720000, pct: 13, tw: 'bg-orange-500' },
 ];
 
@@ -127,9 +127,10 @@ export default function AnalyticsPage() {
       const q = new URLSearchParams();
       if (customFrom) q.set('from', customFrom);
       if (customTo) q.set('to', customTo);
+      const authToken = (typeof window !== 'undefined' ? (localStorage.getItem('access_token') || sessionStorage.getItem('access_token')) : '') || '';
       const res = await fetch(`${API_BASE}/analytics/summary?${q.toString()}`, {
         headers: {
-          Authorization: 'Bearer ' + (localStorage.getItem('access_token') || ''),
+          Authorization: 'Bearer ' + authToken,
         },
       });
       const d = await res.json();
@@ -349,19 +350,19 @@ export default function AnalyticsPage() {
         <div className="phanta-card p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-[var(--text-sub)]">Hồ sơ hoàn tiền</span>
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-[var(--burnt-orange)] flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="font-heading font-black text-2xl text-[var(--text-heading)] tabular-nums">
+            <div className="font-heading font-semibold text-2xl text-[var(--text-heading)] tabular-nums">
               {refundCases} hồ sơ
             </div>
             <div className="mt-2 flex items-center gap-1.5 text-xs">
-              <span className="px-1.5 py-0.5 rounded font-bold font-heading text-[10px] bg-purple-500/15 text-purple-400">
+              <span className="px-1.5 py-0.5 rounded font-medium font-heading text-[11px] bg-amber-500/15 text-[var(--burnt-orange)]">
                 Đối soát
               </span>
-              <span className="text-[var(--text-sub)] text-[11px]">qua PayOS Webhook</span>
+              <span className="text-[var(--text-sub)] text-[11px]">qua PayOS</span>
             </div>
           </div>
         </div>
@@ -671,7 +672,7 @@ export default function AnalyticsPage() {
             <div>
               <h3 className="font-heading font-bold text-lg text-[var(--text-heading)] flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-sky-400" />
-                <span>Biểu đồ Thác nước Dòng tiền Ví Phanta Pay (Waterfall Chart)</span>
+                <span>Biểu đồ thác nước dòng tiền ví Phanta Pay (Waterfall Chart)</span>
               </h3>
               <p className="text-xs text-[var(--text-sub)] mt-0.5">
                 Phân tích biến động cộng dồn từ số dư đầu kỳ qua các dòng tiền nạp, chi tiêu và hoàn tiền
@@ -719,7 +720,7 @@ export default function AnalyticsPage() {
               <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
                 <span className="text-[11px] font-semibold text-emerald-400">Trạng thái đối soát</span>
                 <div className="font-heading font-black text-2xl text-[var(--pitch-green)] tabular-nums">
-                  100% Khớp Lệnh
+                  100% khớp lệnh
                 </div>
                 <p className="text-[11px] text-[var(--text-sub)]">Không phát hiện sai lệch số dư ví hệ thống</p>
               </div>
@@ -758,20 +759,20 @@ export default function AnalyticsPage() {
               <div>
                 <h3 className="font-heading font-bold text-lg text-[var(--text-heading)] flex items-center gap-2">
                   <Coffee className="w-5 h-5 text-[var(--burnt-orange)]" />
-                  <span>So sánh doanh thu theo Ca làm việc (Grouped Bar Chart)</span>
+                  <span>So sánh doanh thu theo ca làm việc (Grouped Bar Chart)</span>
                 </h3>
                 <p className="text-xs text-[var(--text-sub)] mt-0.5">
-                  Đối chiếu hiệu suất giữa Ca Sáng (06:00 - 14:00) và Ca Tối (14:00 - 23:00)
+                  Đối chiếu hiệu suất giữa ca sáng (06:00 - 14:00) và ca tối (14:00 - 23:00)
                 </p>
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded bg-sky-400" />
-                  <span className="text-[var(--text-main)]">Ca Sáng</span>
+                  <span className="text-[var(--text-main)]">Ca sáng</span>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded bg-[var(--burnt-orange)]" />
-                  <span className="text-[var(--text-main)]">Ca Tối</span>
+                  <span className="text-[var(--text-main)]">Ca tối</span>
                 </span>
               </div>
             </div>
@@ -806,7 +807,7 @@ export default function AnalyticsPage() {
           <div className="phanta-card p-6 flex flex-col justify-between">
             <div>
               <h3 className="font-heading font-bold text-lg text-[var(--text-heading)]">
-                Cơ cấu ngành hàng Căng tin
+                Cơ cấu ngành hàng căng tin
               </h3>
               <p className="text-xs text-[var(--text-sub)] mt-0.5 mb-5">
                 Biểu đồ thanh ngang sắp xếp giảm dần (Horizontal Bar)
@@ -833,7 +834,7 @@ export default function AnalyticsPage() {
               href="/canteen"
               className="mt-6 w-full py-2.5 phanta-btn-secondary text-xs flex items-center justify-center gap-1.5"
             >
-              <span>Vào Quản lý Thực đơn Căng tin</span>
+              <span>Vào quản lý thực đơn căng tin</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
