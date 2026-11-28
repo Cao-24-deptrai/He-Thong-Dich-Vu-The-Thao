@@ -132,7 +132,7 @@ export async function sendResetPasswordEmailLink(email: string): Promise<void> {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   await sendPasswordResetEmail(auth, email.trim().toLowerCase(), {
     url: `${origin}/reset-password`,
-    handleCodeInApp: false,
+    handleCodeInApp: true,
   });
 }
 

@@ -62,6 +62,14 @@ export class FirebaseAdminService implements OnModuleInit {
     return this.app !== null;
   }
 
+  private getWebApiKey(): string {
+    return (this.configService.get<string>('firebase.webApiKey') || '').trim();
+  }
+
+  isWebApiKeyConfigured(): boolean {
+    return Boolean(this.getWebApiKey());
+  }
+
   private getAuth(): Auth {
     if (!this.app) {
       this.initializeAppIfConfigured();
@@ -109,6 +117,108 @@ export class FirebaseAdminService implements OnModuleInit {
         return;
       }
       throw error;
+    }
+  }
+
+  /**
+   * Kiểm tra mật khẩu bằng Firebase Auth REST API để đồng bộ khi người dùng vừa đổi pass qua Firebase hosted page.
+   */
+  async verifyPasswordWithFirebase(
+    email: string,
+    password: string,
+  ): Promise<{ uid: string; emailVerified: boolean } | null> {
+    const webApiKey = this.getWebApiKey();
+    if (!webApiKey || !email || !password) return null;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    try {
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(webApiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            password,
+            returnSecureToken: true,
+          }),
+        },
+      );
+
+      const data = (await response.json().catch(() => ({}))) as any;
+      if (!response.ok || !data?.localId) {
+        const errCode = data?.error?.message;
+        if (
+          errCode &&
+          !['INVALID_PASSWORD', 'EMAIL_NOT_FOUND', 'INVALID_LOGIN_CREDENTIALS'].includes(errCode)
+        ) {
+          this.logger.warn(`Firebase signInWithPassword trả lỗi cho ${normalizedEmail}: ${errCode}`);
+        }
+        return null;
+      }
+
+      if (this.isConfigured() && data.idToken) {
+        try {
+          const decoded = await this.verifyIdToken(data.idToken);
+          return {
+            uid: decoded.uid,
+            emailVerified: Boolean(decoded.email_verified),
+          };
+        } catch {
+          // Fallback sang kết quả trực tiếp từ Identity Toolkit nếu token chưa kịp sync thời gian
+        }
+      }
+
+      return {
+        uid: String(data.localId),
+        emailVerified: false,
+      };
+    } catch (error: any) {
+      this.logger.warn(`Không thể gọi Firebase signInWithPassword: ${error?.message || error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Cập nhật ngược mật khẩu mới lên Firebase Auth khi người dùng đổi mật khẩu qua Phone OTP
+   * để tránh mật khẩu cũ còn tồn tại trên Firebase.
+   */
+  async syncUserPassword(
+    params: { firebaseUid?: string; email?: string },
+    newPassword: string,
+  ): Promise<string | null> {
+    if (!this.isConfigured()) return null;
+
+    try {
+      const auth = this.getAuth();
+      let uid: string | null = null;
+
+      if (params.firebaseUid) {
+        try {
+          const fbUser = await auth.getUser(params.firebaseUid);
+          uid = fbUser.uid;
+        } catch (err: any) {
+          if (err?.code !== 'auth/user-not-found') throw err;
+        }
+      }
+
+      if (!uid && params.email) {
+        try {
+          const fbUser = await auth.getUserByEmail(params.email.trim().toLowerCase());
+          uid = fbUser.uid;
+        } catch (err: any) {
+          if (err?.code !== 'auth/user-not-found') throw err;
+        }
+      }
+
+      if (!uid) return null;
+
+      await auth.updateUser(uid, { password: newPassword });
+      this.logger.log(`Đã đồng bộ mật khẩu mới lên Firebase Auth (UID: ${uid}).`);
+      return uid;
+    } catch (error: any) {
+      this.logger.warn(`Không thể đồng bộ mật khẩu lên Firebase Auth: ${error?.message || error}`);
+      return null;
     }
   }
 }

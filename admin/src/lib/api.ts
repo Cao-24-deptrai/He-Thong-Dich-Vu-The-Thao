@@ -338,43 +338,101 @@ export function findLinkedVenues(targetVenue: Venue, allVenues: Venue[]): Venue[
   });
 }
 
+const REMEMBER_ME_KEY = 'phanta_remember_me';
+const REMEMBERED_LOGIN_KEY = 'phanta_remembered_login';
+
 class ApiService {
+  private getActiveAuthStorage(): Storage | null {
+    if (typeof window === 'undefined') return null;
+    if (
+      localStorage.getItem('access_token') ||
+      localStorage.getItem('refresh_token') ||
+      localStorage.getItem('admin_user')
+    ) {
+      return localStorage;
+    }
+    if (
+      sessionStorage.getItem('access_token') ||
+      sessionStorage.getItem('refresh_token') ||
+      sessionStorage.getItem('admin_user')
+    ) {
+      return sessionStorage;
+    }
+    return this.getRememberMe() ? localStorage : sessionStorage;
+  }
+
+  public clearAuthTokens() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('admin_user');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('admin_user');
+    }
+  }
+
+  public getRememberMe(): boolean {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+  }
+
+  public getRememberedLogin(): string {
+    if (typeof window === 'undefined' || !this.getRememberMe()) return '';
+    return localStorage.getItem(REMEMBERED_LOGIN_KEY) || '';
+  }
+
+  public setRememberedLogin(identifier: string, remember: boolean) {
+    if (typeof window === 'undefined') return;
+    if (remember) {
+      localStorage.setItem(REMEMBER_ME_KEY, 'true');
+      localStorage.setItem(REMEMBERED_LOGIN_KEY, identifier.trim());
+    } else {
+      localStorage.removeItem(REMEMBER_ME_KEY);
+      localStorage.removeItem(REMEMBERED_LOGIN_KEY);
+    }
+  }
+
   public getToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('access_token');
+      return localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
     }
     return null;
   }
 
   public setToken(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('access_token', token);
+    const storage = this.getActiveAuthStorage();
+    if (storage) {
+      storage.setItem('access_token', token);
     }
   }
 
   public getRefreshToken(): string | null {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('refresh_token');
+      return localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
     }
     return null;
   }
 
   public setRefreshToken(token: string) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('refresh_token', token);
+    const storage = this.getActiveAuthStorage();
+    if (storage) {
+      storage.setItem('refresh_token', token);
     }
   }
 
   public setUser(user: User) {
-    if (typeof window !== 'undefined') {
+    const storage = this.getActiveAuthStorage();
+    if (storage) {
       try {
         if (!user) {
           localStorage.removeItem('admin_user');
+          sessionStorage.removeItem('admin_user');
         } else {
-          localStorage.setItem('admin_user', JSON.stringify(user));
+          storage.setItem('admin_user', JSON.stringify(user));
         }
       } catch (e) {
-        console.warn('Failed to save user to localStorage:', e);
+        console.warn('Failed to save user to storage:', e);
       }
     }
   }
@@ -382,13 +440,14 @@ class ApiService {
   public getUser(): User | null {
     if (typeof window !== 'undefined') {
       try {
-        const data = localStorage.getItem('admin_user');
+        const data = localStorage.getItem('admin_user') || sessionStorage.getItem('admin_user');
         if (!data || data === 'undefined' || data === 'null') return null;
         return JSON.parse(data);
       } catch (e) {
-        console.warn('Corrupted admin_user in localStorage, clearing:', e);
+        console.warn('Corrupted admin_user in storage, clearing:', e);
         try {
           localStorage.removeItem('admin_user');
+          sessionStorage.removeItem('admin_user');
         } catch (_) {}
         return null;
       }
@@ -401,9 +460,7 @@ class ApiService {
       try {
         await this.request('/auth/logout', { method: 'POST' }).catch(() => {});
       } finally {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('admin_user');
+        this.clearAuthTokens();
         window.location.href = '/login';
       }
     }
@@ -452,9 +509,7 @@ class ApiService {
       }
       // Không thể refresh -> Hết hạn phiên làm việc
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('admin_user');
+        this.clearAuthTokens();
         window.location.href = '/login';
       }
     }
@@ -473,16 +528,29 @@ class ApiService {
   }
 
   // --- AUTH ---
-  private persistAuthSession(res: any): {
+  private persistAuthSession(
+    res: any,
+    options?: { persistent?: boolean },
+  ): {
     accessToken: string;
     refreshToken?: string;
     user: User;
     requiresPhoneCompletion?: boolean;
   } {
     const token = res.accessToken || res.access_token || '';
-    if (token) this.setToken(token);
-    if (res.refreshToken) this.setRefreshToken(res.refreshToken);
-    if (res.user) this.setUser(res.user);
+    if (typeof window !== 'undefined') {
+      this.clearAuthTokens();
+      const targetStorage = options?.persistent === false ? sessionStorage : localStorage;
+      if (token) targetStorage.setItem('access_token', token);
+      if (res.refreshToken) targetStorage.setItem('refresh_token', res.refreshToken);
+      if (res.user) {
+        try {
+          targetStorage.setItem('admin_user', JSON.stringify(res.user));
+        } catch (e) {
+          console.warn('Failed to save user to storage:', e);
+        }
+      }
+    }
     return {
       accessToken: token,
       refreshToken: res.refreshToken,
@@ -491,12 +559,23 @@ class ApiService {
     };
   }
 
-  async login(phone: string, password: string): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
+  async login(
+    identifier: string,
+    password: string,
+    rememberMe = false,
+  ): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
+    const cleanIdentifier = identifier.trim();
     const res = await this.request<any>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ phone, password, deviceName: 'Web Admin Dashboard' }),
+      body: JSON.stringify({
+        phone: cleanIdentifier,
+        identifier: cleanIdentifier,
+        password,
+        deviceName: 'Web Admin Dashboard',
+      }),
     });
-    return this.persistAuthSession(res);
+    this.setRememberedLogin(cleanIdentifier, rememberMe);
+    return this.persistAuthSession(res, { persistent: rememberMe });
   }
 
   async register(phone: string, password: string, fullName: string, email?: string): Promise<{ accessToken: string; refreshToken?: string; user: User }> {
@@ -504,7 +583,7 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ phone, password, fullName, email }),
     });
-    return this.persistAuthSession(res);
+    return this.persistAuthSession(res, { persistent: true });
   }
 
   async loginWithGoogle(idToken: string): Promise<{
@@ -517,7 +596,7 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ idToken, deviceName: 'Google Web Portal' }),
     });
-    return this.persistAuthSession(res);
+    return this.persistAuthSession(res, { persistent: true });
   }
 
   async resetPasswordByPhone(idToken: string, newPassword: string): Promise<{ success: boolean; message: string }> {
